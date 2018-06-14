@@ -1,5 +1,7 @@
 # dotfiles
 
 ```bash
-TODO : ADD install command
+git clone git@github.com:kazuakiishiguro/dotfiles.git ~/.dotfiles
+cd ~/.dotfiles
+./install.sh
 ```
