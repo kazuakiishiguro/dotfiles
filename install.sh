@@ -24,11 +24,43 @@ source install/git.sh
 # OS INSTALLATIONS
 case ${OSTYPE} in 
   darwin*)
-  if [ "$(uname)" == "Darwin" ]; then
     echo -e "\\n\\nRunning on OSX"
     source install/brew.sh
     source install/osx.sh
-  fi
+    ;;
+  linux-gnu*)
+    if [ -e /etc/debian_version ] || [ -e /etc/debian_release ]; then
+      if [ -e /etc/lsb-release ]; then
+        DISTRIBUTION_NAME="ubuntu"
+      else
+        DISTRIBUTION_NAME="debian"
+      fi
+    elif [ -e /etc/fedora-release ]; then
+      DISTRIBUTION_NAME="fedora"
+    elif [ -e /etc/redhat-release ]; then
+      if [ -e /etc/oracle-release ]; then
+        DISTRIBUTION_NAME="oracle"
+      else
+        DISTRIBUTION_NAME="redhat"
+      fi
+    elif [ -e /etc/turbolinux-release ]; then
+      DISTRIBUTION_NAME="turbol"
+    elif [ -e /etc/SuSE-release ]; then
+      DISTRIBUTION_NAME="suse"
+    elif [ -e /etc/mandriva-release ]; then
+      DISTRIBUTION_NAME="mandriva"
+    elif [ -e /etc/vine-release ]; then
+      DISTRIBUTION_NAME="vine"
+    elif [ -e /etc/gentoo-release ]; then
+      DISTRIBUTION_NAME="gentoo"
+    else
+      echo "unkown distribution"
+      DISTRIBUTION_NAME="unkown"
+    fi
+    echo -e "\\n\\nRunning on ${DISTRIBUTION_NAME}"
+    source install/${DISTRIBUTION_NAME}.sh
+    ;;
+  *) echo "unknown: $OSTYPE" ;;
 esac
 
 if ! command_exists zsh; then
