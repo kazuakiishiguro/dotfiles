@@ -35,7 +35,7 @@ for config in $config_files; do
   fi
 done
 
--- neovim setting -----------------------------------------------------------
+#-- neovim setting -----------------------------------------------------------
 echo -e "\\n\\nCreating vim symlinks"
 echo "=============================="
 VIMFILES=( "$HOME/.vim:$DOTFILES/config/nvim"

@@ -28,7 +28,7 @@ case ${OSTYPE} in
     source install/brew.sh
     source install/osx.sh
     ;;
-  Linux*)
+  linux-gnu*)
     if [ -e /etc/debian_version ] || [ -e /etc/debian_release ]; then
       if [ -e /etc/lsb-release ]; then
         DISTRIBUTION_NAME="ubuntu"

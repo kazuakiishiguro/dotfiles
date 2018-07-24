@@ -14,7 +14,6 @@ fi
 # Install if tmux is not installed
 if ! command_exists tmux; then
   sudo apt-get install tmux
-  sudo aptitude install tmux
 fi
 
 # Change the default shell to zsh
