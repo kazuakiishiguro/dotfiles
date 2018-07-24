@@ -4,16 +4,19 @@ command_exists() {
   type "$1" > /dev/null 2>&1
 }
 
-sudo apt-get -y upgrade && apt-get update
+
+printf "password: "
+read password
+echo "$password" | sudo -S apt-get -y upgrade && apt-get update
 
 # Install if zsh is not installed
 if ! command_exists zsh; then
-  sudo apt-get install zsh
+  echo "$password" | sudo -S apt-get install zsh
 fi
 
 # Install if tmux is not installed
 if ! command_exists tmux; then
-  sudo apt-get install tmux
+  echo "$password" | sudo -S apt-get install tmux
 fi
 
 # Change the default shell to zsh
