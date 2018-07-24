@@ -35,4 +35,4 @@ if [[ "$SHELL" != "$zsh_path" ]]; then
 fi
 
 # install basic package
-echo "$password" | sudo -S apt install tree curl vim vim-gnome
+echo "$password" | sudo -S apt install tree curl vim vim-gnome vscode
