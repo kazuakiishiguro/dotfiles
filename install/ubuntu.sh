@@ -11,6 +11,12 @@ env LANGUAGE=C LC_MESSAGES=C xdg-user-dirs-gtk-update
 read -sp "Password: " password
 echo $password | sudo -S apt -y upgrade && apt update && apt autoremove && apt clean
 
+# Remove Basic apps
+echo $password | sudo apt-get remove unity-webapps-common xul-ext-unity xul-ext-websites-integration
+
+# Install basic package
+echo $password | sudo -S apt install -y tree curl vim vim-gnome code apt-transport-https ca-certificates software-properties-common
+
 # Install if zsh is not installed
 if ! command_exists zsh; then
   echo $password | sudo -S apt install zsh
@@ -32,9 +38,6 @@ if [[ "$SHELL" != "$zsh_path" ]]; then
   chsh -s "$zsh_path"
   echo "default shell changed to $zsh_path"
 fi
-
-# install basic package
-echo $password | sudo -S apt install -y tree curl vim vim-gnome code apt-transport-https ca-certificates software-properties-common
 
 if ! command_exists docker; then
   # gpd pub key install
