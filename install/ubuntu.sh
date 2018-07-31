@@ -22,6 +22,24 @@ if ! command_exists zsh; then
   echo $password | sudo -S apt install zsh
 fi
 
+# Install pip3 
+if ! command_exists pip; then
+  echo "Installing pip"
+  echo $password | sudo apt install python3-distutils
+  wget https://bootstrap.pypa.io/get-pip.py
+  echo $password | sudo -S python3 get-pip.py
+  rm get-pip.py
+fi
+
+# Install pyenv
+if ! command_exists pyenv; then
+  git clone https://github.com/yyuu/pyenv.git ~/.pyenv
+  export PYENV_ROOT=$HOME/.pyenv
+  export PATH=$PYENV_ROOT/bin:$PATH
+  eval "$(pyenv init -)"
+  pyenv --version
+fi
+
 # Install if tmux is not installed
 if ! command_exists tmux; then
   echo $password | sudo -S apt install tmux
