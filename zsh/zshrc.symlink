@@ -8,9 +8,6 @@ command_exists() {
 # display how long all tasks over 10 seconds take
 export REPORTTIME=10
 
-# define term color
-[[ $TMUX = "" ]] && export TERM="xterm-256color"
-
 # define the code directory
 # This is where my code exists and where I want the `c` autocomplete to work from exclusively
 if [[ -d ~/Workspace ]]; then
@@ -48,11 +45,9 @@ if [[ -d ~/bin ]]; then
   export PATH=~/bin:$PATH
 fi
 
-# if [ -z "$TMUX" ]; then
+if [ -z "$TMUX" ]; then
   export TERM=xterm-256color
-# else
-#export TERM=tmux-256color
-# fi
+fi
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 export FZF_DEFAULT_COMMAND='rg --files --no-ignore --hidden --follow -g "!{.git,node_modules}/*" 2> /dev/null'
