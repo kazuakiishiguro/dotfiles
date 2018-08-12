@@ -1,5 +1,6 @@
 " -- General ------------------------------------------------------------------
-set fenc=utf-8
+set encoding=utf-8
+scriptencoding utf-8
 set autoread                          " detect when a file is changed
 set history=1000                      " change history to 1000
 set textwidth=120                     " set sext width
@@ -27,8 +28,12 @@ nnoremap <BS> gg
 " -- Custom Mappings ----------------------------------------------------------
 let mapleader = "\<Space>"             " set a map leader for more key combos
 nnoremap <Leader>w :w<CR>              " shortcut to save
+map <silent><C-b> :NERDTreeToggle<CR>  " NERDTree command
+let g:airline_powerline_fonts = 1      " Airline font setting
+set laststatus=2                       " status setting
+let g:airline_theme = 'molokai'        " color scheme
 
-" -- Searching ----------------------------------------------------------------
+" -- Searching ---------------------------------------------------------------
 set incsearch                          " incremental searching
 set showmatch                          " show pairs match
 set hlsearch                           " highlight search results
@@ -59,3 +64,33 @@ inoremap <up> <nop>
 inoremap <down> <nop>
 inoremap <left> <nop>
 inoremap <right> <nop>
+
+" -- NeoBundle Setting --------------------------------------------------------
+
+let s:dein_dir = expand('~/.cache/dein')
+let s:dein_repo_dir = s:dein_dir . '/repos/github.com/Shougo/dein.vim'
+
+if &runtimepath !~# '/dein.vim'
+  if !isdirectory(s:dein_repo_dir)
+    execute '!git clone https://github.com/Shougo/dein.vim' s:dein_repo_dir
+  endif
+  execute 'set runtimepath^=' . fnamemodify(s:dein_repo_dir, ':p')
+endif
+
+if dein#load_state(s:dein_dir)
+  call dein#begin(s:dein_dir)
+  
+  let g:rc_dir    = expand("~/.config/nvim/")
+  let s:toml      = g:rc_dir . '/dein.toml'
+
+  call dein#load_toml(s:toml,      {'lazy': 0})
+
+  call dein#end()
+  call dein#save_state()
+endif
+
+if dein#check_install()
+  call dein#install()
+endif
+
+let g:deoplete#enable_at_startup = 1

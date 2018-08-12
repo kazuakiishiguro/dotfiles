@@ -1,5 +1,6 @@
 # -- General ------------------------------------------------------------------
 set -g default-command "login-shell"
+set-option -g default-command ""
 set-option -g default-terminal screen-256color    # color
 set -g terminal-overrides 'xterm:colors=256'
 unbind C-b                                        # unbind prefix setting

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 DOTFILES=$HOME/.dotfiles
+export XDG_CONFIG_HOME="$HOME/.config"
 
 # -- symlink setting ----------------------------------------------------------
 echo -e "\\nCreating symlinks"
@@ -24,7 +25,7 @@ if [ ! -d "$HOME/.config" ]; then
   mkdir -p "$HOME/.config"
 fi
 
-config_files=$( find "$DOTFILES/config" -d 1 2>/dev/null )
+config_files=$( find "$DOTFILES/config" -maxdepth 1 -name 'nvim')
 for config in $config_files; do
   target="$HOME/.config/$( basename "$config" )"
   if [ -e "$target" ]; then
@@ -35,19 +36,19 @@ for config in $config_files; do
   fi
 done
 
--- neovim setting -----------------------------------------------------------
-echo -e "\\n\\nCreating vim symlinks"
-echo "=============================="
-VIMFILES=( "$HOME/.vim:$DOTFILES/config/nvim"
-        "$HOME/.vimrc:$DOTFILES/config/nvim/init.vim" )
+#-- neovim setting -----------------------------------------------------------
+# echo -e "\\n\\nCreating neovim symlinks"
+# echo "=============================="
+# VIMFILES=( "$HOME/.vim:$XDG_CONFIG_HOME/nvim"
+#         "$HOME/.vimrc:$XDG_CONFIG_HOME/nvim/init.vim" )
 
-for file in "${VIMFILES[@]}"; do
-    KEY=${file%%:*}
-    VALUE=${file#*:}
-    if [ -e "${KEY}" ]; then
-        echo "${KEY} already exists... skipping."
-    else
-        echo "Creating symlink for $KEY"
-        ln -s "${VALUE}" "${KEY}"
-    fi
-done
+# for file in "${VIMFILES[@]}"; do
+#     KEY=${file%%:*}
+#     VALUE=${file#*:}
+#     if [ -e "${KEY}" ]; then
+#         echo "${KEY} already exists... skipping."
+#     else
+#         echo "Creating symlink for $KEY"
+#         ln -s "${VALUE}" "${KEY}"
+#     fi
+# done
