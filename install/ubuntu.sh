@@ -15,7 +15,7 @@ echo $password | sudo -S apt -y upgrade && apt update && apt autoremove && apt c
 echo $password | sudo apt-get remove unity-webapps-common xul-ext-unity xul-ext-websites-integration
 
 # Install basic package
-echo $password | sudo -S apt install -y tree curl vim vim-gnome code apt-transport-https ca-certificates software-properties-common
+echo $password | sudo -S apt install -y tree curl vim vim-gnome apt-transport-https ca-certificates software-properties-common curl
 
 # Install if zsh is not installed
 if ! command_exists zsh; then
@@ -75,4 +75,9 @@ if ! command_exists docker; then
 
   # install docker
   sudo apt-get install -y docker-ce
+fi
+
+if ! command_exists docker-compose; then
+  echo $password | sudo curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+  echo $password | sudo chmod +x /usr/local/bin/docker-compose
 fi
