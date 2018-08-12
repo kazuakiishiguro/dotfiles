@@ -30,7 +30,7 @@ let mapleader = "\<Space>"             " set a map leader for more key combos
 nnoremap <Leader>w :w<CR>              " shortcut to save
 map <silent><C-b> :NERDTreeToggle<CR>  " NERDTree command
 let g:airline_powerline_fonts = 1      " Airline font setting
-set laststatus=2                       " status セッティング
+set laststatus=2                       " status setting
 let g:airline_theme = 'molokai'        " color scheme
 
 " -- Searching ---------------------------------------------------------------
@@ -66,22 +66,31 @@ inoremap <left> <nop>
 inoremap <right> <nop>
 
 " -- NeoBundle Setting --------------------------------------------------------
-if has('vim_starting')
-  set nocompatible
-  if !isdirectory(expand('~/.vim/bundle/neobundle.vim'))
-    echo 'install neobundle....'
-    :call system('git clone git://github.com/Shougo/neobundle.vim ~/.vim/bundle/neobundle.vim')
+
+let s:dein_dir = expand('~/.cache/dein')
+let s:dein_repo_dir = s:dein_dir . '/repos/github.com/Shougo/dein.vim'
+
+if &runtimepath !~# '/dein.vim'
+  if !isdirectory(s:dein_repo_dir)
+    execute '!git clone https://github.com/Shougo/dein.vim' s:dein_repo_dir
   endif
-  set runtimepath+=~/.vim/bundle/neobundle.vim/
+  execute 'set runtimepath^=' . fnamemodify(s:dein_repo_dir, ':p')
 endif
 
-filetype plugin indent on
-call neobundle#begin(expand('~/.vim/bundle/'))
+if dein#load_state(s:dein_dir)
+  call dein#begin(s:dein_dir)
+  
+  let g:rc_dir    = expand("~/.config/nvim/")
+  let s:toml      = g:rc_dir . '/dein.toml'
 
-" Plugins
-NeoBundle 'scrooloose/nerdtree'
-NeoBundle 'thinca/vim-quickrun'
-NeoBundle 'vim-airline/vim-airline'
-NeoBundle 'vim-airline/vim-airline-themes'
+  call dein#load_toml(s:toml,      {'lazy': 0})
 
-call neobundle#end()
+  call dein#end()
+  call dein#save_state()
+endif
+
+if dein#check_install()
+  call dein#install()
+endif
+
+let g:deoplete#enable_at_startup = 1

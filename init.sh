@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-command_exists() {
-  type "$1" > /dev/null 2>&1
-}
+exists() { type -t "$1" > /dev/null 2>&1; }
 
 [[ "$1" == "source" ]] || \
 
@@ -63,7 +61,7 @@ case ${OSTYPE} in
   *) echo "unknown: $OSTYPE" ;;
 esac
 
-if ! command_exists zsh; then
+if ! exists zsh; then
   echo "zsh not found. Please install and then re-run installation scripts"
   exit 1
 elif ! [[ $SHELL =~ .*zsh.* ]]; then
