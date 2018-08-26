@@ -4,8 +4,10 @@ alias reload!='RELOAD=1 source ~/.zshrc'
 # -- Alias setting ------------------------------------------------------------
 if ls --color > /dev/null 2>&1; then  # GNU `ls`
   colorflag="--color"
+  updateCmd=".dotfiles/bin/apt"
 else                                  # macOS `ls`
   colorflag="-G"
+  updateCmd="brew update"
 fi
 
 # -- Filesystem setting -------------------------------------------------------
@@ -32,3 +34,6 @@ alias chrome="/Applications/Google\\ \\Chrome.app/Contents/MacOS/Google\\ \\Chro
 alias canary="/Applications/Google\\ Chrome\\ Canary.app/Contents/MacOS/Google\\ Chrome\\ Canary"
 
 alias pcat='pygmentize -f terminal256 -O style=native -g'
+
+# -- Update setting -----------------------------------------------------------
+alias update!="${updateCmd}"
