@@ -37,18 +37,18 @@ for config in $config_files; do
 done
 
 #-- neovim setting -----------------------------------------------------------
-# echo -e "\\n\\nCreating neovim symlinks"
-# echo "=============================="
-# VIMFILES=( "$HOME/.vim:$XDG_CONFIG_HOME/nvim"
-#         "$HOME/.vimrc:$XDG_CONFIG_HOME/nvim/init.vim" )
+echo -e "\\n\\nCreating neovim symlinks"
+echo "=============================="
+VIMFILES=( "$HOME/.vim:$XDG_CONFIG_HOME/nvim"
+        "$HOME/.vimrc:$XDG_CONFIG_HOME/nvim/init.vim" )
 
-# for file in "${VIMFILES[@]}"; do
-#     KEY=${file%%:*}
-#     VALUE=${file#*:}
-#     if [ -e "${KEY}" ]; then
-#         echo "${KEY} already exists... skipping."
-#     else
-#         echo "Creating symlink for $KEY"
-#         ln -s "${VALUE}" "${KEY}"
-#     fi
-# done
+for file in "${VIMFILES[@]}"; do
+    KEY=${file%%:*}
+    VALUE=${file#*:}
+    if [ -e "${KEY}" ]; then
+        echo "${KEY} already exists... skipping."
+    else
+        echo "Creating symlink for $KEY"
+        ln -s "${VALUE}" "${KEY}"
+    fi
+done

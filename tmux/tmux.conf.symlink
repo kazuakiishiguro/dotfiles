@@ -25,11 +25,8 @@ bind = select-layout tiled
 # -- Key Bindings -------------------------------------------------------------
 bind -T copy-mode-vi v send -X begin-selection
 
-# cross platform config 
-if-shell "uname | grep -q Darwin" 'copyCmd=pbcopy' 'copyCmd=xsel -bi'
-
-bind -T copy-mode-vi Enter send -X copy-pipe-and-cancel "$copyCmd"
-bind -T copy-mode-vi y send -X copy-pipe-and-cancel "copyCmd"
+bind -T copy-mode-vi Enter send -X copy-pipe-and-cancel pbcopy
+bind -T copy-mode-vi y send -X copy-pipe-and-cancel pbcopy
 
 # -- Color & Style Settings ---------------------------------------------------
 source ~/.dotfiles/tmux/base16.sh
