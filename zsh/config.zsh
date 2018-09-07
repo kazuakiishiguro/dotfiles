@@ -2,7 +2,7 @@
 export LANG=ja_JP.UTF-8
 export PROMPT="> %F{green}$%f "
 export PROMPT2="> "
-export HISTFILE="~/.zsh_history"
+export HISTFILE=~/.zsh_history
 export HISTSIZE="10000"
 export SAVEHIST="10000"
 export KEYTIMEOUT=1
