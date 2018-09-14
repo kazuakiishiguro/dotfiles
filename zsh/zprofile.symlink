@@ -48,6 +48,6 @@ if [ -e "$HOME/.cargo" ]; then
 fi
 
 # -- direnv -------------------------------------------------------------------
-if type go > /dev/null 2>&1; then
+if type direnv > /dev/null 2>&1; then
   eval "$(direnv hook zsh)"
 fi
