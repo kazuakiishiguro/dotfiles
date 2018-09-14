@@ -67,5 +67,3 @@ fi
 if [ -z "$TMUX" ]; then
   export TERM=xterm-256color
 fi
-
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
