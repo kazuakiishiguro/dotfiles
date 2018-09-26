@@ -9,7 +9,7 @@ env LANGUAGE=C LC_MESSAGES=C xdg-user-dirs-gtk-update
 
 # Upgrade
 read -sp "Password: " password
-echo $password | sudo -S apt -y upgrade && apt update && apt autoremove && apt clean
+source ./bin/apt
 
 # Remove Basic apps
 echo $password | sudo apt-get remove unity-webapps-common xul-ext-unity xul-ext-websites-integration
@@ -38,6 +38,11 @@ if ! command_exists pyenv; then
   export PATH=$PYENV_ROOT/bin:$PATH
   eval "$(pyenv init -)"
   pyenv --version
+fi
+
+# Install virtualenv
+if ! command_exists virtualenv; then
+  echo $password | sudo apt install virtualenv virtualenvwrapper
 fi
 
 # Install if tmux is not installed
@@ -80,4 +85,14 @@ fi
 if ! command_exists docker-compose; then
   echo $password | sudo curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
   echo $password | sudo chmod +x /usr/local/bin/docker-compose
+fi
+
+# nvim 
+if ! command_exists nvim; then
+  sudo apt-get install software-properties-common
+  sudo add-apt-repository ppa:neovim-ppa/unstable
+  sudo apt install neovim
+  sudo pip3 install -U pip
+  sudo pip3 install neovim
+  which nvim
 fi
