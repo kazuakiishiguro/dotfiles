@@ -36,4 +36,4 @@ alias canary="/Applications/Google\\ Chrome\\ Canary.app/Contents/MacOS/Google\\
 alias pcat='pygmentize -f terminal256 -O style=native -g'
 
 # -- Update setting -----------------------------------------------------------
-alias update!="${updateCmd}"
+alias update!="cd && ${updateCmd} && cd - > null"
