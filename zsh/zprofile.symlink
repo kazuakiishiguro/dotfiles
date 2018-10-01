@@ -23,7 +23,7 @@ if type go > /dev/null 2>&1; then
     export GOPATH="$HOME/.go"
   fi
   export PATH=$PATH:$GOPATH/bin
-  export GO15VENDOREXPERIMENT=1         # for glide settings
+  export GO15VENDOREXPERIMENT=1                            # for glide settings
 fi
 
 

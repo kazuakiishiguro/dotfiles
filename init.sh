@@ -69,4 +69,4 @@ elif ! [[ $SHELL =~ .*zsh.* ]]; then
   chsh -s "$(which zsh)"
 fi
 
-echo "Done. Reload your terminal."
+echo 'Done. Reload your terminal.'
