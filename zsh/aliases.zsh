@@ -37,3 +37,6 @@ alias pcat='pygmentize -f terminal256 -O style=native -g'
 
 # -- Update setting -----------------------------------------------------------
 alias update!="cd && ${updateCmd} && cd - > /dev/null"
+
+# -- ping setting -------------------------------------------------------------
+alias p="ping -c 3 google.com"
