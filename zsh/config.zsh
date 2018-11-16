@@ -8,9 +8,6 @@ export SAVEHIST="10000"
 export KEYTIMEOUT=1
 
 # -- Auto complete ------------------------------------------------------------
-autoload -Uz compinit
-compinit
-
 setopt NO_BG_NICE
 setopt NO_HUP
 setopt NO_LIST_BEEP
