@@ -13,18 +13,10 @@ https://github.com/kazuakiishiguro/dotfiles
 HELP
 exit; fi
 
-echo "Initializing submodule(s)"
-git submodule update --init --recursive
-
-source install/link.sh
-source install/git.sh
-
-# OS INSTALLATIONS
+# OS type
 case ${OSTYPE} in 
   darwin*)
-    echo -e "\\n\\nRunning on OSX"
-    source install/brew.sh
-    source install/osx.sh
+    DISTRIBUTION_NAME="OSX"
     ;;
   linux-gnu*)
     if [ -e /etc/debian_version ] || [ -e /etc/debian_release ]; then
@@ -56,10 +48,15 @@ case ${OSTYPE} in
       DISTRIBUTION_NAME="unkown"
     fi
     echo -e "\\n\\nRunning on ${DISTRIBUTION_NAME}"
-    source install/${DISTRIBUTION_NAME}.sh
     ;;
   *) echo "unknown: $OSTYPE" ;;
 esac
+
+source install/link.sh
+source install/git.sh
+
+echo -e "\\n\\nRunning on ${DISTRIBUTION_NAME}"
+source install/${DISTRIBUTION_NAME}.sh
 
 if ! exists zsh; then
   echo "zsh not found. Please install and then re-run installation scripts"

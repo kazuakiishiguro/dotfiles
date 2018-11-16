@@ -32,3 +32,6 @@ if [[ "$SHELL" != "$zsh_path" ]]; then
   chsh -s "$zsh_path"
   echo "default shell changed to $zsh_path"
 fi
+
+# Install OSX setting
+source install/osx.sh
