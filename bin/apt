@@ -14,7 +14,7 @@ echo -e $TEXT_YELLOW
 echo 'APT distribute upgrade finished...'
 echo -e $TEXT_RESET
 
-sudo apt-get upgrade
+sudo apt-get -y upgrade
 echo -e $TEXT_YELLOW
 echo 'APT upgrade finished...'
 echo -e $TEXT_RESET
