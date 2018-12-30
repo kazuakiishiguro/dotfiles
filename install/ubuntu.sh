@@ -96,3 +96,12 @@ if ! command_exists nvim; then
   sudo pip3 install neovim
   which nvim
 fi
+
+# peco
+if ! command_exists peco; then
+  cd $HOME
+  wget https://github.com/peco/peco/releases/download/v0.5.1/peco_linux_amd64.tar.gz
+  tar zxvf peco_linux_amd64.tar.gz
+  sudo cp peco_linux_amd64/peco /usr/local/bin/
+  sudo chmod 777 /usr/local/bin/peco
+fi
