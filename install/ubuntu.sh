@@ -8,7 +8,7 @@ command_exists() {
 env LANGUAGE=C LC_MESSAGES=C xdg-user-dirs-gtk-update
 
 # Upgrade
-read -sp "Password: " password
+# read -sp "Password: " password
 source ./bin/apt
 
 # Remove Basic apps

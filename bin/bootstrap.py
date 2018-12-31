@@ -44,7 +44,7 @@ def tmux():
 
 def git():
     print('>>> git')
-    os.system('ln -sf ~/.dotfiles/config/git/.gitconfig/ ~/.gitconfig')
+    os.system('ln -sf ~/.dotfiles/config/git/.gitconfig ~/.gitconfig')
     print('<<< [ok] git')
 
 # ---------------------------------------------------------------
@@ -67,7 +67,7 @@ if '__main__' == __name__:
     if version[0] == '2':
         print('Only work with python3.')
         sys.exit(1)
-    # git()
+    git()
     # zsh()
     # vim()
     tmux()
