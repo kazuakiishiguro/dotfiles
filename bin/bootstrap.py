@@ -45,12 +45,21 @@ def git():
     os.system('ln -sf ~/.dotfiles/config/git/.gitconfig/ ~/.gitconfig')
     print('<<< [ok] git')
 
+# ---------------------------------------------------------------
+# zsh
+
+def zsh():
+    print('>>> zsh')
+    os.system('ln -nsf ~/.dotfiles/config/zsh/.zshrc ~/.zshrc')
+    print('<<< [ok] zsh')
+
 
 if '__main__' == __name__:
     version = platform.python_version_tuple()
     if version[0] == '2':
         print('Only work with python3.')
         sys.exit(1)
-    git()
+    # git()
+    zsh()
     vim()
     tmux()
