@@ -32,9 +32,10 @@ def tmux():
             os_name = 'vm'
     else:
         # mac
-        os_name = 'mac'
-    os.system('ln -sf ~/.dotfiles/config/tmux/.tmux.{}.conf ~/.tmux.conf'.format(os_name))
+        os_name = 'osx'
+    os.system('ln -sf ~/.dotfiles/config/tmux/.tmux.conf ~/.tmux.conf')
     os.system('ln -sf ~/.dotfiles/config/tmux/default_{}.sh ~/.tmux-powerline/themes/default.sh'.format(os_name))
+    os.system('ln -sf ~/.dotfiles/config/tmux/tmux_mem_cpu_load.sh ~/.tmux-powerline/segments/tmux_mem_cpu_load.sh')
     print('<<< [ok] tmux')
 
 # ---------------------------------------------------------------
