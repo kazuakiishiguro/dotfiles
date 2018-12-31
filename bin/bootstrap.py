@@ -19,6 +19,31 @@ def vim():
     os.system('ln -sf ~/.dotfiles/config/nvim/init.vim ~/.vimrc')
     print('<<< [ok] neovim & vim')
 
+# ---------------------------------------------------------------
+# tmux
+
+def tmux():
+    print('>>> tmux')
+    if linux:
+        if linux == 'Ubuntu':
+            os_name = 'ubuntu'
+            os.system('ln -sf ~/.dotfiles/config/tmux/weather.sh ~/.tmux-powerline/segments/weather.sh')
+        else:
+            os_name = 'vm'
+    else:
+        # mac
+        os_name = 'mac'
+    os.system('ln -sf ~/.dotfiles/config/tmux/.tmux.{}.conf ~/.tmux.conf'.format(os_name))
+    os.system('ln -sf ~/.dotfiles/config/tmux/default_{}.sh ~/.tmux-powerline/themes/default.sh'.format(os_name))
+    print('<<< [ok] tmux')
+
+# ---------------------------------------------------------------
+# git
+
+def git():
+    print('>>> git')
+    os.system('ln -sf ~/.dotfiles/config/git/.gitconfig/ ~/.gitconfig')
+    print('<<< [ok] git')
 
 
 if '__main__' == __name__:
@@ -26,4 +51,6 @@ if '__main__' == __name__:
     if version[0] == '2':
         print('Only work with python3.')
         sys.exit(1)
+    git()
     vim()
+    tmux()
