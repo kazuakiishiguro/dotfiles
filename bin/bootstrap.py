@@ -58,8 +58,8 @@ def zsh():
 def default():
     print('>>> default')
     os.system('~/.dotfiles/install/{}.sh'.format(os_name))
-    # os.system('~/.dotfiles/install/link.sh')
-    # os.system('~/.dotfiles/install/git.sh')
+    os.system('~/.dotfiles/install/link.sh')
+    os.system('~/.dotfiles/install/git.sh')
     print('<<< [ok] default')
 
 if '__main__' == __name__:
