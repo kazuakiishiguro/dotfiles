@@ -68,7 +68,7 @@ if '__main__' == __name__:
         print('Only work with python3.')
         sys.exit(1)
     git()
-    # zsh()
+    zsh()
     # vim()
     tmux()
     default()

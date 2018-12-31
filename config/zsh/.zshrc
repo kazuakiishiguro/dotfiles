@@ -25,3 +25,6 @@ fi
 
 # source all .zsh files inside of the zsh/ directory
 for config ($ZSH/**/*.zsh) source $config
+
+# environment settings
+source $ZSH/.zshrc.env
