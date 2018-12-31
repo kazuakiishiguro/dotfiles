@@ -54,7 +54,7 @@ fi
 zsh_path="$( which zsh )"
 if ! grep "$zsh_path" /etc/shells; then
   echo "adding $zsh_path to /etc/shells"
-  echo "$zsh_path" | sudo tee -a /etc/shells
+  sudo tee -a /etc/shells
 fi
 
 if [[ "$SHELL" != "$zsh_path" ]]; then

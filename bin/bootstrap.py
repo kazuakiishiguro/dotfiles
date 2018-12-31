@@ -24,6 +24,7 @@ def vim():
 
 def tmux():
     print('>>> tmux')
+    global os_name
     if linux:
         if linux == 'Ubuntu':
             os_name = 'ubuntu'
@@ -54,6 +55,12 @@ def zsh():
     os.system('ln -nsf ~/.dotfiles/config/zsh/.zshrc ~/.zshrc')
     print('<<< [ok] zsh')
 
+def default():
+    print('>>> default')
+    os.system('~/.dotfiles/install/{}.sh'.format(os_name))
+    # os.system('~/.dotfiles/install/link.sh')
+    # os.system('~/.dotfiles/install/git.sh')
+    print('<<< [ok] default')
 
 if '__main__' == __name__:
     version = platform.python_version_tuple()
@@ -61,6 +68,7 @@ if '__main__' == __name__:
         print('Only work with python3.')
         sys.exit(1)
     # git()
-    zsh()
-    vim()
+    # zsh()
+    # vim()
     tmux()
+    default()
