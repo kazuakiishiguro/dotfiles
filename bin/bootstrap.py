@@ -24,9 +24,14 @@ def vim():
 
 def tmux():
     print('>>> tmux')
+    # check if tmux-powerline directory exists
     if os.path.isdir(os.environ['HOME'] + '/.tmux-powerline/') == False:
         os.system('git clone https://github.com/erikw/tmux-powerline.git ~/.tmux-powerline')
-    
+
+    if os.path.isdir(os.environ['HOME'] + '/.tmux_mem_cpu_load') == False:
+        os.system('git clone https://github.com/thewtex/tmux-mem-cpu-load.git ~/.tmux-mem-cpu-load')
+        os.system('source ~/.dotfiles/install/tmux-mem-cpu-load.sh')
+
     global os_name
     
     if linux:
