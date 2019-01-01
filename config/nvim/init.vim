@@ -25,9 +25,6 @@ noremap k gk
 nnoremap <CR> G
 nnoremap <BS> gg
 
-" -- NERDTree Settings --------------------------------------------------------
-map <silent><C-b> :NERDTreeToggle<CR>  " NERDTree command
-
 " -- Custom Mappings ----------------------------------------------------------
 let mapleader = "\<Space>"             " set a map leader for more key combos
 nnoremap <Leader>w :w<CR>              " shortcut to save
