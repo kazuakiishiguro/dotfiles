@@ -17,6 +17,8 @@ def vim():
     os.system('ln -nsf ~/.dotfiles/config/nvim ~/.config')
     # vim
     os.system('ln -sf ~/.dotfiles/config/nvim/init.vim ~/.vimrc')
+    os.system('ln -sf ~/.dotfiles/config/nvim/options.rc.vim ~/.vim/')
+    os.system('ln -sf ~/.dotfiles/config/nvim/keymap.rc.vim ~/.vim/')
     print('<<< [ok] neovim & vim')
 
 # ---------------------------------------------------------------

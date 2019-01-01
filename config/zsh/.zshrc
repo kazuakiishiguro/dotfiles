@@ -28,3 +28,6 @@ for config ($ZSH/**/*.zsh) source $config
 
 # environment settings
 source $ZSH/.zshrc.env
+
+# fzf setting
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
