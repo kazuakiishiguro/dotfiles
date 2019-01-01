@@ -24,7 +24,11 @@ def vim():
 
 def tmux():
     print('>>> tmux')
+    if os.path.isdir(os.environ['HOME'] + '/.tmux-powerline/') == False:
+        os.system('git clone https://github.com/erikw/tmux-powerline.git ~/.tmux-powerline')
+    
     global os_name
+    
     if linux:
         if linux == 'Ubuntu':
             os_name = 'ubuntu'

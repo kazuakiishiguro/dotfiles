@@ -50,6 +50,8 @@ if ! command_exists tmux; then
   echo $password | sudo -S apt install tmux
 fi
 
+
+
 # Change the default shell to zsh
 zsh_path="$( which zsh )"
 if ! grep "$zsh_path" /etc/shells; then
