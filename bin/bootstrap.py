@@ -56,6 +56,14 @@ def git():
     os.system('ln -sf ~/.dotfiles/config/git/.gitconfig ~/.gitconfig')
     print('<<< [ok] git')
 
+# ------------------------------------------------------------------------------
+# font
+
+def font():
+    print('>>> fonts')
+    os.system('ln -nsf ~/.dotfiles/config/fonts ~/.fonts')
+    print('<<< [ok] fonts')
+
 # ---------------------------------------------------------------
 # zsh
 
@@ -78,6 +86,8 @@ if '__main__' == __name__:
         sys.exit(1)
     git()
     zsh()
-    # vim()
+    vim()
     tmux()
     default()
+    if os_name == 'ubuntu':
+        font()
