@@ -8,7 +8,7 @@ command_exists() {
 env LANGUAGE=C LC_MESSAGES=C xdg-user-dirs-gtk-update
 
 # Upgrade
-read -sp "Password: " password
+# read -sp "Password: " password
 source ./bin/apt
 
 # Remove Basic apps
@@ -50,11 +50,13 @@ if ! command_exists tmux; then
   echo $password | sudo -S apt install tmux
 fi
 
+
+
 # Change the default shell to zsh
 zsh_path="$( which zsh )"
 if ! grep "$zsh_path" /etc/shells; then
   echo "adding $zsh_path to /etc/shells"
-  echo "$zsh_path" | sudo tee -a /etc/shells
+  sudo tee -a /etc/shells
 fi
 
 if [[ "$SHELL" != "$zsh_path" ]]; then
