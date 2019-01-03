@@ -89,6 +89,9 @@ let g:neosnippet#enable_completed_snippet = 1
 let g:neosnippet#expand_word_boundary = 1
 '''
 
+[[plugins]]
+repo = 'tomlion/vim-solidity'
+
 # ==========================================================
 # block search and precious
 # ==========================================================
