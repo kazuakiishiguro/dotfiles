@@ -4,7 +4,7 @@
 
 [[plugins]]
 repo = 'Shougo/deoplete.nvim'
-on_i = 1
+on_event = 'InsertEnter'
 hook_add = '''
 source ~/.config/nvim/plugins/deoplete.rc.vim
 '''
@@ -88,6 +88,9 @@ let g:neosnippet#enable_snipmate_compatibility = 1
 let g:neosnippet#enable_completed_snippet = 1
 let g:neosnippet#expand_word_boundary = 1
 '''
+
+[[plugins]]
+repo = 'tomlion/vim-solidity'
 
 # ==========================================================
 # block search and precious

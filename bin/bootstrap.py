@@ -35,7 +35,7 @@ def tmux():
         os.system('source ~/.dotfiles/install/tmux-mem-cpu-load.sh')
 
     global os_name
-    
+
     if linux:
         if linux == 'Ubuntu':
             os_name = 'ubuntu'
