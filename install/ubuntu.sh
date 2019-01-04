@@ -22,7 +22,7 @@ if ! command_exists zsh; then
   echo $password | sudo -S apt install zsh
 fi
 
-# Install pip3 
+# Install pip3
 if ! command_exists pip; then
   echo "Installing pip"
   echo $password | sudo apt install python3-distutils
@@ -77,7 +77,7 @@ if ! command_exists docker; then
     $(lsb_release -cs) \
     stable"
 
-  # update 
+  # update
   sudo apt-get update
 
   # install docker
@@ -89,7 +89,7 @@ if ! command_exists docker-compose; then
   echo $password | sudo chmod +x /usr/local/bin/docker-compose
 fi
 
-# nvim 
+# nvim
 if ! command_exists nvim; then
   sudo apt-get install software-properties-common
   sudo add-apt-repository ppa:neovim-ppa/unstable
