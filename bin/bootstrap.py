@@ -74,6 +74,9 @@ def zsh():
     os.system('ln -nsf ~/.dotfiles/config/zsh/.zshrc ~/.zshrc')
     print('<<< [ok] zsh')
 
+# ---------------------------------------------------------------
+# default
+
 def default():
     print('>>> default')
     os.system('~/.dotfiles/install/{}.sh'.format(os_name))
