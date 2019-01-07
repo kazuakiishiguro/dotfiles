@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -eu
+
 if [ ! "$(type brew)" ]; then
   echo "Installing homebrew"
   /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
@@ -34,4 +36,4 @@ if [[ "$SHELL" != "$zsh_path" ]]; then
 fi
 
 # Install OSX setting
-source install/osx_setting.sh
+source osx_setting.sh
