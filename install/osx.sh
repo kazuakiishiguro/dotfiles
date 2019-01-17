@@ -36,4 +36,4 @@ if [[ "$SHELL" != "$zsh_path" ]]; then
 fi
 
 # Install OSX setting
-source osx_setting.sh
+source $HOME/.dotfiles/install/osx_setting.sh

@@ -56,3 +56,6 @@ tm_session_name="#[fg=$tm_color_feature,bold]#S"
 
 set -g status-left $tm_session_name' '
 set -g status-right $tm_tunes' '$tm_date' '$tm_host
+
+# -- set escapce-time for neovim ----------------------------------------------
+set-option -sg escape-time 10
