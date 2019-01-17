@@ -34,6 +34,7 @@ def tmux():
         os.system('git clone https://github.com/thewtex/tmux-mem-cpu-load.git ~/.tmux-mem-cpu-load')
         os.system('source ~/.dotfiles/install/tmux-mem-cpu-load.sh')
 
+
     global os_name
 
     if linux:
