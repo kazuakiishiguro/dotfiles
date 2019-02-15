@@ -14,6 +14,7 @@ set fileencodings=utf-8,euc-jp,ucs-bom,iso-2022-jp,sjis,cp932,latin1
 set nowrap
 if has('nvim')
   set clipboard+=unnamedplus
+  set backspace=indent,eol,start
   if has('mouse')
     set mouse=
   endif

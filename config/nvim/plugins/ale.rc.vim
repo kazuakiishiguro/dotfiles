@@ -1,6 +1,9 @@
+let g:ale_lint_on_text_changed = 0
 let g:ale_sign_error = 'E➤'
 let g:ale_sign_warning = 'W➤'
-let g:ale_echo_msg_format = '[%linter%] %s'
+let g:airline#extensions#ale#open_lnum_symbol = '('
+let g:airline#extensions#ale#close_lnum_symbol = ')'
+let g:ale_echo_msg_format = '[%linter%]%code: %%s'
 let g:ale_lint_on_text_changed = 'normal'
 
 let g:ale_linters = {
@@ -19,5 +22,3 @@ let g:ale_fixers = {
 \   'scss': ['prettier'],
 \   'python': ['autopep8'],
 \}
-
-" let g:ale_fix_on_save = 1
