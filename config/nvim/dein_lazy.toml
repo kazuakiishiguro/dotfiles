@@ -204,3 +204,4 @@ on_ft = ['markdown', 'mkd']
 
 [[plugins]]
 repo = 'tomlion/vim-solidity'
+on_ft = 'solidity'
