@@ -34,6 +34,13 @@ source ~/.config/nvim/plugins/yankround.rc.vim
 '''
 
 [[plugins]]
+repo = 'tyru/caw.vim.git'
+hook_add = '''
+nmap <Leader>c <Plug>(caw:hatpos:toggle)
+vmap <Leader>c <Plug>(caw:hatpos:toggle)
+'''
+
+[[plugins]]
 repo = 'cohama/lexima.vim'
 
 [[plugins]]
