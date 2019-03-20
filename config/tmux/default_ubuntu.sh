@@ -37,7 +37,7 @@ if [ -z $TMUX_POWERLINE_RIGHT_STATUS_SEGMENTS ]; then
 		"date 30 231 ${TMUX_POWERLINE_SEPARATOR_LEFT_THIN}" \
 		"time 30 231 ${TMUX_POWERLINE_SEPARATOR_LEFT_THIN}" \
 		#"utc_time 235 136 ${TMUX_POWERLINE_SEPARATOR_LEFT_THIN}" \
-		"weather 36 231" \
-		#"ifstat_sys 36 59" \
+		#"weather 36 231" \
+		"ifstat_sys 36 231" \
 	)
 fi

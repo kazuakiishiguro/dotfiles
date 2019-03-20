@@ -24,6 +24,7 @@ def vim():
 # ---------------------------------------------------------------
 # tmux
 
+
 def tmux():
     print('>>> tmux')
     # check if tmux-powerline directory exists
@@ -32,7 +33,7 @@ def tmux():
 
     if os.path.isdir(os.environ['HOME'] + '/.tmux_mem_cpu_load') == False:
         os.system('git clone https://github.com/thewtex/tmux-mem-cpu-load.git ~/.tmux-mem-cpu-load')
-        os.system('source ~/.dotfiles/install/tmux-mem-cpu-load.sh')
+        os.system('source ~/.dotfiles/config/tmux/tmux_mem_cpu_load.sh')
 
 
     global os_name
@@ -54,6 +55,7 @@ def tmux():
 # ---------------------------------------------------------------
 # git
 
+
 def git():
     print('>>> git')
     os.system('ln -sf ~/.dotfiles/config/git/.gitconfig ~/.gitconfig')
@@ -61,6 +63,7 @@ def git():
 
 # ------------------------------------------------------------------------------
 # font
+
 
 def font():
     print('>>> fonts')
@@ -70,6 +73,7 @@ def font():
 # ---------------------------------------------------------------
 # zsh
 
+
 def zsh():
     print('>>> zsh')
     os.system('ln -nsf ~/.dotfiles/config/zsh/.zshrc ~/.zshrc')
@@ -78,12 +82,14 @@ def zsh():
 # ---------------------------------------------------------------
 # default
 
+
 def default():
     print('>>> default')
     os.system('~/.dotfiles/install/{}.sh'.format(os_name))
     os.system('~/.dotfiles/install/link.sh')
     os.system('~/.dotfiles/install/git.sh')
     print('<<< [ok] default')
+
 
 if '__main__' == __name__:
     version = platform.python_version_tuple()
