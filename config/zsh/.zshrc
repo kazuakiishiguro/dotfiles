@@ -18,11 +18,6 @@ fi
 autoload -U compinit add-zsh-hook
 compinit
 
-# define the code directory
-if [[ -d ~/Workspace ]]; then
-  export CODE_DIR=~/Workspace
-fi
-
 # source all .zsh files inside of the zsh/ directory
 for config ($ZSH/**/*.zsh) source $config
 
@@ -31,3 +26,6 @@ source $ZSH/.zshrc.env
 
 # fzf setting
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# added by travis gem
+[ -f /Users/kazuaki/.travis/travis.sh ] && source /Users/kazuaki/.travis/travis.sh

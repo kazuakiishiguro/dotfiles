@@ -16,7 +16,7 @@ echo "=============================="
 /usr/local/opt/fzf/install --all --no-bash --no-fish
 
 
-# after hte install, install neovim python libraries
+# After the install, install neovim python libraries
 echo -e "\\n\\nRunning Neovim Python install"
 echo "=============================="
 pip2 install --user neovim

@@ -22,6 +22,10 @@ alias ll="ls -lFh ${colorflag}"
 alias lld="ls -l | grep ^d"
 alias rmf="rm -rf"
 
+# -- Emacs setting ------------------------------------------------------------
+alias emacs='emacsclient -nw -a ""'
+alias ekill='emacsclient -e "(kill-emacs)"'
+
 # -- NeoVim setting -----------------------------------------------------------
 alias vim="nvim"
 alias vi="nvim"
