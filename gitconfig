@@ -1,0 +1,12 @@
+[user]
+	email = kazuaki@couger.co.jp
+	name = Kazuaki Ishiguro
+
+[github]
+	user = kazuakiishiguro
+
+[credential]
+	helper = osxkeychain
+
+[core]
+  editor = emacs
