@@ -7,3 +7,6 @@ eval $(gdircolors ~/.dircolors/dircolors.256dark)
 # aliases
 alias ls='gls --color=auto'
 alias ll='ls -al'
+
+# rustc path setting
+export PATH=${HOME}/.cargo/bin:${PATH}
