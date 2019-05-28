@@ -4,6 +4,9 @@ HISTFILESIZE=2000
 # ~/.dircolors/themefile
 eval $(gdircolors ~/.dircolors/dircolors.256dark)
 
-# Aliases
+# rust setting 
+source $HOME/.cargo/env 
+
+# aliases
 alias ls='gls --color=auto'
 alias ll='ls -al'
