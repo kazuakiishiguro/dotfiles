@@ -1,41 +1,51 @@
-;; init.el --- Load the full configuration -*- lexical-binding: t -*-
-;;; Code: 
+;; default theme
+(load-theme 'manoj-dark t)
 
-;; setting up and install straight.el 
-(let ((bootstrap-file (concat user-emacs-directory "straight/repos/straight.el/bootstrap.el"))
-      (bootstrap-version 3))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
+;; display settings
+;; turn off toolbar for gui
+(if window-system
+    (tool-bar-mode 0))
 
-;; install use-package
-(straight-use-package 'use-package)
+;; maximize screen on startup
+(set-frame-parameter nil 'fullscreen 'maximized)
 
-;; fallback without options
-(setq straight-use-package-by-default t)
+;; Ricty font
+(create-fontset-from-ascii-font "Ricty-14:weight=normal:slant=normal" nil "ricty")
+(set-fontset-font "fontset-ricty"
+                  'unicode
+                  (font-spec :family "Ricty" :size 14)
+                  nil
+                  'append)
+(add-to-list 'default-frame-alist '(font . "fontset-ricty"))
 
-;; load init-loader
-(use-package init-loader)
+;; do not create backup/autosave file
+(setq make-backup-files nil)
+(setq auto-save-default nil)
 
-;; load files under ~/.emacs.d/lisp/ 
-(init-loader-load "~/.emacs.d/lisp")
+;; mode-line display
+(display-time)
+(line-number-mode 1)
+(column-number-mode 1)
 
-(use-package company
-    :init
-    (setq company-selection-wrap-around t)
-    :bind
-    (:map company-active-map
-        ("M-n" . nil)
-        ("M-p" . nil)
-        ("C-n" . company-select-next)
-        ("C-p" . company-select-previous)
-        ("C-h" . nil))
-    :config
-    (global-company-mode))
+;; mode-line function name display
+(which-function-mode 1)
 
-;;; init.el ends here
+;; 4 spaces for tab
+(setq-default tab-width 4 indent-tabs-mode nil)
+
+;; display line numbers
+(if (version<= "26.0.50" emacs-version)
+    (progn
+      (global-display-line-numbers-mode)
+      ;; line numbers color settings
+      (set-face-attribute 'line-number nil
+                          :foreground "DarkOliveGreen"
+                          :background "black")
+      (set-face-attribute 'line-number-current-line nil
+                          :foreground "gold")))
+
+;; keymaps
+;; F8  eshell
+(global-set-key (kbd "<f8>") 'eshell)
+;; y - n for yes - no
+(defalias 'yes-or-no-p 'y-or-n-p)                  
