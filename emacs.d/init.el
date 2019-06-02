@@ -56,7 +56,10 @@
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
 (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/"))
-(package-initialize)
+
+;; install package
+(custom-set-variables
+ '(package-selected-packages (quote (restart-emacs exec-path-from-shell company))))
 
 ;; company
 (require 'company)
@@ -88,3 +91,6 @@
                     :background "orange")
 (set-face-attribute 'company-scrollbar-bg nil
                     :background "gray40")
+
+;; shell setting
+(exec-path-from-shell-initialize)
