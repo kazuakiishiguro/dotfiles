@@ -3,7 +3,17 @@ HISTFILESIZE=2000
 
 # dircolors
 export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
-eval $(dircolors ~/.dircolors/dircolors.ansi-dark)
+
+LS_COLORS="di=01;36"
+export LS_COLORS
+
+if [ -f "$HOME/.dircolors" ]; then
+  if type dircolors > /dev/null 2>&1; then
+    eval $(dircolors $HOME/.dircolors/dircolors.ansi-dark)
+  elif type gdircolors > /dev/null 2>&1; then
+    eval $(gdircolors $HOME/.dircolors/dircolors.ansi-dark)
+  fi
+fi
 
 # comand prompt
 export PS1="\u@\h:~\\$ "
