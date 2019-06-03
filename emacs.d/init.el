@@ -33,6 +33,9 @@
 ;; 4 spaces for tab
 (setq-default tab-width 4 indent-tabs-mode nil)
 
+;; indent when entering
+(electric-indent-mode t)
+
 ;; display line numbers
 (if (version<= "26.0.50" emacs-version)
     (progn
@@ -57,9 +60,10 @@
 (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
 (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/"))
 
-;; install package
-(custom-set-variables
- '(package-selected-packages (quote (restart-emacs exec-path-from-shell company))))
+;; auto bracket complete
+(require 'smartparens)
+(smartparens-global-mode t)
+(setq-default sp-highlight-pair-overlay nil)
 
 ;; company
 (require 'company)
