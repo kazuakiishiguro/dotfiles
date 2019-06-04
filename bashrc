@@ -15,8 +15,18 @@ if [ -f "$HOME/.dircolors" ]; then
   fi
 fi
 
+# add line for prompt
+function add_line {
+  if [[ -z "${PS1_NEWLINE_LOGIN}" ]]; then
+    PS1_NEWLINE_LOGIN=true
+  else
+    printf '\n'
+  fi
+}
+PROMPT_COMMAND='add_line'
+
 # comand prompt
-export PS1="\u@\h:~\\$ "
+export PS1="👉  \[\e[36m\]\W \[\e[0m\] \$ "
 
 # aliases
 alias ls='gls --color=auto'
