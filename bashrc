@@ -25,8 +25,19 @@ function add_line {
 }
 PROMPT_COMMAND='add_line'
 
+# emoji ψ(｀∇´)ψ
+function _dirt() {
+  echo -e "\U1F918"
+}
+
+# git branch
+function _git_branch () {
+  # Get current Git branch
+  git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
+}
+
 # comand prompt
-export PS1="👉  \[\e[36m\]\W \[\e[0m\] \$ "
+export PS1="\$(_dirt)  \[\e[36m\]\W \[\e[32m\]\$(_git_branch) \[\e[0m\] \$ "
 
 # aliases
 alias ls='gls --color=auto'
