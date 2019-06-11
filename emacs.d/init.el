@@ -1,5 +1,5 @@
 ;; default theme
-(load-theme 'manoj-dark t)
+(load-theme 'wombat t)
 
 ;; display settings
 ;; turn off toolbar for gui
@@ -9,18 +9,12 @@
 ;; maximize screen on startup
 (set-frame-parameter nil 'fullscreen 'maximized)
 
-;; Ricty font
-(create-fontset-from-ascii-font "Ricty-14:weight=normal:slant=normal" nil "ricty")
-(set-fontset-font "fontset-ricty"
-                  'unicode
-                  (font-spec :family "Ricty" :size 14)
-                  nil
-                  'append)
-(add-to-list 'default-frame-alist '(font . "fontset-ricty"))
-
 ;; do not create backup/autosave file
 (setq make-backup-files nil)
 (setq auto-save-default nil)
+
+;; do not show startup page
+(setq inhibit-startup-screen t)
 
 ;; mode-line display
 (display-time)
@@ -42,16 +36,19 @@
       (global-display-line-numbers-mode)
       ;; line numbers color settings
       (set-face-attribute 'line-number nil
-                          :foreground "DarkOliveGreen"
-                          :background "black")
+                          :foreground "DarkOliveGreen")
       (set-face-attribute 'line-number-current-line nil
                           :foreground "gold")))
 
 ;; keymaps
-;; F8  eshell
+;; F8 eshell
 (global-set-key (kbd "<f8>") 'eshell)
+;; F9 shell
+(global-set-key (kbd "<f9>") 'shell)
 ;; y - n for yes - no
 (defalias 'yes-or-no-p 'y-or-n-p)
+;; backslash with M-¥
+(define-key global-map [?\M-¥] "\\")
 
 ;; packages
 ;; package and initialization
@@ -98,3 +95,33 @@
 
 ;; shell setting
 (exec-path-from-shell-initialize)
+
+;; python mode
+(require 'python-mode)
+(setq auto-mode-alist (cons '("\\.py\\'" . python-mode) auto-mode-alist))
+
+;; rust mode
+(require 'rust-mode)
+(setq rust-format-on-save t)
+(add-to-list 'exec-path (expand-file-name "~/.cargo/bin"))
+(require 'company-racer)
+(with-eval-after-load 'company
+  (add-to-list 'company-backends 'company-racer))
+(add-hook 'rust-mode-hook #'racer-mode)
+(add-hook 'rust-mode-hook #'flycheck-rust-setup)
+(add-hook 'racer-mode-hook #'eldoc-mode)
+(add-hook 'racer-mode-hook #'company-mode)
+(add-hook 'after-init-hook #'global-flycheck-mode)
+;; cargo package
+(add-hook 'rust-mode-hook 'cargo-minor-mode)
+
+
+;; custom set variables
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   (quote
+    (cargo company-racer flycheck-rust racer rust-mode jedi python-mode smartparens restart-emacs exec-path-from-shell company))))
