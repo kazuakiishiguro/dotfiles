@@ -43,6 +43,15 @@ export PS1="\$(_dirt)  \[\e[36m\]\W \[\e[32m\]\$(_git_branch) \[\e[0m\] \$ "
 alias ls='gls --color=auto'
 alias ll='ls -al'
 
+# fzf
+if which fzf > /dev/null 2>&1; then
+  [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+else
+  brew install fzf
+  $(brew --prefix)/opt/fzf/install
+  source ~/.bashrc
+fi
+
 # nvm
 if [ -e "$HOME/bin" ];then
   export PATH="$HOME/bin:./node_modules/.bin:$PATH"
