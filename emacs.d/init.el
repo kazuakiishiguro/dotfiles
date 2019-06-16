@@ -42,8 +42,8 @@
       (set-face-attribute 'line-number-current-line nil
                           :foreground "gold")))
 
-;;BEEP disable
-(setq ring-bell-function 'ignore)
+;; Blink instead of beeping
+(setq visible-bell t)
 
 ;; keymaps
 ;; F8 eshell
@@ -120,6 +120,7 @@
 (add-hook 'racer-mode-hook #'company-mode)
 (add-hook 'after-init-hook #'global-flycheck-mode)
 ;; cargo package
+;; check the documentation at https://github.com/kwrooijen/cargo.el
 (add-hook 'rust-mode-hook 'cargo-minor-mode)
 
 
