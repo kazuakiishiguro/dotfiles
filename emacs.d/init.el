@@ -5,6 +5,8 @@
 ;; turn off toolbar for gui
 (if window-system
     (tool-bar-mode 0))
+;; turn off menubar for terminal
+(menu-bar-mode -1)
 
 ;; maximize screen on startup
 (set-frame-parameter nil 'fullscreen 'maximized)
@@ -40,6 +42,9 @@
       (set-face-attribute 'line-number-current-line nil
                           :foreground "gold")))
 
+;;BEEP disable
+(setq ring-bell-function 'ignore)
+
 ;; keymaps
 ;; F8 eshell
 (global-set-key (kbd "<f8>") 'eshell)
@@ -49,13 +54,15 @@
 (defalias 'yes-or-no-p 'y-or-n-p)
 ;; backslash with M-¥
 (define-key global-map [?\M-¥] "\\")
+;; C-k to remove all of the line
+(setq kill-whole-line t)
 
 ;; packages
 ;; package and initialization
-(package-initialize)
 (require 'package)
-(add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
+(add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/"))
 (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/"))
+(package-initialize)
 
 ;; auto bracket complete
 (require 'smartparens)
