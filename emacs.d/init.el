@@ -56,6 +56,16 @@
 (define-key global-map [?\M-¥] "\\")
 ;; C-k to remove all of the line
 (setq kill-whole-line t)
+;; C-c C-d for Duplicate line
+(global-set-key "\C-c\C-d" "\C-a\C- \C-n\M-w\C-y")
+;; C-c C-k for Copy line
+(defun copy-line (arg)
+    "Copy lines (as many as prefix argument) in the kill ring"
+    (interactive "p")
+    (kill-ring-save (line-beginning-position)
+                    (line-beginning-position (+ 1 arg)))
+    (message "%d line%s copied" arg (if (= 1 arg) "" "s")))
+(global-set-key "\C-c\C-k" 'copy-line)
 
 ;; packages
 ;; package and initialization
@@ -103,13 +113,19 @@
 ;; shell setting
 (exec-path-from-shell-initialize)
 
+;; all the icons / neotree
+(require 'neotree)
+(setq neo-show-hidden-files t)
+;; C-q for toggle
+(global-set-key "\C-q" 'neotree-toggle)
+
 ;; python mode
 (require 'python-mode)
 (setq auto-mode-alist (cons '("\\.py\\'" . python-mode) auto-mode-alist))
 
 ;; rust mode
 (require 'rust-mode)
-(setq rust-format-on-save t)
+;;(setq rust-format-on-save t)
 (add-to-list 'exec-path (expand-file-name "~/.cargo/bin"))
 (require 'company-racer)
 (with-eval-after-load 'company
@@ -123,6 +139,11 @@
 ;; check the documentation at https://github.com/kwrooijen/cargo.el
 (add-hook 'rust-mode-hook 'cargo-minor-mode)
 
+;; go mode
+(require 'go-mode)
+(require 'company-go)
+(add-to-list 'exec-path (expand-file-name "/usr/local/go/bin/"))
+
 
 ;; custom set variables
 (custom-set-variables
@@ -132,4 +153,4 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (cargo company-racer flycheck-rust racer rust-mode jedi python-mode smartparens restart-emacs exec-path-from-shell company))))
+    (company-go go-mode neotree cargo company-racer flycheck-rust racer rust-mode jedi python-mode smartparens restart-emacs exec-path-from-shell company))))

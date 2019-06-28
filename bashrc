@@ -66,6 +66,12 @@ if [ -e "$HOME/.nvm" ]; then
   fi
 fi
 
+# go
+if [ -x "`which go`" ]; then
+  export GOPATH=$HOME/.go
+  export PATH=$PATH:$GOPATH/bin
+fi
+
 # rustc
 if [ -e "$HOME/.cargo" ]; then
   export PATH="$HOME/.cargo/bin:$PATH"
