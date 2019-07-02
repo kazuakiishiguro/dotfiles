@@ -58,6 +58,8 @@
 (setq kill-whole-line t)
 ;; C-c C-d for Duplicate line
 (global-set-key "\C-c\C-d" "\C-a\C- \C-n\M-w\C-y")
+;; magit git status
+(global-set-key (kbd "C-x g") 'magit-status)
 ;; C-c C-k for Copy line
 (defun copy-line (arg)
     "Copy lines (as many as prefix argument) in the kill ring"
@@ -153,4 +155,4 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (company-go go-mode neotree cargo company-racer flycheck-rust racer rust-mode jedi python-mode smartparens restart-emacs exec-path-from-shell company))))
+    (magit company-go go-mode neotree cargo company-racer flycheck-rust racer rust-mode jedi python-mode smartparens restart-emacs exec-path-from-shell company))))
