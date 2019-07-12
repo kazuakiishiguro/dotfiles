@@ -1,0 +1,20 @@
+[user]
+	email = kazuaki@couger.co.jp
+	name = Kazuaki Ishiguro
+    signingkey = BD7036EF047DF7B8AFA30D5008D60A5BD286E949
+    
+[github]
+	user = kazuakiishiguro
+
+[credential]
+	helper = osxkeychain
+
+[core]
+  editor = emacs
+	excludesfile = /Users/kazuaki/.gitignore_global
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path = 
+[mergetool "sourcetree"]
+	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
