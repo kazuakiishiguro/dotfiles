@@ -146,8 +146,7 @@
 (require 'company-go)
 (add-to-list 'exec-path (expand-file-name "/usr/local/go/bin/"))
 
-
-;; custom set variables
+; custom set variables
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -155,4 +154,10 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (magit company-go go-mode neotree cargo company-racer flycheck-rust racer rust-mode jedi python-mode smartparens restart-emacs exec-path-from-shell company))))
+    (org magit company-go go-mode neotree cargo company-racer flycheck-rust racer rust-mode jedi python-mode smartparens restart-emacs exec-path-from-shell company))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
