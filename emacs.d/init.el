@@ -58,8 +58,6 @@
 (setq kill-whole-line t)
 ;; C-c C-d for Duplicate line
 (global-set-key "\C-c\C-d" "\C-a\C- \C-n\M-w\C-y")
-;; magit git status
-(global-set-key (kbd "C-x g") 'magit-status)
 ;; C-c C-k for Copy line
 (defun copy-line (arg)
     "Copy lines (as many as prefix argument) in the kill ring"
@@ -68,6 +66,8 @@
                     (line-beginning-position (+ 1 arg)))
     (message "%d line%s copied" arg (if (= 1 arg) "" "s")))
 (global-set-key "\C-c\C-k" 'copy-line)
+;; magit git status
+(global-set-key (kbd "C-x C-g") 'magit-status)
 
 ;; packages
 ;; package and initialization
@@ -155,9 +155,4 @@
  '(package-selected-packages
    (quote
     (org magit company-go go-mode neotree cargo company-racer flycheck-rust racer rust-mode jedi python-mode smartparens restart-emacs exec-path-from-shell company))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+
