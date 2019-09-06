@@ -1,6 +1,16 @@
 HISTSIZE=1000
 HISTFILESIZE=2000
 
+# env
+export PATH="$PATH:$HOME/.bin"
+export PATH="/usr/local/sbin:$PATH"
+
+# lang
+if [[ -z "$LANG" ]]; then
+  export LANG='en_US.UTF-8'
+  export LC_ALL="en_US.UTF-8"
+fi
+
 # dircolors
 export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
 
@@ -42,6 +52,7 @@ export PS1="\$(_dirt)  \[\e[36m\]\W \[\e[32m\]\$(_git_branch) \[\e[0m\] \$ "
 # aliases
 alias ls='gls --color=auto'
 alias ll='ls -al'
+alias tks='tmux kill-server'
 
 # fzf
 if which fzf > /dev/null 2>&1; then
@@ -77,6 +88,5 @@ if [ -e "$HOME/.cargo" ]; then
   export PATH="$HOME/.cargo/bin:$PATH"
 fi
 
-# Homeshick
+# homeshick
 source "$HOME/.homesick/repos/homeshick/homeshick.sh"
-source "$HOME/.homesick/repos/homeshick/completions/homeshick-completion.bash"
