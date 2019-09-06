@@ -76,3 +76,7 @@ fi
 if [ -e "$HOME/.cargo" ]; then
   export PATH="$HOME/.cargo/bin:$PATH"
 fi
+
+# Homeshick
+source "$HOME/.homesick/repos/homeshick/homeshick.sh"
+source "$HOME/.homesick/repos/homeshick/completions/homeshick-completion.bash"
