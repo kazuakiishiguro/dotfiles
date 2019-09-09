@@ -34,3 +34,9 @@ color dracula
 
 " Bind jj to ESC
 inoremap <silent> jj <ESC>
+
+" Bind emacs-keybind for insert mode
+imap <C-p> <Up>
+imap <C-n> <Down>
+imap <C-b> <Left>
+imap <C-f> <Right>
