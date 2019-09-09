@@ -52,7 +52,16 @@ export PS1="\$(_dirt)  \[\e[36m\]\W \[\e[32m\]\$(_git_branch) \[\e[0m\] \$ "
 # aliases
 alias ls='gls --color=auto'
 alias ll='ls -al'
-alias tks='tmux kill-server'
+alias t='tmux'
+alias ta='tmux attach'
+alial tks='tmux kill-server'
+alias htop='sudo htop'
+alias g='git'
+alias diff='icdiff'
+
+alias emacsmin='emacs -nw --no-init-file --no-site-file'
+alias emacs='emacs -nw'
+
 
 # fzf
 if which fzf > /dev/null 2>&1; then

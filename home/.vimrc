@@ -6,6 +6,15 @@ set backspace=indent,eol,start
 " Switch syntax highlighting on
 syntax on
 
+" Security
+set modelines=0
+
+" Show line numbers
+set number
+
+" Show file stats
+set ruler
+
 " Enable file type detection and do language-dependent indenting
 filetype plugin indent on
 
@@ -18,5 +27,10 @@ set showmatch
 " Disable backup files
 set nobackup
 
-" Change color scheme
-colorscheme desert
+" Color scheme (terminal)
+set t_Co=256
+set background=dark
+color dracula
+
+" Bind jj to ESC
+inoremap <silent> jj <ESC>
