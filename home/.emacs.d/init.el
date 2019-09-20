@@ -142,7 +142,7 @@
 (use-package rust-mode
   :ensure t
   :init
-  (add-to-list 'auto-mode-alist '("\\.rs\\'" .rust-mode)))
+  (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-mode)))
 
 (use-package cargo
   :ensure t
