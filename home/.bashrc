@@ -1,6 +1,15 @@
 HISTSIZE=1000
 HISTFILESIZE=2000
 
+# os
+platform='unknown'
+unamestr=`uname`
+if [[ "$unamestr" == 'Darwin' ]]; then
+  platform='osx'
+elif [[ "$unamestr" == 'Linux' ]]; then
+  platform='debian'
+fi
+
 # env
 export PATH="$PATH:$HOME/.bin"
 export PATH="/usr/local/sbin:$PATH"
@@ -9,20 +18,6 @@ export PATH="/usr/local/sbin:$PATH"
 if [[ -z "$LANG" ]]; then
   export LANG='en_US.UTF-8'
   export LC_ALL="en_US.UTF-8"
-fi
-
-# dircolors
-export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
-
-LS_COLORS="di=01;36"
-export LS_COLORS
-
-if [ -f "$HOME/.dircolors" ]; then
-  if type dircolors > /dev/null 2>&1; then
-    eval $(dircolors $HOME/.dircolors/dircolors.ansi-dark)
-  elif type gdircolors > /dev/null 2>&1; then
-    eval $(gdircolors $HOME/.dircolors/dircolors.ansi-dark)
-  fi
 fi
 
 # add line for prompt
@@ -34,18 +29,6 @@ function add_line {
   fi
 }
 PROMPT_COMMAND='add_line'
-
-# bash-complete
-HOMEBREW_PREFIX=$(brew --prefix)
-if type brew &>/dev/null; then
-  if [[ -r "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh" ]]; then
-    source "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh"
-  else
-    for COMPLETION in "${HOMEBREW_PREFIX}/etc/bash_completion.d/"*; do
-      [[ -r "$COMPLETION" ]] && source "$COMPLETION"
-    done
-  fi
-fi
 
 # emoji ψ(｀∇´)ψ
 function _dirt() {
@@ -71,9 +54,11 @@ alias htop='sudo htop'
 alias g='git'
 alias diff='icdiff'
 
+# don't be evil
+alias vi='vim'
+alias vim='emacs'
 alias emacsmin='emacs -nw --no-init-file --no-site-file'
 alias emacs='emacs -nw'
-
 
 # fzf
 if which fzf > /dev/null 2>&1; then
@@ -109,5 +94,31 @@ if [ -e "$HOME/.cargo" ]; then
   export PATH="$HOME/.cargo/bin:$PATH"
 fi
 
-# homeshick
-source "$HOME/.homesick/repos/homeshick/homeshick.sh"
+
+# for macos only setting
+if [[ $platform == "debian" ]]; then
+  # homeshick
+  source "$HOME/.homesick/repos/homeshick/homeshick.sh"
+  # dircolors
+  export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
+  LS_COLORS="di=01;36"
+  export LS_COLORS
+  if [ -f "$HOME/.dircolors" ]; then
+    if type dircolors > /dev/null 2>&1; then
+      eval $(dircolors $HOME/.dircolors/dircolors.ansi-dark)
+    elif type gdircolors > /dev/null 2>&1; then
+      eval $(gdircolors $HOME/.dircolors/dircolors.ansi-dark)
+    fi
+  fi
+  # bash-complete
+  HOMEBREW_PREFIX=$(brew --prefix)
+  if type brew &>/dev/null; then
+    if [[ -r "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh" ]]; then
+      source "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh"
+    else
+      for COMPLETION in "${HOMEBREW_PREFIX}/etc/bash_completion.d/"*; do
+        [[ -r "$COMPLETION" ]] && source "$COMPLETION"
+      done
+    fi
+  fi
+fi

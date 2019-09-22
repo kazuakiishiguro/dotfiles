@@ -1,3 +1,9 @@
+;;; init.el --- Emacs main config
+
+;;; Commentary:
+
+;;; Code:
+
 ;; Minimal UI
 (tooltip-mode    -1)
 (menu-bar-mode   -1)
@@ -30,24 +36,6 @@
   (package-refresh-contents)
   (package-install 'use-package))
 (require 'use-package)
-
-(use-package multi-term
-  :ensure t
-  :config
-  (setq multi-term-program "/usr/local/bin/bash"))
-
-;; Vim mode
-(use-package evil
-  :ensure t
-  :config
-  (evil-mode 1))
-
-(use-package evil-escape
-  :ensure t
-  :init
-  (setq-default evil-escape-key-sequence "jk")
-  :config
-  (evil-escape-mode 1))
 
 ;; Theme
 (use-package dracula-theme
@@ -87,31 +75,14 @@
   :config
   (which-key-mode 1))
 
-;; Custom keybinding
-(use-package general
-  :ensure t
-  :config (general-define-key
-    :states '(normal visual insert emacs)
-    :prefix "SPC"
-    :non-normal-prefix "M-SPC"
-    ;; "/"   '(counsel-rg :which-key "ripgrep") ; You'll need counsel package for this
-    "TAB" '(switch-to-prev-buffer :which-key "previous buffer")
-    ":"   '(helm-M-x :which-key "M-x")
-    "."   '(helm-find-files :which-key "find files")
-    ;; Buffers
-    "bb"  '(helm-buffers-list :which-key "buffers list")
-    ;; Window
-    "wl"  '(windmove-right :which-key "move right")
-    "wh"  '(windmove-left :which-key "move left")
-    "wk"  '(windmove-up :which-key "move up")
-    "wj"  '(windmove-down :which-key "move bottom")
-    "ws"  '(split-window-right :which-key "split right")
-    "wv"  '(split-window-below :which-key "split bottom")
-    "wx"  '(delete-window :which-key "delete window")
-    "qz"  '(delete-frame :whichkey "delete frame")
-    "qq"  '(kill-emacs :which-key "quit")
-    ;; Others
-    "t"  '(multi-term :which-key "open multi terminal")))
+;; Keymaps
+(global-set-key (kbd "C-x w h") 'split-window-horizontally)
+(global-set-key (kbd "C-x w v") 'split-window-vertically)
+(global-set-key (kbd "C-x g")   'magit-status)
+(global-set-key (kbd "C-x t")   'term)
+(global-set-key (kbd "M-/")     'comment-or-uncomment-region)
+(global-set-key (kbd "C-c f .") (lambda () "open emacs config" (interactive) (find-file "~/.emacs.d/init.el")))
+(global-set-key (kbd "C-c f r") (lambda () "reload emacs config" (interactive) (load-file "~/.emacs.d/init.el")))
 
 ;; Fancy titlebar for MacOS
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
@@ -140,19 +111,26 @@
 
 ;; Rust mode
 (use-package rust-mode
+  :mode ("\\.rs\\'" . rust-mode)
   :ensure t
-  :init
-  (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-mode)))
-
-(use-package cargo
-  :ensure t
-  :init
+  :config
+  (require 'racer)
+  (require 'cargo)
+  (require 'flycheck-rust)
+  (setq racer-cmd "~/.cargo/bin/racer")
+  (add-hook 'rust-mode-hook #'racer-mode)
+  (add-hook 'rust-mode-hook #'eldoc-mode)
+  (add-hook 'rust-mode-hook #'company-mode)
+  (add-hook 'rust-mode-hook #'flycheck-rust-setup)
   (add-hook 'rust-mode-hook 'cargo-minor-mode))
 
 ;; Go mode
 (use-package go-mode
   :ensure t
-  :init
+  :config
+  (require 'go-guru)
+  (require 'flymake-go)
+  (require 'go-autocomplete)
   (add-to-list 'exec-path (expand-file-name "/usr/local/go/bin/")))
 
 ;; Magit
@@ -182,4 +160,18 @@
       (split-string-and-unquote path ":")
       exec-path)))
 
-;; Automatically generated
+;;; init.el ends here
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   (quote
+    (flycheck-rust racer go-autocomplete flymake-go go-guru which-key use-package projectile multi-term magit helm go-mode general flycheck evil-escape evil dracula-theme company cargo))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
