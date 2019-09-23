@@ -96,7 +96,7 @@ fi
 
 
 # for macos only setting
-if [[ $platform == "debian" ]]; then
+if [[ $platform == "osx" ]]; then
   # homeshick
   source "$HOME/.homesick/repos/homeshick/homeshick.sh"
   # dircolors
