@@ -1,0 +1,5 @@
+#!/usr/local/bin/bash
+
+set -eu
+
+tmux new-session\; send-keys 'emacs .' C-m \; split-window -h\; send-keys 'tig ' C-m \; split-window -v\; select-pane -t '1'\;
