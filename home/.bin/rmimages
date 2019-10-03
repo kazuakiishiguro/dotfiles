@@ -1,0 +1,8 @@
+#!/usr/local/bin/bash
+
+set -e
+
+docker ps -aq | xargs docker rm
+docker images -aq | xargs docker rmi
+
+docker ps -q $1 | wc -l
