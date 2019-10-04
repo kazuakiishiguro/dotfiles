@@ -47,12 +47,20 @@ export PS1="\$(_dirt)  \[\e[36m\]\W \[\e[32m\]\$(_git_branch) \[\e[0m\] \$ "
 # aliases
 alias ls='gls --color=auto'
 alias ll='ls -al'
+
 alias t='tmux'
 alias ta='tmux attach'
 alias tks='tmux kill-server'
+
 alias htop='sudo htop'
+
 alias g='git'
 alias diff='icdiff'
+
+alias dockerrm='docker rm $(docker ps -aq)'
+alias dockerrmi='docker rmi $(docker images -aq)'
+alias dockerstop='docker stop $(docker ps -aq)'
+alias dockerkill='docker kill $(docker ps -aq)'
 
 # don't be evil
 alias vi='vim'
