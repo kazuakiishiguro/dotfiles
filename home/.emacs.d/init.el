@@ -133,6 +133,10 @@
   (require 'go-autocomplete)
   (add-to-list 'exec-path (expand-file-name "/usr/local/go/bin/")))
 
+;; Solidity mode
+(use-package solidity-mode
+  :ensure t)
+
 ;; Magit
 (use-package magit :ensure t)
 
@@ -168,7 +172,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (flycheck-rust racer go-autocomplete flymake-go go-guru which-key use-package projectile multi-term magit helm go-mode general flycheck evil-escape evil dracula-theme company cargo))))
+    (solidity-mode flycheck-rust racer go-autocomplete flymake-go go-guru which-key use-package projectile multi-term magit helm go-mode general flycheck evil-escape evil dracula-theme company cargo))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
