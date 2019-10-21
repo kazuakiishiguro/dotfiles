@@ -263,9 +263,9 @@ I store all my todos in =~/org/index.org=, so I'd like to derive my agenda from 
 Bind a key for org-mode.
 
 #+BEGIN_SRC emacs-lisp
-  (global-set-key (kbd "C-c a") 'org-agenda)
+  (define-key global-map "\C-ca" 'org-agenda)
+  (define-key global-map "\C-cc" 'org-capture)
 #+END_SRC
-
 
 ** Exporting
 
