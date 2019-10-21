@@ -6,17 +6,11 @@
 [github]
 	user = kazuakiishiguro
 
-[credential]
-	helper = osxkeychain
+[color]
+	diff = auto
+	status = auto
+	branch = auto
 
 [core]
-	editor = emacs
-	excludesfile = /Users/kazuaki/.gitignore_global
-
-[difftool "sourcetree"]
-	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
-	path = 
-
-[mergetool "sourcetree"]
-	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
-	trustExitCode = true
+	excludesfile = ~/.gitignore_global
+	quotepath = false
