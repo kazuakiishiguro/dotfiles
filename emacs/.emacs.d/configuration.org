@@ -1,0 +1,309 @@
+#+TITLE: Emacs Configuration
+#+AUTHOR: Kazuaki Ishiguro
+#+EMAIL: kazuaki@couger.co.jp
+
+* Configure =use-package=
+
+=use-package= to install and configure my packages.
+
+#+BEGIN_SRC emacs-lisp
+  (require 'use-package-ensure)
+  (setq use-package-always-ensure t)
+#+END_SRC
+
+* UI preferences
+
+** Basics
+
+I do not use the menu or scroll bar.
+
+#+BEGIN_SRC emacs-lisp
+  (tooltip-mode    -1)
+  (menu-bar-mode   -1)
+  (add-to-list 'default-frame-alist '(font . "monoki-12"))
+#+END_SRC
+
+** Theme
+
+Use =dracula-theme= for global theme. Because this is the only way I like it.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package dracula-theme
+    :ensure t
+    :config
+    (load-theme 'dracula t))
+#+END_SRC
+
+** Completion
+
+I use =helm= for incremental completion and selection narrowing.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package helm
+    :ensure t
+    :init
+    (setq helm-M-x-fuzzy-match t
+      helm-mode-fuzzy-match t
+      helm-buffers-fuzzy-matching t
+      helm-recentf-fuzzy-match t
+      helm-locate-fuzzy-match t
+      helm-semantic-fuzzy-match t
+      helm-imenu-fuzzy-match t
+      helm-completion-in-region-fuzzy-match t
+      helm-candidate-number-list 80
+      helm-split-window-in-side-p t
+      helm-move-to-line-cycle-in-source t
+      helm-echo-input-in-header-line t
+      helm-autoresize-max-height 0
+      helm-autoresize-min-height 20)
+    :config
+    (helm-mode 1)
+    (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+    (define-key helm-map (kbd "C-z") 'helm-select-action))
+#+END_SRC
+
+** Keybindings in popup
+
+I use ==which-key= to find out which keybindings are available.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package which-key
+    :ensure t
+    :init
+    (setq which-key-separator " ")
+    (setq which-key-prefix-prefix "+")
+    :config
+    (which-key-mode 1))
+#+END_SRC
+
+** Disable visual bell
+
+Because I do not need this function.
+
+#+BEGIN_SRC emacs-lisp
+  (setq rign-bell-function 'ignore)
+#+END_SRC
+
+** Highlight the current line
+
+
+=global-hl-line-mode= softly highlights the background color of the line containing point.
+Also, I would like to change the line color because it's horrible...
+
+#+BEGIN_SRC emacs-lisp
+  (global-hl-line-mode)
+  (set-face-background hl-line-face "gray13")
+#+END_SRC
+
+** Highlight matching parens
+
+I like to highlight matching parens with =show-paren-mode=.
+
+#+BEGIN_SRC emacs-lisp
+  (setq show-paren-delay 0)
+  (show-paren-mode 1)
+#+END_SRC
+
+** Higlight uncommitted changes
+
+Use the =diff-hl= package to highlight changed-and-uncommitted lines when programming.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package diff-hl
+    :config
+    (add-hook 'prog-mode-hook 'turn-on-diff-hl-mode)
+    (add-hook 'vc-dir-mode-hook 'turn-on-diff-hl-mode))
+#+END_SRC
+
+* Project management
+
+** =company=
+Use =company-mode= for auto completion.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package company
+    :ensure t
+    :init
+    (setq company-auto-complete nil)
+    (setq company-idle-delay 0.1)
+    (setq company-require-match 'never)
+    :config
+    (global-company-mode 1)
+    (define-key company-active-map (kbd "C-n") 'company-select-next)
+    (define-key company-active-map (kbd "C-p") 'company-select-previous)
+    (define-key company-search-map (kbd "C-n") 'company-select-next)
+    (define-key company-search-map (kbd "C-p") 'company-select-previous))
+#+END_SRC
+
+** =flycheck=
+
+#+BEGIN_SRC emacs-lisp
+  (use-package flycheck
+    :ensure t
+    :init (global-flycheck-mode))
+#+END_SRC
+
+** =magit=
+
+I use =magit= to handle version control and I assign =C-x g= for =magit-status= shortcut key.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package magit
+    :bind
+    ("C-x g" . magit-status)
+    :config
+    (setq magit-push-always-verify nil))
+#+END_SRC
+
+* Programming environments
+
+** Rust
+
+I <3 =rustlang=.
+When I open a Rust file,
+- Use =racer-mode= as backend,
+- Startup with =company-mode=,
+- Enable =flycheck=.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package rust-mode
+    :mode ("\\.rs\\'" . rust-mode)
+    :ensure t
+    :config
+    (require 'racer)
+    (require 'cargo)
+    (require 'flycheck-rust)
+    (setq racer-cmd "~/.cargo/bin/racer")
+    (add-hook 'rust-mode-hook #'racer-mode)
+    (add-hook 'rust-mode-hook #'eldoc-mode)
+    (add-hook 'rust-mode-hook #'company-mode)
+    (add-hook 'rust-mode-hook #'flycheck-rust-setup)
+    (add-hook 'rust-mode-hook 'cargo-minor-mode))
+#+END_SRC
+
+** =sh=
+
+Indent with 2 spaces.
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'sh-mode-hook
+    (lambda ()
+      (setq sh-basic-offset 2
+        sh-indentation 2)))
+#+END_SRC
+
+* Publishing and task management with Org-mode
+
+I'd like the linitial scratch buffer to be in Org:
+
+#+BEGIN_SRC emacs-lisp
+  (setq initial-major-mode 'org-mode)
+#+END_SRC
+
+** Display preferences
+
+I like to see an outline of pretty bullets instead of a list of asterisks.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package org-bullets
+    :init
+    (add-hook 'org-mode-hook 'org-bullets-mode))
+#+END_SRC
+
+Use syntax highlighting in source blocks while editing.
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-src-fontify-natively t)
+#+END_SRC
+
+
+** Task and org-capture management
+
+Store my org files in =~/org=, and archive finished tasks in =~/org/archive.org=.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-directory "~/org")
+
+(defun org-file-path (filename)
+  "Return the absolute address of an org file, given its relative name"
+  (concat (file-name-as-directory org-directory) filename))
+
+(setq org-index-file (org-file-path "index.org"))
+(setq org-archive-location
+      (concat (org-file-path "archive.org") "::* From %s"))
+#+END_SRC
+
+I store all my todos in =~/org/index.org=, so I'd like to derive my agenda from there.
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-agenda-files (list org-index-file))
+#+END_SRC
+
+*** Keybindings
+
+Bind a key for org-mode.
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-c a") 'org-agenda)
+#+END_SRC
+
+
+** Exporting
+
+Allow babel to evaluate languages.
+
+#+BEGIN_SRC emacs-lisp
+  (org-babel-do-load-languages
+    'org-babel-load-languages
+    '((emacs-lisp . t)
+      (shell . t)
+      (js . t)
+      (latex . t)
+      (python . t)))
+#+END_SRC
+
+Don't asl before evaluating code blocks.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-confirm-babel-evaluate nil)
+#+END_SRC
+
+* Editing setting
+
+** Quick visit Emacs configuration
+
+I edit my dotfiles quite often. This binds =C-c f .= to quickly open my
+Emacs configuration file.
+
+#+BEGIN_SRC emacs-lisp
+  (defun k/visit-emacs-config ()
+    (interactive)
+    (find-file "~/.emacs.d/configuration.org"))
+
+  (global-set-key (kbd "C-c f .") 'k/visit-emacs-config)
+#+END_SRC
+
+Once you have finished editing, you might want to source the file and reload.
+So this is the custom fuctoin that I made with =C-c f r=.
+
+#+BEGIN_SRC emacs-lisp
+  (defun k/reload-emacs-config ()
+    (interactive)
+    (load-file "~/.emacs.d/init.el"))
+
+  (global-set-key (kbd "C-c f r") 'k/reload-emacs-config)
+#+END_SRC
+
+** Disable backup and autosave
+
+It prevents to create extra files while you are working on
+your program.
+
+#+BEGIN_SRC emacs-lisp
+  (setq make-backup-files nil)
+  (setq auto-save-default nil)
+#+END_SRC
+
+** Inspiration
+
+This configuration is heavily inspired by [[https://github.com/hrs/dotfiles/blob/master/emacs/.emacs.d/configuration.org][hrs/dotfiles]].

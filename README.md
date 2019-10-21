@@ -1,11 +1,10 @@
 # dotfiles
 
-this is my OSX dotfiles.
-i use `homeshick` for install, `tmux` for window management and `emacs` for
-editor.
+this is my dotfiles. i use `emacs` as an editor and also use `tmux`
+for multi terminal. i manage them with [GNU Stow](https://www.gnu.org/software/stow/).
 
-## install
+## setup
 
 ``` bash
-$ homeshick pull kazuakiishiguro/dotfiles && homeshick link dotfiles
+$ curl -sf https://raw.githubusercontent.com/kazuakiishiguro/dotfiles/master/init.sh | sh -s
 ```

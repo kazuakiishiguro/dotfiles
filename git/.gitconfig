@@ -1,0 +1,16 @@
+[user]
+	email = kazuaki@couger.co.jp
+	name = Kazuaki Ishiguro
+	signingkey = BD7036EF047DF7B8AFA30D5008D60A5BD286E949
+
+[github]
+	user = kazuakiishiguro
+
+[color]
+	diff = auto
+	status = auto
+	branch = auto
+
+[core]
+	excludesfile = ~/.gitignore_global
+	quotepath = false
