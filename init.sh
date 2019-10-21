@@ -1,8 +1,8 @@
 #!/bin/bash
 
 modules='
-    bin
     bash
+    bin
     emacs
     git
     tmux

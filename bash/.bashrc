@@ -105,8 +105,6 @@ fi
 
 # for macos only setting
 if [ "$platform" = osx ]; then
-  # homeshick
-  source "$HOME/.homesick/repos/homeshick/homeshick.sh"
   # dircolors
   export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
   LS_COLORS="di=01;36"
@@ -118,4 +116,7 @@ if [ "$platform" = osx ]; then
       eval $(gdircolors $HOME/.dircolors/dircolors.ansi-dark)
     fi
   fi
+elif [ "$patform" = debian ]; then
+  # set xcape keymap
+  source $HOME/.bin/start-xcape.sh
 fi
