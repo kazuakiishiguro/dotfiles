@@ -6,5 +6,5 @@ for multi terminal. i manage them with [GNU Stow](https://www.gnu.org/software/s
 ## setup
 
 ``` bash
-$ curl -sf https://raw.githubusercontent.com/kazuakiishiguro/dotfiles/master/init.sh | sh -s
+$ ./init.sh
 ```
