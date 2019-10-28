@@ -258,6 +258,24 @@ I store all my todos in =~/org/index.org=, so I'd like to derive my agenda from 
   (setq org-agenda-files (list org-index-file))
 #+END_SRC
 
+Hitting =C-c C-x C-s= will mark a todo as done and move it to an appropriate place in the archive.
+
+#+BEGIN_SRC emacs-lisp
+  (defun k/mark-done-and-archive ()
+    "Mark the state of an org-mode item as DONE and archive it."
+    (interactive)
+    (org-todo 'done)
+    (org-archive-subtree))
+
+  (define-key org-mode-map (kbd "C-c C-x C-s") 'k/mark-done-and-archive)
+#+END_SRC
+
+Record the time that a todo was archived.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-log-done 'time)
+#+END_SRC
+
 *** Keybindings
 
 Bind a key for org-mode.
