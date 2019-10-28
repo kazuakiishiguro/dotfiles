@@ -1,4 +1,4 @@
-#+TITLE: Emacs Configuration
+S#+TITLE: Emacs Configuration
 #+AUTHOR: Kazuaki Ishiguro
 #+EMAIL: kazuaki@couger.co.jp
 
@@ -9,6 +9,17 @@
 #+BEGIN_SRC emacs-lisp
   (require 'use-package-ensure)
   (setq use-package-always-ensure t)
+#+END_SRC
+
+* Utility functions
+
+Define a big bunch of of handy utility functions.
+
+#+BEGIN_SRC emacs-lisp
+(defun hrs/kill-current-buffer ()
+  "Kill the current buffer without prompting."
+  (interactive)
+  (kill-buffer (current-buffer)))
 #+END_SRC
 
 * UI preferences
@@ -64,7 +75,7 @@ I use =helm= for incremental completion and selection narrowing.
 
 ** Keybindings in popup
 
-I use ==which-key= to find out which keybindings are available.
+I use =which-key= to find out which keybindings are available.
 
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
@@ -276,6 +287,24 @@ Record the time that a todo was archived.
 (setq org-log-done 'time)
 #+END_SRC
 
+*** Capturing tasks
+
+Define a few common tasks as capture templates.
++ Record ideas for future blog posts in =~/org/notes/blog-ideas.org=,
++ Maintain a todo list in =~/org/index.org=
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-capture-templates
+      '(("b" "Blog idea"
+	 entry
+	 (file "~/org/notes/blog-ideas.org")
+	 "* %?\n")
+       ("t" "Todo"
+         entry
+         (file+headline org-index-file "Inbox")
+         "* TODO %?\n")))
+#+END_SRC
+
 *** Keybindings
 
 Bind a key for org-mode.
@@ -296,6 +325,16 @@ Hit =C-c i= to quickly open index file.
       (end-of-buffer))
 
   (global-set-key (kbd "C-c i") 'org-open-index)
+#+END_SRC
+
+Hit =M-n= to quickly open up a capture template for a new todo.
+
+#+BEGIN_SRC emacs-lisp
+  (defun org-capture-todo ()
+    (interactive)
+    (org-capture :keys "t"))
+
+  (global-set-key (kbd "M-n") 'org-capture-todo)
 #+END_SRC
 
 ** Exporting
@@ -342,6 +381,14 @@ So this is the custom fuctoin that I made with =C-c f r=.
     (load-file "~/.emacs.d/init.el"))
 
   (global-set-key (kbd "C-c f r") 'k/reload-emacs-config)
+#+END_SRC
+
+** Always kill current buffer
+
+Assume that I always want to kill the current buffer when hitting =C-xk=.
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-x k") 'hrs/kill-current-buffer)
 #+END_SRC
 
 ** Disable backup and autosave
