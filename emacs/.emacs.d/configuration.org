@@ -45,6 +45,15 @@ Use =dracula-theme= for global theme. Because this is the only way I like it.
     (load-theme 'dracula t))
 #+END_SRC
 
+** Window split
+
+I like to set a shortcut key to split window with =C-x w h= =C-x w v= keys.
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-x w h") 'split-window-horizontally)
+  (global-set-key (kbd "C-x w v") 'split-window-vertically)
+#+END_SRC
+
 ** Completion
 
 I use =helm= for incremental completion and selection narrowing.
