@@ -284,15 +284,15 @@ Quickly insert a block of elisp:
 Store my org files in =~/org=, and archive finished tasks in =~/org/archive.org=.
 
 #+BEGIN_SRC emacs-lisp
-(setq org-directory "~/org")
+  (setq org-directory "~/org")
 
-(defun org-file-path (filename)
-  "Return the absolute address of an org file, given its relative name"
-  (concat (file-name-as-directory org-directory) filename))
+  (defun org-file-path (filename)
+    "Return the absolute address of an org file, given its relative name"
+    (concat (file-name-as-directory org-directory) filename))
 
-(setq org-index-file (org-file-path "index.org"))
-(setq org-archive-location
-      (concat (org-file-path "archive.org") "::* From %s"))
+  (setq org-index-file (org-file-path "index.org"))
+  (setq org-archive-location
+	(concat (org-file-path "archive.org") "::* From %s"))
 #+END_SRC
 
 I store all my todos in =~/org/index.org=, so I'd like to derive my agenda from there.
@@ -316,7 +316,7 @@ Hitting =C-c C-x C-s= will mark a todo as done and move it to an appropriate pla
 Record the time that a todo was archived.
 
 #+BEGIN_SRC emacs-lisp
-(setq org-log-done 'time)
+  (setq org-log-done 'time)
 #+END_SRC
 
 *** Capturing tasks
@@ -371,6 +371,12 @@ Hit =M-n= to quickly open up a capture template for a new todo.
 
 ** Exporting
 
+Import =ob-rust= package to allow babel to evaluate.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package ob-rust)
+#+END_SRC
+
 Allow babel to evaluate languages.
 
 #+BEGIN_SRC emacs-lisp
@@ -380,13 +386,14 @@ Allow babel to evaluate languages.
       (shell . t)
       (js . t)
       (latex . t)
+      (rust . t)
       (python . t)))
 #+END_SRC
 
 Don't asl before evaluating code blocks.
 
 #+BEGIN_SRC emacs-lisp
-(setq org-confirm-babel-evaluate nil)
+  (setq org-confirm-babel-evaluate nil)
 #+END_SRC
 
 * Editing setting
