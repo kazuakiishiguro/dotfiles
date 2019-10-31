@@ -185,20 +185,43 @@ When I open a Rust file,
 - Startup with =company-mode=,
 - Enable =flycheck=.
 
+First, enable =rust-mode= as an initial setup.
+
 #+BEGIN_SRC emacs-lisp
   (use-package rust-mode
-    :mode ("\\.rs\\'" . rust-mode)
     :ensure t
-    :config
-    (require 'racer)
-    (require 'cargo)
-    (require 'flycheck-rust)
-    (setq racer-cmd "~/.cargo/bin/racer")
+    :mode ("\\.rs\\'" . rust-mode))
+#+END_SRC
+
+Then, setup =racer= for code completion.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package racer
+    :ensure t
+    :after rust-mode
+    :diminish racer-mode
+    :init
     (add-hook 'rust-mode-hook #'racer-mode)
-    (add-hook 'rust-mode-hook #'eldoc-mode)
-    (add-hook 'rust-mode-hook #'company-mode)
-    (add-hook 'rust-mode-hook #'flycheck-rust-setup)
-    (add-hook 'rust-mode-hook 'cargo-minor-mode))
+    (add-hook 'racer-mode-hook (lambda () (setq eldoc-documentation-function nil))))
+#+END_SRC
+
+Next, add =lisp-mode=, client using the Rust Language Server.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package lsp-rust
+    :ensure t
+    :disabled t
+    :after lsp-mode
+    :init
+    (add-hook 'rust-mode-hook #'lsp-rust-enable))
+#+END_SRC
+
+Finally, add =toml-mode= for =*.toml= file support.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package toml-mode
+    :ensure t
+    :mode ("\\.toml\\'" . toml-mode))
 #+END_SRC
 
 ** =sh=
