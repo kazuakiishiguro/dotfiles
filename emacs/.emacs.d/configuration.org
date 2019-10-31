@@ -1,4 +1,4 @@
-S#+TITLE: Emacs Configuration
+#+TITLE: Emacs Configuration
 #+AUTHOR: Kazuaki Ishiguro
 #+EMAIL: kazuaki@couger.co.jp
 
