@@ -1,4 +1,6 @@
 *~
 .DS_Store
 .dir-locals.el
+elpa
+configuration.el
 untracked
