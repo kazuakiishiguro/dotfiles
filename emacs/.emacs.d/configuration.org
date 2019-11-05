@@ -440,6 +440,14 @@ your program.
   (setq auto-save-default nil)
 #+END_SRC
 
+** Quick open terminal window
+
+I prefer to use local bash for now.
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-x t") 'term)5
+#+END_SRC
+
 ** Inspiration
 
 This configuration is heavily inspired by [[https://github.com/hrs/dotfiles/blob/master/emacs/.emacs.d/configuration.org][hrs/dotfiles]].
