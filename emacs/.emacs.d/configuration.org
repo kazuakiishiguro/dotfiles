@@ -331,10 +331,14 @@ Define a few common tasks as capture templates.
 	 entry
 	 (file "~/org/notes/blog-ideas.org")
 	 "* %?\n")
-       ("t" "Todo"
-         entry
-         (file+headline org-index-file "Inbox")
-         "* TODO %?\n")))
+	("n" "Note taking"
+	 entry
+	 (file "~/org/notes/note.org")
+	 "* %?\n %U %f")
+	("t" "Todo"
+	 entry
+	 (file+headline org-index-file "Inbox")
+	 "* TODO %?\n")))
 #+END_SRC
 
 *** Keybindings
@@ -390,7 +394,7 @@ Allow babel to evaluate languages.
       (python . t)))
 #+END_SRC
 
-Don't asl before evaluating code blocks.
+Don't ask before evaluating code blocks.
 
 #+BEGIN_SRC emacs-lisp
   (setq org-confirm-babel-evaluate nil)
