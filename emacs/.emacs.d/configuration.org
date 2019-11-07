@@ -136,7 +136,7 @@ Use the =diff-hl= package to highlight changed-and-uncommitted lines when progra
 #+END_SRC
 
 * Project management
-
+  
 ** =company=
 Use =company-mode= for auto completion.
 
@@ -441,11 +441,28 @@ your program.
 #+END_SRC
 
 ** Quick open terminal window
+   
 
 I prefer to use local bash for now.
 
 #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "C-x t") 'term)5
+#+END_SRC
+
+** Multiple cursor editing mode
+
+I prefer to use =multiple-cursor= for multiple editing.
+
+#+BEGIN_SRC emacs-lisp
+(require 'multiple-cursors)
+#+END_SRC
+
+Then, let's set up my keybindings.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C->") 'k/mark-next-like-this)
+(global-set-key (kbd "C-<") 'k/mark-previous-like-this)
+(global-set-key (kbd "C-c C-<") 'k/mark-all-like-this)
 #+END_SRC
 
 ** Inspiration
