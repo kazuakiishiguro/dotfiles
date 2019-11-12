@@ -452,6 +452,15 @@ I prefer to use local bash for now.
   (global-set-key (kbd "C-x t") 'term)
 #+END_SRC
 
+** Avoid "Symbolic link to SVN-controlled source file" question.
+
+For saving my time.
+
+#+BEGIN_SRC emacs-lisp
+  (setq vc-follow-symlinks t)
+  (setq auto-revert-check-vc-info t)
+#+END_SRC
+
 ** Inspiration
 
 This configuration is heavily inspired by [[https://github.com/hrs/dotfiles/blob/master/emacs/.emacs.d/configuration.org][hrs/dotfiles]].
