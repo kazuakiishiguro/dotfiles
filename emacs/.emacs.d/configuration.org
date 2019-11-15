@@ -190,6 +190,13 @@ First, enable =rust-mode= as an initial setup.
 #+BEGIN_SRC emacs-lisp
   (use-package rust-mode
     :ensure t
+    :config
+    (use-package flycheck-rust
+      :ensure t
+      :config
+      (with-eval-after-load 'rust-mode
+	(add-hook 'flycheck-mode-hook #'flycheck-rust-setup))
+      (add-hook 'rust-mode-hook #'flycheck-rust-setup))
     :mode ("\\.rs\\'" . rust-mode))
 #+END_SRC
 
@@ -202,7 +209,8 @@ Then, setup =racer= for code completion.
     :diminish racer-mode
     :init
     (add-hook 'rust-mode-hook #'racer-mode)
-    (add-hook 'racer-mode-hook (lambda () (setq eldoc-documentation-function nil))))
+    (add-hook 'racer-mode-hook #'eldoc-mode)
+    (add-hook 'racer-mode-hook #'company-mode))
 #+END_SRC
 
 Next, add =lisp-mode=, client using the Rust Language Server.
