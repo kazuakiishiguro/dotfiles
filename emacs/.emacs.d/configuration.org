@@ -136,7 +136,7 @@ Use the =diff-hl= package to highlight changed-and-uncommitted lines when progra
 #+END_SRC
 
 * Project management
-  
+
 ** =company=
 Use =company-mode= for auto completion.
 
@@ -452,7 +452,7 @@ your program.
   (setq auto-save-default nil)
 #+END_SRC
 
-** Quick open terminal window   
+** Quick open terminal window
 
 I prefer to use local bash for now.
 
