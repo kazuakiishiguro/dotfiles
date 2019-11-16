@@ -16,10 +16,20 @@
 Define a big bunch of of handy utility functions.
 
 #+BEGIN_SRC emacs-lisp
-(defun hrs/kill-current-buffer ()
+(defun k/kill-current-buffer ()
   "Kill the current buffer without prompting."
   (interactive)
   (kill-buffer (current-buffer)))
+#+END_SRC
+
+
+#+BEGIN_SRC emacs-lisp
+  (defun k/insert-line-before ()
+	"Insert a newline(s) above the line containing the cursor."
+    (interactive)
+    (save-excursion
+      (move-beginning-of-line 1)
+      (newline)))
 #+END_SRC
 
 * UI preferences
@@ -439,7 +449,15 @@ So this is the custom fuctoin that I made with =C-c f r=.
 Assume that I always want to kill the current buffer when hitting =C-xk=.
 
 #+BEGIN_SRC emacs-lisp
-  (global-set-key (kbd "C-x k") 'hrs/kill-current-buffer)
+  (global-set-key (kbd "C-x k") 'k/kill-current-buffer)
+#+END_SRC
+
+** nsert a newline(s) above the line containint the cursor.
+
+So that you do not have to move your cursor from current position.
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-o") 'k/insert-line-before)
 #+END_SRC
 
 ** Disable backup and autosave
@@ -471,4 +489,4 @@ For saving my time.
 
 ** Inspiration
 
-This configuration is heavily inspired by [[https://github.com/hrs/dotfiles/blob/master/emacs/.emacs.d/configuration.org][hrs/dotfiles]].
+   This configuration is heavily inspired by [[https://github.com/hrs/dotfiles/blob/master/emacs/.emacs.d/configuration.org][hrs/dotfil
