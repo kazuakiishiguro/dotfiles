@@ -452,7 +452,7 @@ Assume that I always want to kill the current buffer when hitting =C-xk=.
   (global-set-key (kbd "C-x k") 'k/kill-current-buffer)
 #+END_SRC
 
-** nsert a newline(s) above the line containint the cursor.
+** Insert a newline(s) above the line containint the cursor.
 
 So that you do not have to move your cursor from current position.
 
