@@ -486,6 +486,14 @@ I prefer to use local bash for now.
   (global-set-key (kbd "C-x t") 'term)
 #+END_SRC
 
+** Enable =electric-pair-mode=
+
+For inserting parenthesis/brackats.
+
+#+BEGIN_SRC emacs-lisp
+  (electric-pair-mode 1)
+#+END_SRC
+
 ** Avoid "Symbolic link to SVN-controlled source file" question.
 
 For saving my time.
