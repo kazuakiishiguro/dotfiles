@@ -195,7 +195,7 @@ When I open a Rust file,
 - Startup with =company-mode=,
 - Enable =flycheck=.
 
-First, enable =rust-mode= as an initial setup.
+First, enable =rust-mode= as an initial setup. I also attach =flycheck-rust= package to it.
 
 #+BEGIN_SRC emacs-lisp
   (use-package rust-mode
@@ -232,6 +232,14 @@ Next, add =lisp-mode=, client using the Rust Language Server.
     :after lsp-mode
     :init
     (add-hook 'rust-mode-hook #'lsp-rust-enable))
+#+END_SRC
+
+Also, add =cargo= for doing a quick cargo tasks.
+
+#+BEGIN_SRC emacs-lisp 
+  (use-package cargo
+    :init
+    (add-hook 'rust-mode-hook 'cargo-minor-mode))
 #+END_SRC
 
 Finally, add =toml-mode= for =*.toml= file support.
