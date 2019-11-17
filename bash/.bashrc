@@ -45,7 +45,7 @@ function _git_branch () {
 export PS1="\$(_dirt)  \[\e[36m\]\W \[\e[32m\]\$(_git_branch) \[\e[0m\] \$ "
 
 # aliases
-alias ls='gls --color=auto'
+alias ls='ls --color=auto'
 alias ll='ls -al'
 
 alias t='tmux'
