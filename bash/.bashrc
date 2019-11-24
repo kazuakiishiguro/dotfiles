@@ -5,9 +5,11 @@ HISTFILESIZE=2000
 platform='unknown'
 unamestr=`uname`
 if [[ "$unamestr" == 'Darwin' ]]; then
-  platform='osx'
+  eche 'mac'
 elif [[ "$unamestr" == 'Linux' ]]; then
   platform='debian'
+  # set xcape keymap
+  source $HOME/.bin/start-xcape.sh  
 fi
 
 # env
@@ -116,9 +118,6 @@ if [ "$platform" = osx ]; then
       eval $(gdircolors $HOME/.dircolors/dircolors.ansi-dark)
     fi
   fi
-elif [ "$patform" = debian ]; then
-  # set xcape keymap
-  source $HOME/.bin/start-xcape.sh
 fi
 
 # This loads nvm bash_completion
