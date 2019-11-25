@@ -5,7 +5,7 @@ HISTFILESIZE=2000
 platform='unknown'
 unamestr=`uname`
 if [[ "$unamestr" == 'Darwin' ]]; then
-  eche 'mac'
+  platform='osx'
 elif [[ "$unamestr" == 'Linux' ]]; then
   platform='debian'
   # set xcape keymap
