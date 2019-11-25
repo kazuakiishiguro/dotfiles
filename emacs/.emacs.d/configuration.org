@@ -1,6 +1,6 @@
 #+TITLE: Emacs Configuration
 #+AUTHOR: Kazuaki Ishiguro
-#+EMAIL: kazuaki@couger.co.jp
+#+EMAIL: kazuaki@gmail.com
 
 * Configure =use-package=
 
@@ -261,6 +261,26 @@ Indent with 2 spaces.
         sh-indentation 2)))
 #+END_SRC
 
+** Python
+
+#+BEGIN_SRC emacs-lisp
+(use-package python
+  :mode ("\\.py\\'" . python-mode)
+  :interpreter ("python" . python-mode))
+#+END_SRC
+
+** Web-mode
+   For web development with full support for tooling like JSX and es6. First, let's install web-mode:
+#+BEGIN_SRC emacs-lisp
+  (use-package web-mode
+    :ensure t
+    :mode (("\\.html?\\'" . web-mode)
+	   ("\\.jsx?$\\'" . web-mode))
+    :config
+    (setq web-mode-content-types-alist '(("jsx" . "\\.js[x]?\\'")))
+    (setq-default web-mode-markup-indent-offset 2)
+    (setq web-mode-code-indent-offset 2))
+#+END_SRC
 * Publishing and task management with Org-mode
 
 I'd like the linitial scratch buffer to be in Org:
@@ -366,7 +386,6 @@ Define a few common tasks as capture templates.
 	 (file+headline org-index-file "Inbox")
 	 "* TODO %?\n")))
 #+END_SRC
-
 *** Keybindings
 
 Bind a key for org-mode.
