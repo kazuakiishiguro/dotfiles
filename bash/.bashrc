@@ -9,7 +9,7 @@ if [[ "$unamestr" == 'Darwin' ]]; then
 elif [[ "$unamestr" == 'Linux' ]]; then
   platform='debian'
   # set xcape keymap
-  source $HOME/.bin/start-xcape.sh  
+  source $HOME/.bin/start-xcape.sh
 fi
 
 # env
