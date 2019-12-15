@@ -1,0 +1,83 @@
+- hosts: all
+  vars:
+    homebrew_taps:
+      - homebrew/cask
+
+    homebrew_cask_packages:
+      - name: android-file-transfer
+      - name: android-studio
+      - name: appcleaner
+      - name: bettertouchtool
+      - name: docker
+      - name: gpg-suite
+      - name: iterm2
+      - name: keybase
+      - name: kindle
+      - name: sequel-pro
+      - name: sketch
+      - name: skype
+      - name: slack
+      - name: sourcetree
+      - name: spotify
+      - name: telegram
+      - name: vagrant
+      - name: virtualbox
+      - name: visual-studio-code
+      - name: whatsapp
+      - name: zoomus
+
+    homebrew_packages:
+      - name: awscli
+      - name: ansible
+      - name: bash
+      - name: bat
+      - name: cmake
+      - name: coreutils
+      - name: curl
+      - name: direnv
+      - name: docker
+      - name: emacs
+      - name: fzf
+      - name: git
+      - name: go
+      - name: htop
+      - name: hub
+      - name: jq
+      - name: nvm
+      - name: pyenv
+      - name: python
+      - name: python3
+      - name: reattach-to-user-namespace
+      - name: rsync
+      - name: rustup-init
+      - name: stow
+      - name: tig
+      - name: tmux
+      - name: tmux-mem-cpu-load
+      - name: tree
+      - name: wget
+      - name: zsh
+      - name: zsh-completions
+
+  tasks:
+    - name: homebrew update
+      homebrew:
+        update_homebrew: yes
+
+    - name: homebrew tap
+      homebrew_tap:
+        name: '{{ item }}'
+        state: present
+      with_items: '{{ homebrew_taps }}'
+
+    - name: homebrew cask packages install
+      homebrew_cask: name={{ item.name }} state=installed
+      environment:
+        HOMEBREW_CASK_OPTS: "--appdir=/Applications"
+      with_items: '{{ homebrew_cask_packages }}'
+
+    - name: homebrew packages install
+      homebrew:
+        name: '{{ item.name }}'
+        state: '{{ item.state | default("present") }}'
+      with_items: '{{ homebrew_packages }}'
