@@ -191,7 +191,6 @@
 #+BEGIN_SRC emacs-lisp
   (use-package lsp-rust
     :ensure t
-    :disabled t
     :after lsp-mode
     :init
     (add-hook 'rust-mode-hook #'lsp-rust-enable))
