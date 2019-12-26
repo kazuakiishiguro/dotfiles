@@ -216,10 +216,8 @@
   :mode "\\.sol\\'"
   :interpreter ("solc" . solidity-mode)
   :config
-  (setq-default c-basic-offset 2)
-  (setq default-tab-width 2)
-  (setq indent-tabs-mode nil)
-  (message "Loading solidity-mode Configuration..."))
+  (setq-default c-basic-offset 4)
+  (setq default-tab-width 4))
 #+END_EXAMPLE
 ** =sh=
    Indent with 2 spaces.
