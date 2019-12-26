@@ -117,12 +117,14 @@
   (show-paren-mode 1)
 #+END_SRC
 ** Higlight uncommitted changes
-   Use the =diff-hl= package to highlight changed-and-uncommitted lines when programming.
+   Use =git-gutter= to highlight uncommitted changes.
 #+BEGIN_SRC emacs-lisp
-  (use-package diff-hl
-    :config
-    (add-hook 'prog-mode-hook 'turn-on-diff-hl-mode)
-    (add-hook 'vc-dir-mode-hook 'turn-on-diff-hl-mode))
+  (use-package git-gutter
+    :ensure t
+    :defer t
+    :diminish git-gutter-mode
+    :init
+    (add-hook 'org-mode-hook 'git-gutter-mode))
 #+END_SRC
 * Project management
 ** =company=
@@ -191,6 +193,7 @@
 #+BEGIN_SRC emacs-lisp
   (use-package lsp-rust
     :ensure t
+    :disabled t
     :after lsp-mode
     :init
     (add-hook 'rust-mode-hook #'lsp-rust-enable))
@@ -432,6 +435,6 @@ So this is the custom fuctoin that I made with =C-c f r=.
   (setq auto-revert-check-vc-info t)
 #+END_SRC
 ** Inspiration
-   This configuration is heavily inspired by [[https://github.com/hrs/dotfiles/blob/master/emacs/.emacs.d/configuration.org][hrs/dotfil
+   This configuration is heavily inspired by [[https://github.com/hrs/dotfiles/blob/master/emacs/.emacs.d/configuration.org][hrs/dotfiles]]
 
 
