@@ -1,28 +1,37 @@
-#+TITLE: Emacs Configuration
+#+TITLE: My Personal Emacs Configuration
 #+AUTHOR: Kazuaki Ishiguro
-#+EMAIL: kazuaki@gmail.com
+#+EMAIL: gurokazu@gmail.com
 
-* Configure =use-package=
-
-=use-package= to install and configure my packages.
-
+* Initial configuration
+** =use-package= to install and configure my packages
+   Use =use-package-ensure= to configure my packages and always ensure.
 #+BEGIN_SRC emacs-lisp
   (require 'use-package-ensure)
   (setq use-package-always-ensure t)
 #+END_SRC
+** Set up =el-get=
+   Basic setup using lazy setup.
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'load-path "~/.emacs.d/el-get/el-get")
 
+  (unless (require 'el-get nil 'noerror)
+    (with-current-buffer
+	(url-retrieve-synchronously
+	 "https://raw.githubusercontent.com/dimitri/el-get/master/el-get-install.el")
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+
+  (add-to-list 'el-get-recipe-path "~/.emacs.d/el-get-user/recipes")
+  (el-get 'sync)
+#+END_SRC
 * Utility functions
-
-Define a big bunch of of handy utility functions.
-
+  Define a big bunch of of handy utility functions.
 #+BEGIN_SRC emacs-lisp
 (defun k/kill-current-buffer ()
   "Kill the current buffer without prompting."
   (interactive)
   (kill-buffer (current-buffer)))
 #+END_SRC
-
-
 #+BEGIN_SRC emacs-lisp
   (defun k/insert-line-before ()
 	"Insert a newline(s) above the line containing the cursor."
@@ -31,43 +40,30 @@ Define a big bunch of of handy utility functions.
       (move-beginning-of-line 1)
       (newline)))
 #+END_SRC
-
 * UI preferences
-
 ** Basics
-
-I do not use the menu or scroll bar.
-
+   I do not use the menu or scroll bar.
 #+BEGIN_SRC emacs-lisp
   (tooltip-mode    -1)
   (menu-bar-mode   -1)
   (add-to-list 'default-frame-alist '(font . "monoki-12"))
 #+END_SRC
-
 ** Theme
-
-Use =dracula-theme= for global theme. Because this is the only way I like it.
-
+   Use =dracula-theme= for global theme. Because this is the only way I like it.
 #+BEGIN_SRC emacs-lisp
   (use-package dracula-theme
     :ensure t
     :config
     (load-theme 'dracula t))
 #+END_SRC
-
 ** Window split
-
-I like to set a shortcut key to split window with =C-x w h= =C-x w v= keys.
-
+   I like to set a shortcut key to split window with =C-x w h= =C-x w v= keys.
 #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "C-x w h") 'split-window-horizontally)
   (global-set-key (kbd "C-x w v") 'split-window-vertically)
 #+END_SRC
-
 ** Completion
-
-I use =helm= for incremental completion and selection narrowing.
-
+   I use =helm= for incremental completion and selection narrowing.
 #+BEGIN_SRC emacs-lisp
   (use-package helm
     :ensure t
@@ -91,11 +87,8 @@ I use =helm= for incremental completion and selection narrowing.
     (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "C-z") 'helm-select-action))
 #+END_SRC
-
 ** Keybindings in popup
-
-I use =which-key= to find out which keybindings are available.
-
+   I use =which-key= to find out which keybindings are available.
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
     :ensure t
@@ -105,51 +98,35 @@ I use =which-key= to find out which keybindings are available.
     :config
     (which-key-mode 1))
 #+END_SRC
-
 ** Disable visual bell
-
-Because I do not need this function.
-
+   Because I do not need this function.
 #+BEGIN_SRC emacs-lisp
   (setq rign-bell-function 'ignore)
 #+END_SRC
-
 ** Highlight the current line
-
-
-=global-hl-line-mode= softly highlights the background color of the line containing point.
-Also, I would like to change the line color because it's horrible...
-
+   =global-hl-line-mode= softly highlights the background color of the line containing point.
+   Also, I would like to change the line color because it's horrible...
 #+BEGIN_SRC emacs-lisp
   (global-hl-line-mode)
   (set-face-background hl-line-face "gray13")
 #+END_SRC
-
 ** Highlight matching parens
-
-I like to highlight matching parens with =show-paren-mode=.
-
+   I like to highlight matching parens with =show-paren-mode=.
 #+BEGIN_SRC emacs-lisp
   (setq show-paren-delay 0)
   (show-paren-mode 1)
 #+END_SRC
-
 ** Higlight uncommitted changes
-
-Use the =diff-hl= package to highlight changed-and-uncommitted lines when programming.
-
+   Use the =diff-hl= package to highlight changed-and-uncommitted lines when programming.
 #+BEGIN_SRC emacs-lisp
   (use-package diff-hl
     :config
     (add-hook 'prog-mode-hook 'turn-on-diff-hl-mode)
     (add-hook 'vc-dir-mode-hook 'turn-on-diff-hl-mode))
 #+END_SRC
-
 * Project management
-
 ** =company=
-Use =company-mode= for auto completion.
-
+   Use =company-mode= for auto completion.
 #+BEGIN_SRC emacs-lisp
   (use-package company
     :ensure t
@@ -164,19 +141,14 @@ Use =company-mode= for auto completion.
     (define-key company-search-map (kbd "C-n") 'company-select-next)
     (define-key company-search-map (kbd "C-p") 'company-select-previous))
 #+END_SRC
-
 ** =flycheck=
-
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck
     :ensure t
     :init (global-flycheck-mode))
 #+END_SRC
-
 ** =magit=
-
-I use =magit= to handle version control and I assign =C-x g= for =magit-status= shortcut key.
-
+   I use =magit= to handle version control and I assign =C-x g= for =magit-status= shortcut key.
 #+BEGIN_SRC emacs-lisp
   (use-package magit
     :bind
@@ -184,19 +156,14 @@ I use =magit= to handle version control and I assign =C-x g= for =magit-status= 
     :config
     (setq magit-push-always-verify nil))
 #+END_SRC
-
 * Programming environments
-
 ** Rust
-
-I <3 =rustlang=.
-When I open a Rust file,
-- Use =racer-mode= as backend,
-- Startup with =company-mode=,
-- Enable =flycheck=.
-
-First, enable =rust-mode= as an initial setup. I also attach =flycheck-rust= package to it.
-
+   I <3 =rustlang=.
+   When I open a Rust file,
+   1. Use =racer-mode= as backend,
+   2. Startup with =company-mode=,
+   3. Enable =flycheck=.
+   First, enable =rust-mode= as an initial setup. I also attach =flycheck-rust= package to it.
 #+BEGIN_SRC emacs-lisp
   (use-package rust-mode
     :ensure t
@@ -209,9 +176,7 @@ First, enable =rust-mode= as an initial setup. I also attach =flycheck-rust= pac
       (add-hook 'rust-mode-hook #'flycheck-rust-setup))
     :mode ("\\.rs\\'" . rust-mode))
 #+END_SRC
-
-Then, setup =racer= for code completion.
-
+    Then, setup =racer= for code completion.
 #+BEGIN_SRC emacs-lisp
   (use-package racer
     :ensure t
@@ -222,9 +187,7 @@ Then, setup =racer= for code completion.
     (add-hook 'racer-mode-hook #'eldoc-mode)
     (add-hook 'racer-mode-hook #'company-mode))
 #+END_SRC
-
-Next, add =lisp-mode=, client using the Rust Language Server.
-
+    Next, add =lisp-mode=, client using the Rust Language Server.
 #+BEGIN_SRC emacs-lisp
   (use-package lsp-rust
     :ensure t
@@ -233,42 +196,45 @@ Next, add =lisp-mode=, client using the Rust Language Server.
     :init
     (add-hook 'rust-mode-hook #'lsp-rust-enable))
 #+END_SRC
-
-Also, add =cargo= for doing a quick cargo tasks.
-
+    Also, add =cargo= for doing a quick cargo tasks.
 #+BEGIN_SRC emacs-lisp 
   (use-package cargo
     :init
     (add-hook 'rust-mode-hook 'cargo-minor-mode))
 #+END_SRC
-
-Finally, add =toml-mode= for =*.toml= file support.
-
+    Finally, add =toml-mode= for =*.toml= file support.
 #+BEGIN_SRC emacs-lisp
   (use-package toml-mode
     :ensure t
     :mode ("\\.toml\\'" . toml-mode))
 #+END_SRC
-
+** Solidity
+   Basic setup for =solidity= development.
+#+BEGIN_EXAMPLE emacs-lisp
+(use-package solidity-mode
+  :ensure t
+  :mode "\\.sol\\'"
+  :interpreter ("solc" . solidity-mode)
+  :config
+  (setq-default c-basic-offset 2)
+  (setq default-tab-width 2)
+  (setq indent-tabs-mode nil)
+  (message "Loading solidity-mode Configuration..."))
+#+END_EXAMPLE
 ** =sh=
-
-Indent with 2 spaces.
-
+   Indent with 2 spaces.
 #+BEGIN_SRC emacs-lisp
   (add-hook 'sh-mode-hook
     (lambda ()
       (setq sh-basic-offset 2
         sh-indentation 2)))
 #+END_SRC
-
 ** Python
-
 #+BEGIN_SRC emacs-lisp
-(use-package python
-  :mode ("\\.py\\'" . python-mode)
-  :interpreter ("python" . python-mode))
+  (use-package python
+    :mode ("\\.py\\'" . python-mode)
+    :interpreter ("python" . python-mode))
 #+END_SRC
-
 ** Web-mode
    For web development with full support for tooling like JSX and es6. First, let's install web-mode:
 #+BEGIN_SRC emacs-lisp
@@ -282,53 +248,37 @@ Indent with 2 spaces.
     (setq web-mode-code-indent-offset 2))
 #+END_SRC
 * Publishing and task management with Org-mode
-
-I'd like the linitial scratch buffer to be in Org:
-
+  I'd like the linitial scratch buffer to be in Org:
 #+BEGIN_SRC emacs-lisp
   (setq initial-major-mode 'org-mode)
 #+END_SRC
-
 ** Display preferences
-
-I like to see an outline of pretty bullets instead of a list of asterisks.
-
+   I like to see an outline of pretty bullets instead of a list of asterisks.
 #+BEGIN_SRC emacs-lisp
   (use-package org-bullets
     :init
     (add-hook 'org-mode-hook 'org-bullets-mode))
 #+END_SRC
-
 Use syntax highlighting in source blocks while editing.
-
 #+BEGIN_SRC emacs-lisp
   (setq org-src-fontify-natively t)
 #+END_SRC
-
 Make TAB act as if it were issued in a buffer of the language's major mode.
-
 #+begin_src emacs-lisp
   (setq org-src-tab-acts-natively t)
 #+end_src
-
 When editing a code snippet, use the current window rather than popping open a
 new one (which shows the same information).
-
 #+begin_src emacs-lisp
   (setq org-src-window-setup 'current-window)
 #+end_src
-
 Quickly insert a block of elisp:
-
 #+begin_src emacs-lisp
   (add-to-list 'org-structure-template-alist
                '("el" . "src emacs-lisp"))
 #+end_src
-
 ** Task and org-capture management
-
-Store my org files in =~/org=, and archive finished tasks in =~/org/archive.org=.
-
+   Store my org files in =~/org=, and archive finished tasks in =~/org/archive.org=.
 #+BEGIN_SRC emacs-lisp
   (setq org-directory "~/org")
 
@@ -340,15 +290,11 @@ Store my org files in =~/org=, and archive finished tasks in =~/org/archive.org=
   (setq org-archive-location
 	(concat (org-file-path "archive.org") "::* From %s"))
 #+END_SRC
-
 I store all my todos in =~/org/index.org=, so I'd like to derive my agenda from there.
-
 #+BEGIN_SRC emacs-lisp
   (setq org-agenda-files (list org-index-file))
 #+END_SRC
-
 Hitting =C-c C-x C-s= will mark a todo as done and move it to an appropriate place in the archive.
-
 #+BEGIN_SRC emacs-lisp
   (defun k/mark-done-and-archive ()
     "Mark the state of an org-mode item as DONE and archive it."
@@ -358,13 +304,10 @@ Hitting =C-c C-x C-s= will mark a todo as done and move it to an appropriate pla
 
   (define-key org-mode-map (kbd "C-c C-x C-s") 'k/mark-done-and-archive)
 #+END_SRC
-
 Record the time that a todo was archived.
-
 #+BEGIN_SRC emacs-lisp
   (setq org-log-done 'time)
 #+END_SRC
-
 *** Capturing tasks
 
 Define a few common tasks as capture templates.
@@ -419,15 +362,11 @@ Hit =M-n= to quickly open up a capture template for a new todo.
 #+END_SRC
 
 ** Exporting
-
-Import =ob-rust= package to allow babel to evaluate.
-
+   Import =ob-rust= package to allow babel to evaluate.
 #+BEGIN_SRC emacs-lisp
   (use-package ob-rust)
 #+END_SRC
-
 Allow babel to evaluate languages.
-
 #+BEGIN_SRC emacs-lisp
   (org-babel-do-load-languages
     'org-babel-load-languages
@@ -438,20 +377,14 @@ Allow babel to evaluate languages.
       (rust . t)
       (python . t)))
 #+END_SRC
-
-Don't ask before evaluating code blocks.
-
+Don't ask before evaluating code blocks
 #+BEGIN_SRC emacs-lisp
   (setq org-confirm-babel-evaluate nil)
 #+END_SRC
-
 * Editing setting
-
 ** Quick visit Emacs configuration
-
-I edit my dotfiles quite often. This binds =C-c f .= to quickly open my
-Emacs configuration file.
-
+   I edit my dotfiles quite often. This binds =C-c f .= to quickly open my
+   Emacs configuration file.
 #+BEGIN_SRC emacs-lisp
   (defun k/visit-emacs-config ()
     (interactive)
@@ -459,10 +392,8 @@ Emacs configuration file.
 
   (global-set-key (kbd "C-c f .") 'k/visit-emacs-config)
 #+END_SRC
-
 Once you have finished editing, you might want to source the file and reload.
 So this is the custom fuctoin that I made with =C-c f r=.
-
 #+BEGIN_SRC emacs-lisp
   (defun k/reload-emacs-config ()
     (interactive)
@@ -470,58 +401,40 @@ So this is the custom fuctoin that I made with =C-c f r=.
 
   (global-set-key (kbd "C-c f r") 'k/reload-emacs-config)
 #+END_SRC
-
 ** Always kill current buffer
-
-Assume that I always want to kill the current buffer when hitting =C-xk=.
-
+   Assume that I always want to kill the current buffer when hitting =C-xk=.
 #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "C-x k") 'k/kill-current-buffer)
 #+END_SRC
-
 ** Insert a newline(s) above the line containint the cursor.
-
-So that you do not have to move your cursor from current position.
-
+   So that you do not have to move your cursor from current position.
 #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "C-o") 'k/insert-line-before)
 #+END_SRC
-
 ** Disable backup and autosave
-
-It prevents to create extra files while you are working on
-your program.
-
+   It prevents to create extra files while you are working on your program.
 #+BEGIN_SRC emacs-lisp
   (setq make-backup-files nil)
   (setq auto-save-default nil)
 #+END_SRC
-
 ** Quick open terminal window
-
-I prefer to use local bash for now.
-
+   I prefer to use local bash for now.
 #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "C-x t") 'term)
 #+END_SRC
-
 ** Enable =electric-pair-mode=
-
-For inserting parenthesis/brackats.
-
+   For inserting parenthesis/brackats.
 #+BEGIN_SRC emacs-lisp
   (electric-pair-mode 1)
 #+END_SRC
 
 ** Avoid "Symbolic link to SVN-controlled source file" question.
-
-For saving my time.
-
+   For saving my time.
 #+BEGIN_SRC emacs-lisp
   (setq vc-follow-symlinks t)
   (setq auto-revert-check-vc-info t)
 #+END_SRC
-
 ** Inspiration
-
    This configuration is heavily inspired by [[https://github.com/hrs/dotfiles/blob/master/emacs/.emacs.d/configuration.org][hrs/dotfil
+
+
