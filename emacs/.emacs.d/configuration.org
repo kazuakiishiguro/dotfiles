@@ -174,8 +174,9 @@
       :ensure t
       :config
       (with-eval-after-load 'rust-mode
-	(add-hook 'flycheck-mode-hook #'flycheck-rust-setup))
-      (add-hook 'rust-mode-hook #'flycheck-rust-setup))
+	(setq rust-format-on-save t)
+	(add-hook 'flycheck-mode-hook #'flycheck-rust-setup)
+	(add-hook 'rust-mode-hook #'flycheck-rust-setup)))
     :mode ("\\.rs\\'" . rust-mode))
 #+END_SRC
     Then, setup =racer= for code completion.
@@ -246,6 +247,17 @@
     (setq web-mode-content-types-alist '(("jsx" . "\\.js[x]?\\'")))
     (setq-default web-mode-markup-indent-offset 2)
     (setq web-mode-code-indent-offset 2))
+#+END_SRC
+** JavaScript
+   This is test
+#+BEGIN_SRC emacs-lisp
+  (use-package js2-mode
+    :ensure t
+    :mode
+    (("\\.js$" . js2-mode)
+     ("\\.jsx$" . js2-jsx-mode))
+    :init
+    (setq js-indent-level 2))
 #+END_SRC
 * Publishing and task management with Org-mode
   I'd like the linitial scratch buffer to be in Org:
