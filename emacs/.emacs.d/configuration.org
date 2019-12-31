@@ -393,6 +393,12 @@ Don't ask before evaluating code blocks
 #+BEGIN_SRC emacs-lisp
   (setq org-confirm-babel-evaluate nil)
 #+END_SRC
+**** htmlize for org exports
+     I use =htmlize= for html exporting
+#+BEGIN_SRC emacs-lisp
+  (use-package htmlize
+      :ensure t)
+#+END_SRC
 * Editing setting
 ** Quick visit Emacs configuration
    I edit my dotfiles quite often. This binds =C-c f .= to quickly open my
