@@ -213,7 +213,7 @@
 #+END_SRC
 ** Solidity
    Basic setup for =solidity= development.
-#+BEGIN_EXAMPLE emacs-lisp
+#+BEGIN_SRC emacs-lisp
 (use-package solidity-mode
   :ensure t
   :mode "\\.sol\\'"
@@ -221,7 +221,7 @@
   :config
   (setq-default c-basic-offset 4)
   (setq default-tab-width 4))
-#+END_EXAMPLE
+#+END_SRC
 ** =sh=
    Indent with 2 spaces.
 #+BEGIN_SRC emacs-lisp
