@@ -87,6 +87,13 @@
     (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
     (define-key helm-map (kbd "C-z") 'helm-select-action))
 #+END_SRC
+** Use =minions= to hide all minor modes
+   Using =minions= to hide all the minor modes inthe modeline instead of manually adding =:diminish= to every use-package declaration.
+#+BEGIN_SRC emacs-lisp
+  (use-package minions
+    :config
+    (minions-mode 1))
+#+END_SRC
 ** Keybindings in popup
    I use =which-key= to find out which keybindings are available.
 #+BEGIN_SRC emacs-lisp
@@ -398,6 +405,10 @@ Don't ask before evaluating code blocks
 #+BEGIN_SRC emacs-lisp
   (use-package htmlize
       :ensure t)
+#+END_SRC
+     Don't include a footer with my contract and publishing information at the bottom of every exported HTML document.
+#+BEGIN_SRC emacs-lisp
+  (setq org-html-postamble nil)
 #+END_SRC
 * Editing setting
 ** Quick visit Emacs configuration
