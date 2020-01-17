@@ -449,7 +449,7 @@ So this is the custom fuctoin that I made with =C-c f r=.
 ** Quick open terminal window
    I prefer to use local bash for now.
 #+BEGIN_SRC emacs-lisp
-  (global-set-key (kbd "C-x t") 'term)
+  (global-set-key (kbd "C-x t") 'eshell)
 #+END_SRC
 ** Enable =electric-pair-mode=
    For inserting parenthesis/brackats.
