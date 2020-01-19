@@ -27,10 +27,10 @@
 * Utility functions
   Define a big bunch of of handy utility functions.
 #+BEGIN_SRC emacs-lisp
-(defun k/kill-current-buffer ()
-  "Kill the current buffer without prompting."
-  (interactive)
-  (kill-buffer (current-buffer)))
+  (defun k/kill-current-buffer ()
+    "Kill the current buffer without prompting."
+    (interactive)
+    (kill-buffer (current-buffer)))
 #+END_SRC
 #+BEGIN_SRC emacs-lisp
   (defun k/insert-line-before ()
@@ -434,6 +434,11 @@ So this is the custom fuctoin that I made with =C-c f r=.
    Assume that I always want to kill the current buffer when hitting =C-xk=.
 #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "C-x k") 'k/kill-current-buffer)
+#+END_SRC
+** Do not always ask for recursive directories.
+   I do not want to type =y= or =n= every time when I delete derectory from =dired= .
+#+BEGIN_SRC emacs-lisp
+  (setq dired-recursive-deletes 'always)
 #+END_SRC
 ** Insert a newline(s) above the line containint the cursor.
    So that you do not have to move your cursor from current position.
