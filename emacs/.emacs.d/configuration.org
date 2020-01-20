@@ -62,7 +62,7 @@
   (set-default 'fill-column 80)
 #+End_SRC
 ** Window split
-   I like to set a shortcut key to split window with =C-x w h= =C-x w v= keys.
+   I like to set a shortcut key to split window with =C-c w h= =C-c w v= keys.
 #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "C-c w h") 'split-window-horizontally)
   (global-set-key (kbd "C-c w v") 'split-window-vertically)
