@@ -56,11 +56,16 @@
     :config
     (load-theme 'dracula t))
 #+END_SRC
+** Fill-colum width
+   I prefer with 80 chars.
+#+BEGIN_SRC emacs-lisp
+  (set-default 'fill-colum 80)
+#+End_SRC
 ** Window split
    I like to set a shortcut key to split window with =C-x w h= =C-x w v= keys.
 #+BEGIN_SRC emacs-lisp
-  (global-set-key (kbd "C-x w h") 'split-window-horizontally)
-  (global-set-key (kbd "C-x w v") 'split-window-vertically)
+  (global-set-key (kbd "C-c w h") 'split-window-horizontally)
+  (global-set-key (kbd "C-c w v") 'split-window-vertically)
 #+END_SRC
 ** Completion
    I use =helm= for incremental completion and selection narrowing.
@@ -470,5 +475,4 @@ So this is the custom fuctoin that I made with =C-c f r=.
 #+END_SRC
 ** Inspiration
    This configuration is heavily inspired by [[https://github.com/hrs/dotfiles/blob/master/emacs/.emacs.d/configuration.org][hrs/dotfiles]]
-
 
