@@ -56,10 +56,10 @@
     :config
     (load-theme 'dracula t))
 #+END_SRC
-** Fill-colum width
+** Fill-column width
    I prefer with 80 chars.
 #+BEGIN_SRC emacs-lisp
-  (set-default 'fill-colum 80)
+  (set-default 'fill-column 80)
 #+End_SRC
 ** Window split
    I like to set a shortcut key to split window with =C-x w h= =C-x w v= keys.
@@ -212,7 +212,7 @@
     (add-hook 'rust-mode-hook #'lsp-rust-enable))
 #+END_SRC
     Also, add =cargo= for doing a quick cargo tasks.
-#+BEGIN_SRC emacs-lisp 
+#+BEGIN_SRC emacs-lisp
   (use-package cargo
     :init
     (add-hook 'rust-mode-hook 'cargo-minor-mode))
