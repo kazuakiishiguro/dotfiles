@@ -226,7 +226,7 @@
 *** Keybindings
     Set up keybinding for =racer-describe= so that I can refer to the original documentation.
 #+BEGIN_SRC emacs-lisp
-(define-key rust-mode-map (kbd "C-c d") 'racer-describe))
+(define-key rust-mode-map (kbd "C-c d") 'racer-describe)
 #+END_SRC
 ** Solidity
    Basic setup for =solidity= development.
