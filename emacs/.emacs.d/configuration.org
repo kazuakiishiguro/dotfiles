@@ -450,6 +450,14 @@ Hit =M-n= to quickly open up a capture template for a new todo.
 #+BEGIN_SRC emacs-lisp
   (setq dired-recursive-deletes 'always)
 #+END_SRC
+** Hide details mode on =dired= .
+   I prefer simple ui for initial display.
+#+BEGIN_SRC emacs-lisp
+  (defun k/dired-mode-setup()
+    "To be run as hook for `dired-mode`"
+    (dired-hide-details-mode 1))
+  (add-hook 'dired-mode-hook 'k/dired-mode-setup)
+#+END_SRC
 ** Insert a newline(s) above the line containint the cursor.
    So that you do not have to move your cursor from current position.
 #+BEGIN_SRC emacs-lisp
