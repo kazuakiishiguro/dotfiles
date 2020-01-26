@@ -50,6 +50,8 @@ export PS1="\$(_dirt)  \[\e[36m\]\W \[\e[32m\]\$(_git_branch) \[\e[0m\] \$ "
 alias ls='ls --color=auto'
 alias ll='ls -al'
 
+alias cat='bat'
+
 alias t='tmux'
 alias ta='tmux attach'
 alias tks='tmux kill-server'
