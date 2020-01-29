@@ -46,7 +46,7 @@
 #+BEGIN_SRC emacs-lisp
   (tooltip-mode    -1)
   (menu-bar-mode   -1)
-  (add-to-list 'default-frame-alist '(font . "monoki-12"))
+  (add-to-list 'default-frame-alist '(font . "Source Code Pro-13"))
 #+END_SRC
 ** Theme
    Use =dracula-theme= for global theme. Because this is the only way I like it.
