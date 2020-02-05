@@ -33,6 +33,12 @@
     (kill-buffer (current-buffer)))
 #+END_SRC
 #+BEGIN_SRC emacs-lisp
+  (defun k/kill-another-buffer ()
+    "Kill another buffer if it exists."
+    (interactive)
+    (delete-other-windows))
+#+END_SRC
+#+BEGIN_SRC emacs-lisp
   (defun k/insert-line-before ()
 	"Insert a newline(s) above the line containing the cursor."
     (interactive)
@@ -445,6 +451,10 @@ Hit =M-n= to quickly open up a capture template for a new todo.
 #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "C-x k") 'k/kill-current-buffer)
 #+END_SRC
+** Keymap for =delete-other-windows= .
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-q") 'k/kill-another-buffer)
+#+END_SRC
 ** Do not always ask for recursive directories.
    I do not want to type =y= or =n= every time when I delete derectory from =dired= .
 #+BEGIN_SRC emacs-lisp
@@ -488,4 +498,4 @@ Hit =M-n= to quickly open up a capture template for a new todo.
 #+END_SRC
 ** Inspiration
    This configuration is heavily inspired by [[https://github.com/hrs/dotfiles/blob/master/emacs/.emacs.d/configuration.org][hrs/dotfiles]]
-
+   
