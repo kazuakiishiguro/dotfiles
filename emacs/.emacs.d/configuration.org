@@ -280,7 +280,8 @@
     (("\\.js$" . js2-mode)
      ("\\.jsx$" . js2-jsx-mode))
     :init
-    (setq js-indent-level 2))
+    (setq js-indent-level 2)
+    (setq js2-strict-missing-semi-warning nil))
 #+END_SRC
 * Publishing and task management with Org-mode
   I'd like the linitial scratch buffer to be in Org:
