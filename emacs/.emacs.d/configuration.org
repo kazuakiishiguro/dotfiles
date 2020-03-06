@@ -67,6 +67,11 @@
 #+BEGIN_SRC emacs-lisp
   (set-default 'fill-column 80)
 #+End_SRC
+** Startup screen
+   I prefer simple startup screen
+#+BEGIN_SRC emacs-lisp
+  (setq inhibit-startup-screen t)
+#+END_SRC
 ** Window split
    I like to set a shortcut key to split window with =C-c w h= =C-c w v= keys.
 #+BEGIN_SRC emacs-lisp
