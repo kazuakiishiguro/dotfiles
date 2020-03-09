@@ -81,7 +81,6 @@
    I also would like to set =split-width-threshold= to =0= to split window horizontally when I am coding.
 #+BEGIN_SRC emacs-lisp
   (setq split-height-threshold nil)
-  (setq split-width-threshold 0)
 #+END_SRC
 ** Completion
    I use =helm= for incremental completion and selection narrowing.
@@ -494,6 +493,12 @@ Hit =M-n= to quickly open up a capture template for a new todo.
    I prefer to use eshell for now.
 #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "C-x t") 'eshell)
+#+END_SRC
+** Share =$PATH=
+   For my convenience
+#+BEGIN_SRC emacs-lisp
+  (require 'exec-path-from-shell)
+  (exec-path-from-shell-initialize)
 #+END_SRC
 ** Enable =electric-pair-mode=
    For inserting parenthesis/brackats.
