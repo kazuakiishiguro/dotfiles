@@ -78,6 +78,11 @@
   (global-set-key (kbd "C-c w h") 'split-window-horizontally)
   (global-set-key (kbd "C-c w v") 'split-window-vertically)
 #+END_SRC
+   I also would like to set =split-width-threshold= to =0= to split window horizontally when I am coding.
+#+BEGIN_SRC emacs-lisp
+  (setq split-height-threshold nil)
+  (setq split-width-threshold 0)
+#+END_SRC
 ** Completion
    I use =helm= for incremental completion and selection narrowing.
 #+BEGIN_SRC emacs-lisp
@@ -504,4 +509,3 @@ Hit =M-n= to quickly open up a capture template for a new todo.
 #+END_SRC
 ** Inspiration
    This configuration is heavily inspired by [[https://github.com/hrs/dotfiles/blob/master/emacs/.emacs.d/configuration.org][hrs/dotfiles]]
-   
