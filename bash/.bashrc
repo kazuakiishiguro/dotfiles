@@ -76,8 +76,14 @@ alias emacs='emacs -nw'
 if which fzf > /dev/null 2>&1; then
   [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 else
-  brew install fzf
-  $(brew --prefix)/opt/fzf/install
+  echo "installing fzf..."
+  if [ "$platform" = osx ]; then
+    brew install fzf
+    $(brew --prefix)/opt/fzf/install
+  else
+    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+    ~/.fzf/install
+  fi
   source ~/.bashrc
 fi
 
