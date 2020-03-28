@@ -3,9 +3,9 @@
 set -eu
 
 # mac only setting
-#if [[ `uname` == 'Darwin' ]]; then
-#    source ./scripts/setup_macos.sh
-#fi
+if [[ `uname` == 'Darwin' ]]; then
+    source ./scripts/setup_macos.sh
+fi
 
 modules='
     bash
