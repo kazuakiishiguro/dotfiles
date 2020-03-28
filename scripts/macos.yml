@@ -18,7 +18,6 @@
       - name: skype
       - name: slack
       - name: sourcetree
-      - name: spotify
       - name: telegram
       - name: vagrant
       - name: virtualbox
