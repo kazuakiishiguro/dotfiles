@@ -10,8 +10,7 @@ exists() { type -t "$1" > /dev/null 2>&1; }
 if exists brew; then
   echo "brew exists"
 else
-  sudo apt install linuxbrew-wrapper
-  sudo apt install buid-essential
+  sudo apt install linuxbrew-wrapper build-essential libtool-bin
 fi
 
 # install cmake
