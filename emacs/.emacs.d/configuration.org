@@ -343,7 +343,8 @@
                '("el" . "src emacs-lisp"))
 #+end_src
 ** Task and org-capture management
-   Store my org files in =~/org=, and archive finished tasks in =~/org/archive.org=.
+*** File management
+    Store my org files in =~/org=, and archive finished tasks in =~/org/archive.org=.
 #+BEGIN_SRC emacs-lisp
   (setq org-directory "~/org")
 
@@ -359,26 +360,16 @@
 #+BEGIN_SRC emacs-lisp
   (setq org-agenda-files (list org-index-file))
 #+END_SRC
-   Hitting =C-c C-x C-s= will mark a todo as done and move it to an appropriate place in the archive.
+*** Task management
+**** =TODO= keywords
 #+BEGIN_SRC emacs-lisp
-  (defun k/mark-done-and-archive ()
-    "Mark the state of an org-mode item as DONE and archive it."
-    (interactive)
-    (org-todo 'done)
-    (org-archive-subtree))
-
-  (define-key org-mode-map (kbd "C-c C-x C-s") 'k/mark-done-and-archive)
+  (setq org-todo-keywords 
+	'((sequence "TODO(t)" "NOTE(n)" "DONE(d)" "CANCEL(c)")))
 #+END_SRC
-   Record the time that a todo was archived.
-#+BEGIN_SRC emacs-lisp
-  (setq org-log-done 'time)
-#+END_SRC
-*** Capturing tasks
-
+**** Capturing tasks
 Define a few common tasks as capture templates.
 + Record ideas for future blog posts in =~/org/notes/blog-ideas.org=,
 + Maintain a todo list in =~/org/index.org=
-
 #+BEGIN_SRC emacs-lisp
   (setq org-capture-templates
       '(("b" "Blog idea"
@@ -394,17 +385,28 @@ Define a few common tasks as capture templates.
 	 (file+headline org-index-file "Inbox")
 	 "* TODO %?\n")))
 #+END_SRC
+**** Task archive
+    Hitting =C-c C-x C-s= will mark a todo as done and move it to an appropriate place in the archive.
+#+BEGIN_SRC emacs-lisp
+  (defun k/mark-done-and-archive ()
+    "Mark the state of an org-mode item as DONE and archive it."
+    (interactive)
+    (org-todo 'done)
+    (org-archive-subtree))
+
+  (define-key org-mode-map (kbd "C-c C-x C-s") 'k/mark-done-and-archive)
+#+END_SRC
+   Record the time that a todo was archived.
+#+BEGIN_SRC emacs-lisp
+  (setq org-log-done 'time)
+#+END_SRC
 *** Keybindings
-
-Bind a key for org-mode.
-
+    Bind a key for org-mode.
 #+BEGIN_SRC emacs-lisp
   (define-key global-map "\C-ca" 'org-agenda)
   (define-key global-map "\C-cc" 'org-capture)
 #+END_SRC
-
 Hit =C-c i= to quickly open index file.
-
 #+BEGIN_SRC emacs-lisp
   (defun org-open-index ()
     "Open the master TODO list."
@@ -415,9 +417,7 @@ Hit =C-c i= to quickly open index file.
 
   (global-set-key (kbd "C-c i") 'org-open-index)
 #+END_SRC
-
 Hit =M-n= to quickly open up a capture template for a new todo.
-
 #+BEGIN_SRC emacs-lisp
   (defun org-capture-todo ()
     (interactive)
