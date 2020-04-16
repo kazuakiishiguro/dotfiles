@@ -163,15 +163,6 @@
     :ensure t
     :init (global-flycheck-mode))
 #+END_SRC
-** =magit=
-   I use =magit= to handle version control and I assign =C-x g= for =magit-status= shortcut key.
-#+BEGIN_SRC emacs-lisp
-  (use-package magit
-    :bind
-    ("C-x g" . magit-status)
-    :config
-    (setq magit-push-always-verify nil))
-#+END_SRC
 * Programming environments
 ** Rust
    I <3 =rustlang=.
