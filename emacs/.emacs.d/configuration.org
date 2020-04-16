@@ -54,19 +54,6 @@
   (menu-bar-mode   -1)
   (add-to-list 'default-frame-alist '(font . "Source Code Pro-13"))
 #+END_SRC
-** Theme
-   Use =dracula-theme= for global theme. Because this is the only way I like it.
-#+BEGIN_SRC emacs-lisp
-  (use-package dracula-theme
-    :ensure t
-    :config
-    (load-theme 'dracula t))
-#+END_SRC
-** Fill-column width
-   I prefer with 80 chars.
-#+BEGIN_SRC emacs-lisp
-  (set-default 'fill-column 80)
-#+End_SRC
 ** Startup screen
    I prefer simple startup screen
 #+BEGIN_SRC emacs-lisp
@@ -130,13 +117,13 @@
 #+BEGIN_SRC emacs-lisp
   (setq rign-bell-function 'ignore)
 #+END_SRC
-** Highlight the current line
-   =global-hl-line-mode= softly highlights the background color of the line containing point.
-   Also, I would like to change the line color because it's horrible...
-#+BEGIN_SRC emacs-lisp
-  (global-hl-line-mode)
-  (set-face-background hl-line-face "gray13")
-#+END_SRC
+# ** Highlight the current line
+#    =global-hl-line-mode= softly highlights the background color of the line containing point.
+#    Also, I would like to change the line color because it's horrible...
+# #+BEGIN_SRC emacs-lisp
+#   (global-hl-line-mode)
+#   (set-face-background hl-line-face "gray13")
+# #+END_SRC
 ** Highlight matching parens
    I like to highlight matching parens with =show-paren-mode=.
 #+BEGIN_SRC emacs-lisp
@@ -281,16 +268,18 @@
     (setq web-mode-code-indent-offset 2))
 #+END_SRC
 ** JavaScript
-   Also need minimal =js2-mode= is needed for Javascirpt development.
+   Also need minimal =rjsx-mode= is needed for Javascirpt development.
 #+BEGIN_SRC emacs-lisp
-  (use-package js2-mode
+  (use-package rjsx-mode
     :ensure t
     :mode
-    (("\\.js$" . js2-mode)
-     ("\\.jsx$" . js2-jsx-mode))
+    (("\\.js$" . rjsx-mode)
+     ("\\.jsx$" . rjsxx-mode))
     :init
-    (setq js-indent-level 2)
-    (setq js2-strict-missing-semi-warning nil))
+    (setq
+     js-indent-level 2
+     js2-basic-offset 2
+     js2-strict-missing-semi-warning nil))
 #+END_SRC
 ** TypeScript
    Why not use strictly typed language, right? So I use =tide= for typescript-mode.
@@ -306,24 +295,12 @@
 	   (before-save . tide-format-before-save)))
     :mode "\\.ts\\'")
 #+END_SRC
-
-#+RESULTS:
-
-#+BEGIN_SRC emacs-lisp
-
-#+END_SRC
 * Publishing and task management with Org-mode
-  I'd like the linitial scratch buffer to be in Org:
+I want the linitial scratch buffer to be in Org:
 #+BEGIN_SRC emacs-lisp
   (setq initial-major-mode 'org-mode)
 #+END_SRC
 ** Display preferences
-   I like to see an outline of pretty bullets instead of a list of asterisks.
-#+BEGIN_SRC emacs-lisp
-  (use-package org-bullets
-    :init
-    (add-hook 'org-mode-hook 'org-bullets-mode))
-#+END_SRC
    Use syntax highlighting in source blocks while editing.
 #+BEGIN_SRC emacs-lisp
   (setq org-src-fontify-natively t)
@@ -363,7 +340,7 @@
 *** Task management
 **** =TODO= keywords
 #+BEGIN_SRC emacs-lisp
-  (setq org-todo-keywords 
+  (setq org-todo-keywords
 	'((sequence "TODO(t)" "NOTE(n)" "DONE(d)" "CANCEL(c)")))
 #+END_SRC
 **** Capturing tasks
@@ -401,7 +378,7 @@ Define a few common tasks as capture templates.
   (setq org-log-done 'time)
 #+END_SRC
 *** Keybindings
-    Bind a key for org-mode.
+Bind a key for org-mode.
 #+BEGIN_SRC emacs-lisp
   (define-key global-map "\C-ca" 'org-agenda)
   (define-key global-map "\C-cc" 'org-capture)
@@ -425,13 +402,12 @@ Hit =M-n= to quickly open up a capture template for a new todo.
 
   (global-set-key (kbd "M-n") 'org-capture-todo)
 #+END_SRC
-
 ** Exporting
-   Import =ob-rust= package to allow babel to evaluate.
+Import =ob-rust= package to allow babel to evaluate.
 #+BEGIN_SRC emacs-lisp
   (use-package ob-rust)
 #+END_SRC
-   Allow babel to evaluate languages.
+Allow babel to evaluate languages.
 #+BEGIN_SRC emacs-lisp
   (org-babel-do-load-languages
     'org-babel-load-languages
@@ -442,7 +418,7 @@ Hit =M-n= to quickly open up a capture template for a new todo.
       (rust . t)
       (python . t)))
 #+END_SRC
-   Don't ask before evaluating code blocks
+Don't ask before evaluating code blocks
 #+BEGIN_SRC emacs-lisp
   (setq org-confirm-babel-evaluate nil)
 #+END_SRC
