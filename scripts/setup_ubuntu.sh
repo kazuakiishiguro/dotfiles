@@ -6,21 +6,6 @@ sudo apt update
 
 exists() { type -t "$1" > /dev/null 2>&1; }
 
-# install linuxbrew-wrapper
-if exists brew; then
-  echo "brew exists"
-else
-  sudo apt install linuxbrew-wrapper build-essential libtool-bin
-fi
-
-# install cmake
-if exists cmake; then
-  echo "cmake exists"
-else
-  brew update
-  brew install cmake
-fi
-
 # install git
 if exists git; then
   echo "git exists"

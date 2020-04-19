@@ -25,17 +25,12 @@ fi
 # add line for prompt
 function add_line {
   if [[ -z "${PS1_NEWLINE_LOGIN}" ]]; then
-    PS1_NEWLINE_LOGIN=true
+    PS1_NEWLINE_LOGIN=false
   else
     printf '\n'
   fi
 }
 PROMPT_COMMAND='add_line'
-
-# emoji ψ(｀∇´)ψ
-function _dirt() {
-  echo -e "\U1F918"
-}
 
 # git branch
 function _git_branch () {
@@ -43,40 +38,16 @@ function _git_branch () {
   git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
 }
 
-# vterm clear scrollback
-if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
-    function clear(){
-        vterm_printf "51;Evterm-clear-scrollback";
-        tput clear;
-    }
-fi
-
 # comand prompt
-export PS1="\$(_dirt)  \[\e[36m\]\W \[\e[32m\]\$(_git_branch) \[\e[0m\] \$ "
+export PS1="\u@\h:\[\e[36m\]\w\[\e[32m\]\$(_git_branch)\[\e[0m\]\$ "
 
 # aliases
 alias ls='ls --color=auto'
 alias ll='ls -al'
-
-alias cat='bat'
-
-alias t='tmux'
-alias ta='tmux attach'
-alias tks='tmux kill-server'
-
-alias htop='sudo htop'
-
-alias g='git'
-alias diff='icdiff'
-
 alias dockerrm='docker rm $(docker ps -aq)'
 alias dockerrmi='docker rmi $(docker images -aq)'
 alias dockerstop='docker stop $(docker ps -aq)'
 alias dockerkill='docker kill $(docker ps -aq)'
-
-# don't be evil
-alias vi='vim'
-alias vim='emacs'
 alias emacsmin='emacs -nw --no-init-file --no-site-file'
 alias emacs='emacs -nw'
 

@@ -5,7 +5,7 @@ set -eu
 # mac only setting
 if [[ `uname` == 'Darwin' ]]; then
   source ./scripts/setup_macos.sh
-elif [[ `uname` == *Ubuntu* ]]; then
+elif [[ `uname -a` == *Ubuntu* ]]; then
   source ./scripts/setup_ubuntu.sh
 fi
 
@@ -14,7 +14,7 @@ modules='
     bin
     emacs
     git
-    tmux
+    screen
     vim
 '
 
