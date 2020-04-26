@@ -117,13 +117,6 @@
 #+BEGIN_SRC emacs-lisp
   (setq rign-bell-function 'ignore)
 #+END_SRC
-# ** Highlight the current line
-#    =global-hl-line-mode= softly highlights the background color of the line containing point.
-#    Also, I would like to change the line color because it's horrible...
-# #+BEGIN_SRC emacs-lisp
-#   (global-hl-line-mode)
-#   (set-face-background hl-line-face "gray13")
-# #+END_SRC
 ** Highlight matching parens
    I like to highlight matching parens with =show-paren-mode=.
 #+BEGIN_SRC emacs-lisp
