@@ -2,7 +2,7 @@
 
 set -eu
 
-# mac only setting
+# os setting
 if [[ `uname` == 'Darwin' ]]; then
   source ./scripts/setup_macos.sh
 elif [[ `uname -a` == *Ubuntu* ]]; then
