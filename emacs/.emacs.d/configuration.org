@@ -79,7 +79,6 @@
    I use =which-key= to find out which keybindings are available.
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
-    :ensure t
     :init
     (setq which-key-separator " ")
     (setq which-key-prefix-prefix "+")
@@ -186,12 +185,12 @@
    Basic setup for =solidity= development.
 #+BEGIN_SRC emacs-lisp
   (use-package solidity-mode
-    :ensure t
-    :mode "\\.sol\\'"
     :interpreter ("solc" . solidity-mode)
     :config
-    (setq-default c-basic-offset 4)
-    (setq default-tab-width 4))
+    (setq-default
+     c-basic-offset 4
+     tab-width 4
+     indent-tabs-mode t))
 #+END_SRC
 ** ShellScript
    Indent with 2 spaces.
@@ -210,7 +209,6 @@
 ** Web-mode
 #+BEGIN_SRC emacs-lisp
   (use-package web-mode
-    :ensure t
     :mode (("\\.html?\\'" . web-mode)
 	      ("\\.jsx?$\\'" . web-mode))
   :config
@@ -222,7 +220,6 @@
    Also need minimal =rjsx-mode= is needed for Javascirpt development.
 #+BEGIN_SRC emacs-lisp
   (use-package rjsx-mode
-    :ensure t
     :mode
     (("\\.js$" . rjsx-mode)
      ("\\.jsx$" . rjsxx-mode))
@@ -236,10 +233,8 @@
    Why not use strictly typed language, right? So I use =tide= for typescript-mode.
 #+BEGIN_SRC emacs-lisp
   (use-package typescript-mode
-    :ensure t
     :config
     (use-package tide
-      :ensure t
       :after (typescript-mode company flycheck)
       :hook ((typescript-mode . tide-setup)
 	     (typescript-mode . tide-hl-identifier-mode)
