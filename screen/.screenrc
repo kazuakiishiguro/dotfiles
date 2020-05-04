@@ -12,3 +12,8 @@ startup_message off
 
 # disable visual bell
 vbell off
+defflow off
+
+# enable Unicode support
+defutf8 on
+
