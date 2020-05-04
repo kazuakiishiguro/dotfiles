@@ -183,12 +183,13 @@
     (rust-mode . company-mode)
     (flycheck-mode . flycheck-rust-setup)
     :custom
-    (rustic-lsp-format t)
+    (rustic-format-on-save t)
     (rustic-indent-method-chain t)
     ;; The default is 'rls
     (rustic-lsp-server 'rust-analyzer)
     :bind
-    ("M-." . lsp-execute-code-action))
+    ("C-c ." . lsp-execute-code-action)
+    ("C-c r" . xref-find-references))
 #+END_SRC
 ** Solidity
    Basic setup for =solidity= development.
