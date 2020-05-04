@@ -75,6 +75,13 @@
 
   (global-set-key (kbd "C-c f r") 'my/reload-emacs-config)
 #+END_SRC
+** Completion
+   I use =helm= for incremental completion and selection narrowing.
+#+BEGIN_SRC emacs-lisp
+  (use-package helm
+    :config
+    (helm-mode 1))
+#+END_SRC
 ** Keybindings in popup
    I use =which-key= to find out which keybindings are available.
 #+BEGIN_SRC emacs-lisp
@@ -176,10 +183,12 @@
     (rust-mode . company-mode)
     (flycheck-mode . flycheck-rust-setup)
     :custom
-    (rustic-format-on-save t)
+    (rustic-lsp-format t)
     (rustic-indent-method-chain t)
     ;; The default is 'rls
-    (rustic-lsp-server 'rust-analyzer))
+    (rustic-lsp-server 'rust-analyzer)
+    :bind
+    ("M-." . lsp-execute-code-action))
 #+END_SRC
 ** Solidity
    Basic setup for =solidity= development.
