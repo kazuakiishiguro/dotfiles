@@ -17,3 +17,5 @@ defflow off
 # enable Unicode support
 defutf8 on
 
+# show hardware status
+hardstatus alwayslastline "%{=}%-w%{= kW} %n %t %{-}%+w %=%D %m/%d/%Y %C"
