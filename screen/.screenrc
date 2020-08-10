@@ -18,4 +18,4 @@ defflow off
 defutf8 on
 
 # show hardware status
-hardstatus alwayslastline "%{=}%-w%{= kW} %n %t %{-}%+w %=%D %m/%d/%Y %C"
+hardstatus alwayslastline "%{= wk} %-w%{= dw} %n* %t %{-}%+w %=%D %m/%d/%Y %C "
