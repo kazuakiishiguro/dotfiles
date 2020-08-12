@@ -3,6 +3,10 @@
 #+EMAIL: gurokazu@gmail.com
 
 * Initial configuration
+** Do not warn 'cl package
+#+BEGIN_SRC emacs-lisp
+  (setq byte-compile-warnings '(cl-functions))
+#+END_SRC
 ** =use-package= to install and configure my packages
    Use =use-package-ensure= to configure my packages and always =:ensure t=.
 #+BEGIN_SRC emacs-lisp
