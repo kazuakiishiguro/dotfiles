@@ -256,6 +256,10 @@
 	     (before-save . tide-format-before-save)))
     :mode "\\.ts\\'")
 #+END_SRC
+** Docker
+   #+BEGIN_SRC emacs-lisp
+     (use-package dockerfile-mode)
+   #+End_SRC
 * Org-mode
 ** Display
 *** Syntax highlighting
