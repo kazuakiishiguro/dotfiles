@@ -256,9 +256,12 @@
 	     (before-save . tide-format-before-save)))
     :mode "\\.ts\\'")
 #+END_SRC
-** Docker
+** Docker and Docker-compose
    #+BEGIN_SRC emacs-lisp
      (use-package dockerfile-mode)
+   #+End_SRC
+   #+BEGIN_SRC emacs-lisp
+     (use-package docker-compose-mode)
    #+End_SRC
 * Org-mode
 ** Display
