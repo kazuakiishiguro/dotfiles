@@ -257,12 +257,26 @@
     :mode "\\.ts\\'")
 #+END_SRC
 ** Docker and Docker-compose
-   #+BEGIN_SRC emacs-lisp
-     (use-package dockerfile-mode)
-   #+End_SRC
-   #+BEGIN_SRC emacs-lisp
-     (use-package docker-compose-mode)
-   #+End_SRC
+#+BEGIN_SRC emacs-lisp
+  (use-package dockerfile-mode)
+#+END_SRC
+#+BEGIN_SRC emacs-lisp
+  (use-package docker-compose-mode)
+#+END_SRC
+** Markdown
+   Add markdown and it's preview mode
+#+BEGIN_SRC emacs-lisp
+  (use-package markdown-mode
+    :mode 
+    (("README\\.md\\'" . gfm-mode)
+    ("\\.md\\'" . markdown-mode))
+    :config
+    (add-hook 'markdown-mode-hook 'visual-line-mode)
+    )
+  (use-package markdown-preview-mode
+    :after (markdown-mode)
+    )
+#+END_SRC
 * Org-mode
 ** Display
 *** Syntax highlighting
@@ -384,7 +398,6 @@
      + shell
      + js
      + latex
-     + rust
      + python
 #+BEGIN_SRC emacs-lisp
   (org-babel-do-load-languages
@@ -393,17 +406,11 @@
       (shell . t)
       (js . t)
       (latex . t)
-      (rust . t)
       (python . t)))
 #+END_SRC
 Don't ask before evaluating code blocks
 #+BEGIN_SRC emacs-lisp
   (setq org-confirm-babel-evaluate nil)
-#+END_SRC
-**** Rust
-     Import =ob-rust= package to allow babel to evaluate.
-#+BEGIN_SRC emacs-lisp
-  (use-package ob-rust)
 #+END_SRC
 **** htmlize for org exports
      I use =htmlize= for html exporting
