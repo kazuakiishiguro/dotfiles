@@ -157,6 +157,7 @@
   (my/set-exec-path-from-shell-PATH)
 #+END_SRC
 * Programming environment
+  This section is heavily inspired by [[https://github.com/matheus-consoli/.emacs.d][https://github.com/matheus-consoli/.emacs.d]]
 ** Compnay
    Use =company-mode= for auto completion.
 #+BEGIN_SRC emacs-lisp
@@ -172,28 +173,56 @@
     (define-key company-search-map (kbd "C-n") 'company-select-next)
     (define-key company-search-map (kbd "C-p") 'company-select-previous))
 #+END_SRC
-** Rust
-   I <3 Rust.
-   Currently I use:
-   - =flychek-rust=
-   - =rustic=
-   - =rust-analyzer=
+** Linter
+*** Flycheck
 #+BEGIN_SRC emacs-lisp
-  (use-package flycheck-rust)
+  (use-package flycheck
+    :config (global-flycheck-mode))
+#+END_SRC
+** Language Server Protocol
+*** LSP mode
+#+BEGIN_SRC emacs-lisp
+  (use-package lsp-mode
+  :custom((lsp-auto-guess-root t)
+	  (lsp-file-watch-threshold 2000)
+	  (lsp-prefer-flymake nil)
+	  (lsp-auto-configure t)
+	  (lst-rust-server 'rust-analyzer)
+	  (lsp-keep-workspace-alive nil))
+  :hook (lsp-mode . lsp-enable-which-key-integration)
+  :bind (:map lsp-mode-map
+	      ("C-c l r" . lsp-rename)
+	      ("C-c l a" . lsp-execute-code-action)
+	      ("C-c l t" . lsp-find-type-definition)))
 
-  (use-package rustic
-    :hook
-    (rust-mode . lsp-deferred)
-    (rust-mode . company-mode)
-    (flycheck-mode . flycheck-rust-setup)
-    :custom
-    (rustic-format-on-save t)
-    (rustic-indent-method-chain t)
-    ;; The default is 'rls
-    (rustic-lsp-server 'rust-analyzer)
-    :bind
-    ("C-c ." . lsp-execute-code-action)
-    ("C-c r" . xref-find-references))
+(setq lsp-rust-server 'rust-analyzer)
+#+END_SRC
+*** Company lsp
+#+BEGIN_SRC emacs-lisp
+(use-package company-lsp
+  :ensure t
+  :config (push 'company-lsp company-backends)
+  :custom (company-lsp-async t))
+#+END_SRC
+** Rust-mode
+#+BEGIN_SRC emacs-lisp
+(use-package rust-mode
+  :ensure t
+  :hook (rust-mode . lsp)
+  :bind (:map rust-mode-map
+              ("C-c l x" . lsp-rust-analyzer-expand-macro)
+              ("C-c l j" . lsp-rust-analyzer-join-lines))
+  :custom ((company-tooltip-align-annotation t)
+           (lsp-rust-server 'rust-analyzer)
+           (lsp-rust-analyzer-server-command '("~/.cargo/bin/rust-analyzer"))
+           (lsp-rust-analyzer-display-parameter-hints t)
+           (lsp-rust-server 'rust-analyzer)
+           (lsp-rust-analyzer-display-chaining-hints t)))
+#+END_SRC
+** Cargo
+#+BEGIN_SRC emacs-lisp
+  (use-package cargo
+    :hook (rust-mode . cargo-minor-mode))
 #+END_SRC
 ** Solidity
    Basic setup for =solidity= development.
