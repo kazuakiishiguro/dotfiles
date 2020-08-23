@@ -1,0 +1,65 @@
+* Code generation
+** company
+#+BEGIN_SRC emacs-lisp
+(use-package company
+  :defines (company-dabbrev-ignore-case company-dabbrev-downcase)
+  :init
+  (setq company-auto-complete nil)
+  (setq company-idle-delay 0)
+  (setq company-require-match nil)
+  :config
+  (global-company-mode 1)
+  (define-key company-active-map (kbd "C-n") 'company-select-next)
+  (define-key company-active-map (kbd "C-p") 'company-select-previous)
+  (define-key company-search-map (kbd "C-n") 'company-select-next)
+  (define-key company-search-map (kbd "C-p") 'company-select-previous))
+#+END_SRC
+
+* Lint
+** flycheck
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck
+  :config (global-flycheck-mode))
+#+END_SRC
+
+* Language Server Protocol
+** lsp-mode
+#+BEGIN_SRC emacs-lisp
+(use-package lsp-mode
+ :custom((lsp-prefer-flymake nil)
+ (lsp-auto-configure t)
+ (lsp-rust-server 'rust-analyzer)
+ (lsp-keep-workspace-alive nil))
+ :hook (lsp-mode . lsp-enable-which-key-integration))
+#+END_SRC
+
+** rust-analyzer for rust-server
+#+BEGIN_SRC emacs-lisp
+(setq lsp-rust-server 'rust-analyzer)
+#+END_SRC
+
+** lsp-ui
+#+BEGIN_SRC emacs-lisp
+(use-package lsp-ui
+  :hook (lsp-mode . lsp-ui-mode)
+  :custom ((lsp-ui-doc-include-signature t)
+           (lsp-ui-doc-enable nil))
+  :bind (:map lsp-ui-mode-map
+              ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
+              ([remap xref-find-references] . lsp-ui-peek-find-references)
+              ("C-c l i" . lsp-ui-imenu)
+              ("C-c l d" . lsp-ui-doc-show)))
+#+END_SRC
+
+** company-lsp
+#+BEGIN_SRC emacs-lisp
+(use-package company-lsp
+  :config (push 'company-lsp company-backends)
+  :custom (company-lsp-async t))
+#+END_SRC
+
+** lsp-treemacs
+#+BEGIN_SRC emacs-lisp
+(use-package lsp-treemacs
+  :commands lsp-treemacs-errors-list)
+#+END_SRC
