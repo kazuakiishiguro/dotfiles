@@ -2,452 +2,61 @@
 #+AUTHOR: Kazuaki Ishiguro
 #+EMAIL: gurokazu@gmail.com
 
-* Initial configuration
-** Do not warn 'cl package
+* Always =:ensure t=
 #+BEGIN_SRC emacs-lisp
-  (setq byte-compile-warnings '(cl-functions))
+(require 'use-package-ensure)
+(setq use-package-always-ensure t)
 #+END_SRC
-** =use-package= to install and configure my packages
-   Use =use-package-ensure= to configure my packages and always =:ensure t=.
-#+BEGIN_SRC emacs-lisp
-  (require 'use-package-ensure)
-  (setq use-package-always-ensure t)
-#+END_SRC
-* UI preferences
-** Basics
-   I do not use the menu or scroll bar.
-#+BEGIN_SRC emacs-lisp
-  (tooltip-mode -1)
-  (menu-bar-mode -1)
-#+END_SRC
-*** Font setting
-    I prefer to use =Source Code Pro= font.
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'default-frame-alist '(font . "Source Code Pro-13"))
-#+END_SRC
-** Startup screen
-   I prefer simple startup screen
-#+BEGIN_SRC emacs-lisp
-  (setq inhibit-startup-screen t)
-#+END_SRC
-** Window management
-*** Split
-   I like to set a shortcut key to split window with =C-c w h= =C-c w v= keys.
-#+BEGIN_SRC emacs-lisp
-  (global-set-key (kbd "C-c w h") 'split-window-horizontally)
-  (global-set-key (kbd "C-c w v") 'split-window-vertically)
-#+END_SRC
-**** Threshhold
-   I also would like to set =split-width-threshold= to =0= to split window horizontally when I am coding.
-#+BEGIN_SRC emacs-lisp
-  (setq split-height-threshold nil)
-#+END_SRC
-** Minor modes
-*** =minions=
-    Using =minions= to hide all the minor modes in the modeline instead of manually adding =:diminish= to every =use-package= declaration.
-#+BEGIN_SRC emacs-lisp
-  (use-package minions
-    :config
-    (minions-mode 1))
-#+END_SRC
-** Uncommited changes
-*** Highlight uncommitted changes
-    Use =git-gutter= to highlight concommitted changes.
-#+BEGIN_SRC emacs-lisp
-  (use-package git-gutter
-    :defer t
-    :init
-    (add-hook 'org-mode-hook 'git-gutter-mode))
-#+END_SRC
-* Editor setting
-** Configuration files
-*** Edit
-    I edit my dotfiles quite often. This binds =C-c f= . to quickly open my Emacs configuratiobn file.
-#+BEGIN_SRC emacs-lisp
-  (defun my/visit-emacs-config ()
-    (interactive)
-    (find-file "~/.emacs.d/configuration.org"))
 
-  (global-set-key (kbd "C-c f .") 'my/visit-emacs-config)
-#+END_SRC
-*** Reload
-    Once you have finished editing, you might want to source the file and reload. So this is the custom fuctoin that I made with =C-c f r=.
+* Load config
+** defun load-config
 #+BEGIN_SRC emacs-lisp
-  (defun my/reload-emacs-config ()
-    (interactive)
-    (load-file "~/.emacs.d/init.el"))
+(defun load-config (file)
+  (org-babel-load-file (expand-file-name
+                        (concat user-emacs-directory file))))
+#+END_SRC
 
-  (global-set-key (kbd "C-c f r") 'my/reload-emacs-config)
-#+END_SRC
-** Completion
-   I use =helm= for incremental completion and selection narrowing.
+** General
 #+BEGIN_SRC emacs-lisp
-  (use-package helm
-    :config
-    (helm-mode 1))
+(load-config "general.org")
 #+END_SRC
-** Keybindings in popup
-   I use =which-key= to find out which keybindings are available.
-#+BEGIN_SRC emacs-lisp
-  (use-package which-key
-    :init
-    (setq which-key-separator " ")
-    (setq which-key-prefix-prefix "+")
-    :config
-    (which-key-mode 1))
-#+END_SRC
-** Disable visual bell
-   Because I do not need this function.
-#+BEGIN_SRC emacs-lisp
-  (setq rign-bell-function 'ignore)
-#+END_SRC
-** Always kill current buffer
-   Assume that I always want to kill the current buffer when hitting =C-x k=.
-#+BEGIN_SRC emacs-lisp
-  (defun my/kill-current-buffer ()
-    "Kill the current buffer without prompting."
-    (interactive)
-    (kill-buffer (current-buffer)))
 
-  (global-set-key (kbd "C-x k") 'my/kill-current-buffer)
-#+END_SRC
-** Delete other windows setting
-   Keymap for =delete-other-windows=.
+** UI
 #+BEGIN_SRC emacs-lisp
-  (defun my/kill-another-buffer ()
-    "Kill another buffer if it exists."
-    (interactive)
-    (delete-other-windows))
+(load-config "ui.org")
+#+END_SRC
 
-  (global-set-key (kbd "C-q") 'my/kill-another-buffer)
-#+END_SRC
-** Insert line before
-   Insert a newline(s) above the line contain in the cursor.
-   So tha you do not have to move your cursor.
+** Programming
 #+BEGIN_SRC emacs-lisp
-  (defun my/insert-line-before ()
-    "Insert a newline(s) above the line containing the cursor."
-    (interactive)
-    (save-excursion
-      (move-beginning-of-line 1)
-      (newline)))
+(load-config "prog.org")
+#+END_SRC
 
-  (global-set-key (kbd "C-o") 'my/insert-line-before)
-#+END_SRC
-** Disable backup and autosave
-   It prevents to create extra files while you are working on your program.
+** Rust
 #+BEGIN_SRC emacs-lisp
-  (setq make-backup-files nil)
-  (setq auto-save-default nil)
+(load-config "rust.org")
 #+END_SRC
-** Enable =electric-pair-mode=
-   For inserting parenthesis/brackats.
-#+BEGIN_SRC emacs-lisp
-  (electric-pair-mode 1)
-#+END_SRC
-** Share =$PATH=
-#+BEGIN_SRC emacs-lisp
-  (defun my/set-exec-path-from-shell-PATH ()
-    "Set up Emacs' `exec-path` and PATH environment variable to match that used by the use's shell."
-    (interactive)
-    (let ((path-from-shell (replace-regexp-in-string "[ \t\n]*$" "" (shell-command-to-string "$SHELL --login -i -c 'echo $PATH'"))))
-      (setenv "PATH" path-from-shell)
-      (setq exec-path (split-string path-from-shell path-separator))))
 
-  (my/set-exec-path-from-shell-PATH)
-#+END_SRC
-* Programming environment
-  This section is heavily inspired by [[https://github.com/matheus-consoli/.emacs.d][https://github.com/matheus-consoli/.emacs.d]]
-** Compnay
-   Use =company-mode= for auto completion.
-#+BEGIN_SRC emacs-lisp
-  (use-package company
-    :init
-    (setq company-auto-complete nil)
-    (setq company-idle-delay 0.1)
-    (setq company-require-match 'never)
-    :config
-    (global-company-mode 1)
-    (define-key company-active-map (kbd "C-n") 'company-select-next)
-    (define-key company-active-map (kbd "C-p") 'company-select-previous)
-    (define-key company-search-map (kbd "C-n") 'company-select-next)
-    (define-key company-search-map (kbd "C-p") 'company-select-previous))
-#+END_SRC
-** Linter
-*** Flycheck
-#+BEGIN_SRC emacs-lisp
-  (use-package flycheck
-    :config (global-flycheck-mode))
-#+END_SRC
-** Language Server Protocol
-*** LSP mode
-#+BEGIN_SRC emacs-lisp
-  (use-package lsp-mode
-  :custom((lsp-auto-guess-root t)
-	  (lsp-file-watch-threshold 2000)
-	  (lsp-prefer-flymake nil)
-	  (lsp-auto-configure t)
-	  (lst-rust-server 'rust-analyzer)
-	  (lsp-keep-workspace-alive nil))
-  :hook (lsp-mode . lsp-enable-which-key-integration)
-  :bind (:map lsp-mode-map
-	      ("C-c l r" . lsp-rename)
-	      ("C-c l a" . lsp-execute-code-action)
-	      ("C-c l t" . lsp-find-type-definition)))
-
-(setq lsp-rust-server 'rust-analyzer)
-#+END_SRC
-*** Company lsp
-#+BEGIN_SRC emacs-lisp
-(use-package company-lsp
-  :ensure t
-  :config (push 'company-lsp company-backends)
-  :custom (company-lsp-async t))
-#+END_SRC
-** Rust-mode
-#+BEGIN_SRC emacs-lisp
-(use-package rust-mode
-  :ensure t
-  :hook (rust-mode . lsp)
-  :bind (:map rust-mode-map
-              ("C-c l x" . lsp-rust-analyzer-expand-macro)
-              ("C-c l j" . lsp-rust-analyzer-join-lines))
-  :custom ((company-tooltip-align-annotation t)
-           (lsp-rust-server 'rust-analyzer)
-           (lsp-rust-analyzer-server-command '("~/.cargo/bin/rust-analyzer"))
-           (lsp-rust-analyzer-display-parameter-hints t)
-           (lsp-rust-server 'rust-analyzer)
-           (lsp-rust-analyzer-display-chaining-hints t)))
-#+END_SRC
-** Cargo
-#+BEGIN_SRC emacs-lisp
-  (use-package cargo
-    :hook (rust-mode . cargo-minor-mode))
-#+END_SRC
 ** Solidity
-   Basic setup for =solidity= development.
 #+BEGIN_SRC emacs-lisp
-  (use-package solidity-mode
-    :interpreter ("solc" . solidity-mode)
-    :config
-    (setq-default
-     c-basic-offset 4
-     tab-width 4
-     indent-tabs-mode t))
+(load-config "solidity.org")
 #+END_SRC
-** ShellScript
-   Indent with 2 spaces.
-#+BEGIN_SRC emacs-lisp
-  (add-hook 'sh-mode-hook
-    (lambda ()
-      (setq sh-basic-offset 2
-	sh-indentation 2)))
-#+END_SRC
+
 ** Python
 #+BEGIN_SRC emacs-lisp
-  (use-package python
-    :mode ("\\.py\\'" . python-mode)
-    :interpreter ("python" . python-mode))
+(load-config "python.org")
 #+END_SRC
-** Web-mode
+
+** Web
 #+BEGIN_SRC emacs-lisp
-  (use-package web-mode
-    :mode (("\\.html?\\'" . web-mode)
-	   ("\\.jsx?$\\'" . web-mode)
-	   ("\\.tsx?\\'" . web-mode))
-  :config
-  (setq web-mode-content-types-alist '(("jsx" . "\\.js[x]?\\'")))
-  (setq-default web-mode-markup-indent-offset 2)
-  (setq web-mode-code-indent-offset 2))
+(load-config "web.org")
 #+END_SRC
+
 ** JavaScript
-   Also need minimal =rjsx-mode= is needed for Javascirpt development.
 #+BEGIN_SRC emacs-lisp
-  (use-package rjsx-mode
-    :mode
-    (("\\.js$" . rjsx-mode)
-     ("\\.jsx$" . rjsxx-mode))
-    :init
-    (setq
-     js-indent-level 2
-     js2-basic-offset 2
-     js2-strict-missing-semi-warning nil))
+(load-config "javascript.org")
 #+END_SRC
-** TypeScript
-   Why not use strictly typed language, right? So I use =tide= for typescript-mode.
-#+BEGIN_SRC emacs-lisp
-  (use-package typescript-mode
-    :config
-    (use-package tide
-      :after (typescript-mode company flycheck)
-      :hook ((typescript-mode . tide-setup)
-	     (typescript-mode . tide-hl-identifier-mode)
-	     (before-save . tide-format-before-save)))
-    :mode "\\.ts\\'")
-#+END_SRC
-** Docker and Docker-compose
-#+BEGIN_SRC emacs-lisp
-  (use-package dockerfile-mode)
-#+END_SRC
-#+BEGIN_SRC emacs-lisp
-  (use-package docker-compose-mode)
-#+END_SRC
+
 ** Markdown
-   Add markdown and it's preview mode
 #+BEGIN_SRC emacs-lisp
-  (use-package markdown-mode
-    :mode 
-    (("README\\.md\\'" . gfm-mode)
-    ("\\.md\\'" . markdown-mode))
-    :config
-    (add-hook 'markdown-mode-hook 'visual-line-mode)
-    )
-  (use-package markdown-preview-mode
-    :after (markdown-mode)
-    )
-#+END_SRC
-* Org-mode
-** Display
-*** Syntax highlighting
-    Use syntax highlighting in source blocks while editing.
-#+BEGIN_SRC emacs-lisp
-  (setq org-src-fontify-natively t)
-#+END_SRC
-*** Window
-    When editing a code snippet, use the current window rather than popping open a new one (which shows the same information).
-#+BEGIN_SRC emacs-lisp
-  (setq org-src-window-setup 'current-window)
-#+END_SRC
-** Editing
-*** =TAB= action
-    Make =TAB= act as if it were issued in a buffer of the language’s major mode
-#+BEGIN_SRC emacs-lisp
-  (setq org-src-tab-acts-natively t)
-#+END_SRC
-*** Template
-    Quickly insert a block of elisp.
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'org-structure-template-alist
-		 '("el" . "src emacs-lisp"))
-#+END_SRC
-** Task management
-*** File directory
-    Store my org files in =~/org=, and archive finished tasks in =~/org/archive.org=.
-#+BEGIN_SRC emacs-lisp
-  (setq org-directory "~/org")
-
-  (defun org-file-path (filename)
-     "Return the absolute address of an org file, given its relative name"
-     (concat (file-name-as-directory org-directory) filename))
-
-  (setq org-index-file (org-file-path "index.org"))
-  (setq org-archive-location
-	 (concat (org-file-path "archive.org") "::* From %s"))
-#+END_SRC
-*** Index file
-    I store all my todos in =~/org/index.org=, so I’d like to derive my agenda from there.
-#+BEGIN_SRC emacs-lisp
-  (setq org-agenda-files (list org-index-file))
-#+END_SRC
-*** Capture
-**** =TODO= keywords
-     I like to set =TODO= keywords as follows:
-#+BEGIN_SRC emacs-lisp
-  (setq org-todo-keywords
-	'((sequence "TODO(t)" "NOTE(n)" "DONE(d)" "CANCEL(c)")))
-#+END_SRC
-**** Capturing tasks
-     Define a few common tasks as capture templates.
-+ Record ideas for future blog posts in =~/org/notes/blog-ideas.org=,
-+ Maintain a todo list in =~/org/index.org=
-#+BEGIN_SRC emacs-lisp
-  (setq org-capture-templates
-      '(("b" "Blog idea"
-	 entry
-	 (file "~/org/notes/blog-ideas.org")
-	 "* %?\n")
-	("n" "Note taking"
-	 entry
-	 (file "~/org/notes/note.org")
-	 "* %?\n %U %f")
-	("t" "Todo"
-	 entry
-	 (file+headline org-index-file "Inbox")
-	 "* TODO %?\n")))
-#+END_SRC
-**** Task archive
-     Hitting =C-c C-x C-s= will mark a todo as done and move it to an appropriate place in the archive.
-#+BEGIN_SRC emacs-lisp
-  (defun my/mark-done-and-archive ()
-    "Mark the state of an org-mode item as DONE and archive it."
-    (interactive)
-    (org-todo 'done)
-    (org-archive-subtree))
-
-  (define-key org-mode-map (kbd "C-c C-x C-s") 'my/mark-done-and-archive)
-#+END_SRC
-**** Time keeping
-     Record the time that a todo was archived.
-#+BEGIN_SRC emacs-lisp
-  (setq org-log-done 'time)
-#+END_SRC
-*** Keybindings
-**** Basics
-     Bind a key for org-mode.
-#+BEGIN_SRC emacs-lisp
-  (define-key global-map "\C-ca" 'org-agenda)
-  (define-key global-map "\C-cc" 'org-capture)
-#+END_SRC
-**** =index.org= access
-     Hit =C-c i= to quickly open index file.
-#+BEGIN_SRC emacs-lisp
-  (defun my/org-open-index ()
-    "Open the master TODO list."
-      (interactive)
-      (find-file org-index-file)
-      (flycheck-mode -1)
-      (end-of-buffer))
-
-  (global-set-key (kbd "C-c i") 'my/org-open-index)
-#+END_SRC
-**** Capture template access
-     Hit =M-n= to quickly open up a capture template for a new todo.
-#+BEGIN_SRC emacs-lisp
-  (defun my/org-capture-todo ()
-    (interactive)
-    (org-capture :keys "t"))
-
-  (global-set-key (kbd "M-n") 'my/org-capture-todo)
-#+END_SRC
-** Exporting
-**** =org-babel= settings
-     Allow babel to evaluate languages.
-     Currently those languages are able to eveluate:
-     + emacs-lisp
-     + shell
-     + js
-     + latex
-     + python
-#+BEGIN_SRC emacs-lisp
-  (org-babel-do-load-languages
-    'org-babel-load-languages
-    '((emacs-lisp . t)
-      (shell . t)
-      (js . t)
-      (latex . t)
-      (python . t)))
-#+END_SRC
-Don't ask before evaluating code blocks
-#+BEGIN_SRC emacs-lisp
-  (setq org-confirm-babel-evaluate nil)
-#+END_SRC
-**** htmlize for org exports
-     I use =htmlize= for html exporting
-#+BEGIN_SRC emacs-lisp
-  (use-package htmlize)
-#+END_SRC
-***** Footer configuration
-      Don't include a footer with my contract and publishing information at the bottom of every exported HTML document.
-#+BEGIN_SRC emacs-lisp
-  (setq org-html-postamble nil)
+(load-config "markdown.org")
 #+END_SRC

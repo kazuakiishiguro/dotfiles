@@ -1,0 +1,24 @@
+* JavaScript
+#+BEGIN_SRC emacs-lisp
+(use-package rjsx-mode
+  :mode
+  (("\\.js$" . rjsx-mode)
+   ("\\.jsx$" . rjsxx-mode))
+  :init
+  (setq
+   js-indent-level 2
+   js2-basic-offset 2
+   js2-strict-missing-semi-warning nil))
+#+END_SRC
+
+* TypeScript
+#+BEGIN_SRC emacs-lisp
+(use-package typescript-mode
+  :config
+  (use-package tide
+    :after (typescript-mode company flycheck)
+    :hook ((typescript-mode . tide-setup)
+	     (typescript-mode . tide-hl-identifier-mode)
+	     (before-save . tide-format-before-save)))
+  :mode "\\.ts\\'")
+#+END_SRC
