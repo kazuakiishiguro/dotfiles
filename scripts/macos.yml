@@ -1,5 +1,11 @@
 - hosts: all
-  vars:
+  gather_facts: false
+  pre_tasks:
+    - when: inventory_hostname == 'localhost'
+      set_fact:
+        ansible_connection: local
+        ansible_python_interpreter: '{{ ansible_playbook_python }}'
+  vars:  
     homebrew_taps:
       - homebrew/cask
 
