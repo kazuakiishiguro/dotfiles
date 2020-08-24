@@ -18,44 +18,20 @@
 #+END_SRC
 
 ** Line numbers
-*** Hook
+*** Line numbers
+[[https://github.com/kisswiki/kisswiki/blob/master/src/code_editors/emacs/line-numbers.md][https://github.com/kisswiki/kisswiki/blob/master/src/code_editors/emacs/line-numbers.md]]
 #+BEGIN_SRC emacs-lisp
-(add-hook 'prog-mode-hook 'linum-mode)
+(defun init-line-numbers-mode ()
+(display-line-numbers-mode)
+(setq display-line-numbers-witdth-start t))
+
+(add-hook 'prog-mode-hook 'init-line-numbers-mode)
 #+END_SRC
-
-*** Line format
-#+BEGIN_SRC emacs-lisp
-(setq left-fringe-width 10)
-(setq right-fringe-width 3)
-
-(custom-set-faces '(linum ((t (:foreground "gray" :background "black" :box nil)))) ) 
-(eval-after-load 'linum
-  '(progn
-     (defface linum-soft-space
-       `((t :inherit 'linum
-            :foreground ,(face-attribute 'linum :background nil t)))
-       "Face for displaying leading zeroes for line numbers in display margin."
-       :group 'linum)
-     (defun linum-format-func (line)
-       (let ((w (length
-                 (number-to-string (count-lines (point-min) (point-max))))))
-         (concat
-         "\u2002"
-          (propertize (make-string (- w (length (number-to-string line))) ? ) ;; change leading zero to a soft space
-                      'face 'linum-soft-space)
-          (propertize (number-to-string line) 'face 'linum)
-          "\u2002")))
-     (setq linum-format 'linum-format-func)))
-#+END_SRC
-
 *** Hilight line
 #+BEGIN_SRC emacs-lisp
-(use-package hlinum
-  :ensure t
-  :init (global-hl-line-mode)
-  :config (set-face-background 'hl-line "#313131"))
+(custom-set-faces
+ '(line-number-current-line ((t (:foreground "Royalblue" :background "DarkGray")))))
 #+END_SRC
-
 ** Window settings
 *** Window split
 #+BEGIN_SRC emacs-lisp
