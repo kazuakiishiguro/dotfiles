@@ -177,6 +177,25 @@
 (setq auto-save-default nil)
 #+END_SRC
 
+** Editor setting
+*** Edit
+#+BEGIN_SRC emacs-lisp
+(defun my/visit-emacs-config ()
+  (interactive)
+  (find-file "~/.emacs.d"))
+
+(global-set-key (kbd "C-c f .") 'my/visit-emacs-config)
+#+END_SRC
+
+*** Reload
+#+BEGIN_SRC emacs-lisp
+(defun my/reload-emacs-config ()
+  (interactive)
+  (load-file "~/.emacs.d/init.el"))
+
+(global-set-key (kbd "C-c f r") 'my/reload-emacs-config)
+#+END_SRC
+
 ** Better scroll
 #+BEGIN_SRC emacs-lisp
 (setq scroll-conservatively 9999
@@ -195,7 +214,37 @@
 (global-set-key (kbd "C-x k") 'volatile-kill-buffer)     ;; Unconditionally kill unmodified buffers.
 #+END_SRC
 
+** Delete other windows setting
+#+BEGIN_SRC emacs-lisp
+(defun my/kill-another-buffer ()
+  "Kill another buffer if it exists."
+  (interactive)
+  (delete-other-windows))
+
+(global-set-key (kbd "C-q") 'my/kill-another-buffer)
+#+END_SRC
+** Insert line before
+#+BEGIN_SRC emacs-lisp
+(defun my/insert-line-before ()
+  "Insert a newline(s) above the line containing the cursor."
+  (interactive)
+  (save-excursion
+    (move-beginning-of-line 1)
+    (newline)))
+
+(global-set-key (kbd "C-o") 'my/insert-line-before)
+#+END_SRC
+
 ** y-or-n
 #+BEGIN_SRC emacs-lisp
 (defalias 'yes-or-no-p 'y-or-n-p)
+#+END_SRC
+
+** Disable visual bell
+#+BEGIN_SRC emacs-lisp
+(setq rign-bell-function 'ignore)
+#+END_SRC
+** Save last cursor position
+#+BEGIN_SRC emacs-lisp
+(save-place-mode 1)
 #+END_SRC

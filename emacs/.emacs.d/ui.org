@@ -75,7 +75,6 @@
   (minions-mode 1))
 #+END_SRC
 
-
 ** Git
 *** Fringe helper
 #+BEGIN_SRC emacs-lisp
