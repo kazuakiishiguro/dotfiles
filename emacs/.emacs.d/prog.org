@@ -67,10 +67,7 @@
 ** Smart parens
 #+BEGIN_SRC emacs-lisp
 (use-package smartparens
-:bind ("C-M-f" . 'sp-forward-sexp)
-("C-M-b" . 'sp-backward-sexp)
-:config (smartparens-global-mode)
-:init (smartparens-strict-mode))
+:config (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode))
 #+END_SRC
 
 ** Smart new line
@@ -86,9 +83,10 @@
             (equal (char-after) 125)) ; }
        (and (equal (char-before) 40)  ; (
             (equal (char-after) 41))) ; )
-      (progn (newline-and-indent)
-             (split-line)
-             (indent-for-tab-command))
-    (newline-and-indent)))
+       (progn (newline-and-indent)
+            (split-line)
+            (indent-for-tab-command))
+            (newline-and-indent)))
+
 (global-set-key (kbd "RET") 'my/smart-newline)
 #+END_SRC
