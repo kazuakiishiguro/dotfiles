@@ -1,7 +1,3 @@
-#/bin/bash
-
-set -eu
-
 #!/bin/sh
 
 set -eu
