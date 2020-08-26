@@ -16,30 +16,27 @@
       - name: bettertouchtool
       - name: docker
       - name: gpg-suite
-      - name: iterm2
       - name: keybase
       - name: kindle
       - name: sequel-pro
       - name: sketch
-      - name: skype
       - name: slack
       - name: sourcetree
       - name: telegram
       - name: vagrant
       - name: virtualbox
       - name: visual-studio-code
-      - name: whatsapp
       - name: zoomus
 
     homebrew_packages:
       - name: awscli
       - name: ansible
+      - name: autogen
       - name: bash
       - name: bat
       - name: cmake
       - name: coreutils
       - name: curl
-      - name: direnv
       - name: docker
       - name: emacs
       - name: fzf
@@ -56,10 +53,9 @@
       - name: reattach-to-user-namespace
       - name: rsync
       - name: rustup-init
+      - name: screen
       - name: stow
       - name: tig
-      - name: tmux
-      - name: tmux-mem-cpu-load
       - name: tree
       - name: wget
       - name: zsh
