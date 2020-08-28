@@ -94,6 +94,7 @@ alias dockerstop='docker stop $(docker ps -aq)'
 alias dockerkill='docker kill $(docker ps -aq)'
 alias emacsmin='emacs -nw --no-init-file --no-site-file'
 alias emacs='emacs -nw'
+alias screen='/usr/local/bin/screen'
 
 # fzf
 if which fzf > /dev/null 2>&1; then

@@ -19,6 +19,7 @@
 #+END_SRC
 
 * Org
+** Base
 #+BEGIN_SRC emacs-lisp
 (use-package org
   :custom ((org-src-fontify-natively t)
@@ -139,6 +140,7 @@
 #+END_SRC
 
 ** Exporting
+*** LaTeX
 #+BEGIN_SRC emacs-lisp
 (require 'ox-latex)
 (org-babel-do-load-languages

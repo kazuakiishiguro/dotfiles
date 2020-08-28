@@ -1,9 +1,14 @@
 * UI settings
-** Font setting
+** Theme
 #+BEGIN_SRC emacs-lisp
-(set-default-font "Source Code Pro 13")
+(use-package doom-themes
+  :config
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t)
+  (load-theme 'doom-dracula t)
+  (doom-themes-visual-bell-config)
+  (doom-themes-org-config))
 #+END_SRC
-
 ** No toolbar, menu-bar nor scroll bar
 #+BEGIN_SRC emacs-lisp
 (tool-bar-mode -1)
@@ -11,10 +16,6 @@
 
 (when window-system
   (scroll-bar-mode -1))
-#+END_SRC
-
-** No scrool-bar
-#+BEGIN_SRC emacs-lisp
 #+END_SRC
 
 ** Line numbers
