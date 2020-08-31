@@ -8,7 +8,9 @@
 * Git
 ** Magit
 #+BEGIN_SRC emacs-lisp
-(use-package magit)
+(use-package magit
+  :if (executable-find "git")
+  :bind ("C-x g" . magit-status))
 #+END_SRC
 
 * Which-key
