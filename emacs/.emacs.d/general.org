@@ -5,6 +5,12 @@
   (helm-mode 1))
 #+END_SRC
 
+* Git
+** Magit
+#+BEGIN_SRC emacs-lisp
+(use-package magit)
+#+END_SRC
+
 * Which-key
 #+BEGIN_SRC emacs-lisp
 (use-package which-key
