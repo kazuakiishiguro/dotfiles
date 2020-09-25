@@ -67,7 +67,8 @@
 ** Smart parens
 #+BEGIN_SRC emacs-lisp
 (use-package smartparens
-:config (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode))
+  :config
+  (smartparens-global-mode 1))
 #+END_SRC
 
 ** Smart new line
@@ -90,3 +91,14 @@
 
 (global-set-key (kbd "RET") 'my/smart-newline)
 #+END_SRC
+
+** Multiple cursors
+#+BEGIN_SRC emacs-lisp
+(use-package multiple-cursors
+  :bind
+  ("C-c m e" . mc/edit-lines)
+  ("C->" . mc/mark-next-like-this)
+  ("C-<" . mc/mark-previous-like-this)
+  ("C-c m a" . mc/mark-all-like-this))
+#+END_SRC
+
