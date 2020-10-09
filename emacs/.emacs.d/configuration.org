@@ -2,6 +2,12 @@
 #+AUTHOR: Kazuaki Ishiguro
 #+EMAIL: gurokazu@gmail.com
 
+* =use-package= is not needed at runtime
+#+BEGIN_SRC emacs-lisp
+(eval-when-compile
+  (require 'use-package))
+#+END_SRC
+
 * Always =:ensure t=
 #+BEGIN_SRC emacs-lisp
 (require 'use-package-ensure)
