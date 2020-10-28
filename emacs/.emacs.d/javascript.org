@@ -13,12 +13,20 @@
 
 * TypeScript
 #+BEGIN_SRC emacs-lisp
-(use-package typescript-mode
+;;;###autoload
+(defun my/setup-tide-mode ()
+  "Set up tide mode."
+  (interactive)
+  (setq company-tooltip-align-annotations t)
+  (tide-setup)
+  (setq flycheck-check-syntax-automatically '(save mode-enabled))
+  (eldoc-mode +1)
+  (setq typescript-indent-level 4))
+
+(use-package typescript-mode)
+
+(use-package tide
   :config
-  (use-package tide
-    :after (typescript-mode company flycheck)
-    :hook ((typescript-mode . tide-setup)
-	     (typescript-mode . tide-hl-identifier-mode)
-	     (before-save . tide-format-before-save)))
-  :mode "\\.ts\\'")
+  (add-hook 'before-save-hook 'tide-format-before-save)
+  (add-hook 'typescript-mode-hook 'my/setup-tide-mode))
 #+END_SRC
