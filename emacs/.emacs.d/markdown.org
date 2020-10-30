@@ -1,15 +1,15 @@
 * Markdown
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package markdown-mode
   :mode
   (("README\\.md\\'" . gfm-mode)
   ("\\.md\\'" . markdown-mode))
   :config
   (add-hook 'markdown-mode-hook 'visual-line-mode))
-#+END_SRC
+#+end_src
 
 * Enable preview
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package markdown-preview-mode
   :after (markdown-mode))
-#+END_SRC
+#+end_src

@@ -3,66 +3,66 @@
 #+EMAIL: gurokazu@gmail.com
 
 * =use-package= is not needed at runtime
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (eval-when-compile
   (require 'use-package))
-#+END_SRC
+#+end_src
 
 * Always =:ensure t=
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (require 'use-package-ensure)
 (setq use-package-always-ensure t)
-#+END_SRC
+#+end_src
 
 * Load config
 ** defun load-config
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (defun load-config (file)
   (org-babel-load-file (expand-file-name
                         (concat user-emacs-directory file))))
-#+END_SRC
+#+end_src
 
 ** General
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (load-config "general.org")
-#+END_SRC
+#+end_src
 
 ** UI
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (load-config "ui.org")
-#+END_SRC
+#+end_src
 
 ** Programming
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (load-config "prog.org")
-#+END_SRC
+#+end_src
 
 ** Rust
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (load-config "rust.org")
-#+END_SRC
+#+end_src
 
 ** Solidity
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (load-config "solidity.org")
-#+END_SRC
+#+end_src
 
 ** Python
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (load-config "python.org")
-#+END_SRC
+#+end_src
 
 ** Web
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (load-config "web.org")
-#+END_SRC
+#+end_src
 
 ** JavaScript
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (load-config "javascript.org")
-#+END_SRC
+#+end_src
 
 ** Markdown
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (load-config "markdown.org")
-#+END_SRC
+#+end_src

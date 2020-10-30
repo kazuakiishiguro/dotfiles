@@ -1,5 +1,5 @@
 * Rust
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 ;; (use-package rust-mode
 ;;  :hook (rust-mode . lsp)
 ;;  :custom ((lsp-rust-server 'rust-analyzer)
@@ -19,15 +19,15 @@
       (setq lsp-rust-server 'rust-analyzer)))
   :custom
   (rust-format-on-save (executable-find "rustfmt")))
-#+END_SRC
+#+end_src
 
 * Cargo
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package cargo
  :hook (rust-mode . cargo-minor-mode))
-#+END_SRC
+#+end_src
 
 * ob-rust
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package ob-rust)
-#+END_SRC
+#+end_src

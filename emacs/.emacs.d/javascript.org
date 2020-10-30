@@ -1,5 +1,5 @@
 * JavaScript
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package rjsx-mode
   :mode
   (("\\.js$" . rjsx-mode)
@@ -9,10 +9,10 @@
    js-indent-level 2
    js2-basic-offset 2
    js2-strict-missing-semi-warning nil))
-#+END_SRC
+#+end_src
 
 * TypeScript
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 ;;;###autoload
 (defun my/setup-tide-mode ()
   "Set up tide mode."
@@ -29,4 +29,4 @@
   :config
   (add-hook 'before-save-hook 'tide-format-before-save)
   (add-hook 'typescript-mode-hook 'my/setup-tide-mode))
-#+END_SRC
+#+end_src

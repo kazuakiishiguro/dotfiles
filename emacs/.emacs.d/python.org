@@ -1,7 +1,7 @@
 * Python
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package python
   :mode ("\\.py\\'" . python)
   :interpreter ("python" . python-mode))
-#+END_SRC
+#+end_src
 

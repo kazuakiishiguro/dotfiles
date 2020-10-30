@@ -1,67 +1,67 @@
 * UI settings
 ** Theme
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package dracula-theme
   :config
   (load-theme 'dracula t))
-#+END_SRC
+#+end_src
 
 ** Mode-line
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq column-number-mode t)
-#+END_SRC
+#+end_src
 
 ** No toolbar, menu-bar nor scroll bar
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (tool-bar-mode -1)
 (menu-bar-mode -1)
 
 (when window-system
   (scroll-bar-mode -1))
-#+END_SRC
+#+end_src
 
 ** Line numbers
 *** Line numbers
 [[https://github.com/kisswiki/kisswiki/blob/master/src/code_editors/emacs/line-numbers.md][https://github.com/kisswiki/kisswiki/blob/master/src/code_editors/emacs/line-numbers.md]]
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (defun init-line-numbers-mode ()
 (display-line-numbers-mode)
 (setq display-line-numbers-witdth-start t))
 
 (add-hook 'prog-mode-hook 'init-line-numbers-mode)
-#+END_SRC
+#+end_src
 *** Hilight line
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (custom-set-faces
  '(line-number-current-line ((t (:foreground "Royalblue" :background "DarkGray")))))
-#+END_SRC
+#+end_src
 ** Window settings
 *** Window split
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (global-set-key (kbd "C-c w h") 'split-window-horizontally)
 (global-set-key (kbd "C-c w v") 'split-window-vertically)
-#+END_SRC
+#+end_src
 
 *** Window threshold
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq split-height-threshold nil)
-#+END_SRC
+#+end_src
 
 ** Minormodes
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package minions
   :config
   (minions-mode 1))
-#+END_SRC
+#+end_src
 
 ** Git
 *** Fringe helper
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package fringe-helper)
-#+END_SRC
+#+end_src
 
 *** Git gutter
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package git-gutter
   :ensure t
   :diminish git-gutter-mode
@@ -72,11 +72,11 @@
         git-gutter:added-sign "│"
         git-gutter:deleted-sign "│")
   :config
-  (set-face-foreground 'git-gutter:modified "#ffb86c") ; dracula rainbow-5                       
-  (set-face-foreground 'git-gutter:added "#50fa7b") ; dracula rainbow-6                          
-  (set-face-foreground 'git-gutter:deleted "#ff5555") ; dracula rainbow-9                        
+  (set-face-foreground 'git-gutter:modified "#ffb86c") ; dracula rainbow-5
+  (set-face-foreground 'git-gutter:added "#50fa7b") ; dracula rainbow-6
+  (set-face-foreground 'git-gutter:deleted "#ff5555") ; dracula rainbow-9
   (add-to-list 'git-gutter:update-hooks 'focus-in-hook)
   (add-hook 'magit-post-refresh-hook 'git-gutter:update-all-windows)
   (global-git-gutter-mode t))
 
-#+END_SRC
+#+end_src

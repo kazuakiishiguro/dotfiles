@@ -1,33 +1,33 @@
 * Helm
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package helm
   :config
   (helm-mode 1))
-#+END_SRC
+#+end_src
 
 * Magit
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package magit
   :if (executable-find "git")
   :bind ("C-x g" . magit-status))
-#+END_SRC
+#+end_src
 
 * Which-key
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package which-key
   :custom (which-key-popup-type 'minibuffer)
   :config (which-key-mode))
-#+END_SRC
+#+end_src
 
 * Docker
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package dockerfile-mode)
 (use-package docker-compose-mode)
-#+END_SRC
+#+end_src
 
 * Org
 ** Base
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package org
   :custom ((org-src-fontify-natively t)
            (org-src-tab-acts-natively nil)
@@ -38,30 +38,41 @@
            (org-hide-emphasis-markers t)
            (org-confirm-babel-evaluate nil))
   :hook ((org-mode . visual-line-mode)))
-#+END_SRC
+#+end_src
 
 ** Template
-*** emacs-lisp
-#+BEGIN_SRC emacs-lisp
+*** Load org-tempo
+#+begin_src emacs-lisp
+(require 'org-tempo)
+#+end_src
+
+*** Basic
+#+begin_src emacs-lisp
 (add-to-list 'org-structure-template-alist
-             '("el" "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC"))
-#+END_SRC
+             '("s" . "src"))
+#+end_src
+
+*** emacs-lisp
+#+begin_src emacs-lisp
+(add-to-list 'org-structure-template-alist
+             '("el" . "src emacs-lisp"))
+#+end_src
 
 *** Rust
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (add-to-list 'org-structure-template-alist
-             '("rs" "#+BEGIN_SRC rust\n?\n#+END_SRC"))
-#+END_SRC
+             '("rs" . "src rust"))
+#+end_src
 
 *** LaTeX
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (add-to-list 'org-structure-template-alist
-             '("tex" "#+BEGIN_SRC latex\n?\n#+END_SRC"))
-#+END_SRC
+             '("tex" . "src latex"))
+#+end_src
 
 ** Task management
 *** File directory
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq org-directory "~/org")
 
 (defun org-file-path (filename)
@@ -71,22 +82,22 @@
 (setq org-index-file (org-file-path "index.org"))
 (setq org-archive-location
 	 (concat (org-file-path "archive.org") "::* From %s"))
-#+END_SRC
+#+end_src
 
 *** index.org file
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq org-agenda-files (list org-index-file))
-#+END_SRC
+#+end_src
 
 *** Capture
 **** =TODO= keywords
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq org-todo-keywords
 	'((sequence "TODO(t)" "NOTE(n)" "DONE(d)" "CANCEL(c)")))
-#+END_SRC
+#+end_src
 
 **** Capturing tasks
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq org-capture-templates
      '(("b" "Blog idea"
 	 entry
@@ -100,10 +111,10 @@
 	 entry
 	 (file+headline org-index-file "Inbox")
 	 "* TODO %?\n")))
-#+END_SRC
+#+end_src
 
 **** Task archive
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (defun my/mark-done-and-archive ()
   "Mark the state of an org-mode item as DONE and archive it."
   (interactive)
@@ -111,21 +122,21 @@
   (org-archive-subtree))
 
 (define-key org-mode-map (kbd "C-c C-x C-s") 'my/mark-done-and-archive)
-#+END_SRC
+#+end_src
 
 **** Time keeping
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq org-log-done 'time)
-#+END_SRC
+#+end_src
 
 *** Keybindings
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (define-key global-map "\C-ca" 'org-agenda)
 (define-key global-map "\C-cc" 'org-capture)
-#+END_SRC
+#+end_src
 
 **** Quick =index.org= file access
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (defun my/org-open-index ()
   "Open the master TODO list."
     (interactive)
@@ -134,20 +145,20 @@
     (end-of-buffer))
 
 (global-set-key (kbd "C-c i") 'my/org-open-index)
-#+END_SRC
+#+end_src
 
 **** Capture template access
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (defun my/org-capture-todo ()
   (interactive)
   (org-capture :keys "t"))
 
 (global-set-key (kbd "M-n") 'my/org-capture-todo)
-#+END_SRC
+#+end_src
 
 ** Exporting
 *** LaTeX
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (require 'ox-latex)
 (org-babel-do-load-languages
   'org-babel-load-languages
@@ -156,63 +167,63 @@
     (js . t)
     (latex . t)
     (python . t)))
-#+END_SRC
+#+end_src
 
 *** Disable asking before evaluation
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq org-confirm-babel-evaluate nil)
-#+END_SRC
+#+end_src
 
 *** htmlize for org exports
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package htmlize)
-#+END_SRC
+#+end_src
 
 **** Footer configuration
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq org-html-postamble nil)
-#+END_SRC
+#+end_src
 
 *** Org export for github markdown
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package ox-gfm)
-#+END_SRC
+#+end_src
 
 * Util
 ** No backup, auto-save
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq make-backup-files nil)
 (setq auto-save-default nil)
-#+END_SRC
+#+end_src
 
 ** Editor setting
 *** Edit
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (defun my/visit-emacs-config ()
   (interactive)
   (find-file "~/.emacs.d"))
 
 (global-set-key (kbd "C-c f .") 'my/visit-emacs-config)
-#+END_SRC
+#+end_src
 
 *** Reload
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (defun my/reload-emacs-config ()
   (interactive)
   (load-file "~/.emacs.d/init.el"))
 
 (global-set-key (kbd "C-c f r") 'my/reload-emacs-config)
-#+END_SRC
+#+end_src
 
 ** Better scroll
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq scroll-conservatively 9999
       scroll-preserve-screen-position t
       scroll-margin 5)
-#+END_SRC
+#+end_src
 
 ** Always kill current buffer
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (defun volatile-kill-buffer ()
   "Kill current buffer unconditionally."
   (interactive)
@@ -220,19 +231,19 @@
     (kill-buffer (current-buffer))))
 
 (global-set-key (kbd "C-x k") 'volatile-kill-buffer)     ;; Unconditionally kill unmodified buffers.
-#+END_SRC
+#+end_src
 
 ** Delete other windows setting
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (defun my/kill-another-buffer ()
   "Kill another buffer if it exists."
   (interactive)
   (delete-other-windows))
 
 (global-set-key (kbd "C-q") 'my/kill-another-buffer)
-#+END_SRC
+#+end_src
 ** Insert line before
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (defun my/insert-line-before ()
   "Insert a newline(s) above the line containing the cursor."
   (interactive)
@@ -241,22 +252,22 @@
     (newline)))
 
 (global-set-key (kbd "C-o") 'my/insert-line-before)
-#+END_SRC
+#+end_src
 
 ** y-or-n
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (defalias 'yes-or-no-p 'y-or-n-p)
-#+END_SRC
+#+end_src
 
 ** Disable visual bell
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq rign-bell-function 'ignore)
-#+END_SRC
+#+end_src
 ** Trim trailing whitespace
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package ws-butler
   :diminish ws-butler-mode
   :config
   (ws-butler-global-mode))
-#+END_SRC
+#+end_src
 

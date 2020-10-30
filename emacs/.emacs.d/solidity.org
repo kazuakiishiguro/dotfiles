@@ -1,5 +1,5 @@
 * Solidity
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package solidity-mode
   :interpreter ("solc" . solidity-mode)
   :config
@@ -8,4 +8,4 @@
    tab-width 4
    indent-tabs-mode t))
 
-#+END_SRC
+#+end_src

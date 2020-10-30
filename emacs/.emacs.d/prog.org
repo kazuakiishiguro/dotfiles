@@ -1,6 +1,6 @@
 * Code generation
 ** company
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package company
   :defines (company-dabbrev-ignore-case company-dabbrev-downcase)
   :init
@@ -13,33 +13,33 @@
   (define-key company-active-map (kbd "C-p") 'company-select-previous)
   (define-key company-search-map (kbd "C-n") 'company-select-next)
   (define-key company-search-map (kbd "C-p") 'company-select-previous))
-#+END_SRC
+#+end_src
 
 * Lint
 ** flycheck
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package flycheck
   :config (global-flycheck-mode))
-#+END_SRC
+#+end_src
 
 * Language Server Protocol
 ** lsp-mode
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package lsp-mode
  :custom((lsp-prefer-flymake nil)
  (lsp-auto-configure t)
  (lsp-rust-server 'rust-analyzer)
  (lsp-keep-workspace-alive nil))
  :hook (lsp-mode . lsp-enable-which-key-integration))
-#+END_SRC
+#+end_src
 
 ** rust-analyzer for rust-server
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (setq lsp-rust-server 'rust-analyzer)
-#+END_SRC
+#+end_src
 
 ** lsp-ui
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package lsp-ui
   :hook (lsp-mode . lsp-ui-mode)
   :custom ((lsp-ui-doc-include-signature t)
@@ -49,31 +49,31 @@
               ([remap xref-find-references] . lsp-ui-peek-find-references)
               ("C-c l i" . lsp-ui-imenu)
               ("C-c l d" . lsp-ui-doc-show)))
-#+END_SRC
+#+end_src
 
 ** company-lsp
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package company-lsp
   :config (push 'company-lsp company-backends)
   :custom (company-lsp-async t))
-#+END_SRC
+#+end_src
 
 ** lsp-treemacs
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package lsp-treemacs
   :commands lsp-treemacs-errors-list)
-#+END_SRC
+#+end_src
 * Utils
 ** Smart parens
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package smartparens
   :config
   (smartparens-global-mode 1))
-#+END_SRC
+#+end_src
 
 ** Smart new line
 [[https://gist.github.com/brianloveswords/e23cedf3a80bab675fe5][https://gist.github.com/brianloveswords/e23cedf3a80bab675fe5]]
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (defun my/smart-newline ()
   "Add two newlines and put the cursor at the right indentation
      between them if a newline is attempted when the cursor is between
@@ -90,15 +90,15 @@
             (newline-and-indent)))
 
 (global-set-key (kbd "RET") 'my/smart-newline)
-#+END_SRC
+#+end_src
 
 ** Multiple cursors
-#+BEGIN_SRC emacs-lisp
+#+begin_src emacs-lisp
 (use-package multiple-cursors
   :bind
   ("C-c m e" . mc/edit-lines)
   ("C->" . mc/mark-next-like-this)
   ("C-<" . mc/mark-previous-like-this)
   ("C-c m a" . mc/mark-all-like-this))
-#+END_SRC
+#+end_src
 
