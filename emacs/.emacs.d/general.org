@@ -99,18 +99,14 @@
 **** Capturing tasks
 #+begin_src emacs-lisp
 (setq org-capture-templates
-     '(("b" "Blog idea"
-	 entry
-	 (file "~/org/notes/blog-ideas.org")
-	 "* %?\n")
-	("n" "Note taking"
-	 entry
-	 (file "~/org/notes/note.org")
-	 "* %?\n %U %f")
-	("t" "Todo"
-	 entry
-	 (file+headline org-index-file "Inbox")
-	 "* TODO %?\n")))
+     '(("b" "Blog idea" entry (file "~/org/notes/blog-ideas.org")
+     "* %?\n")
+     ("l" "Log" entry (file+datetree "~/org/log.org")
+     "* %?\nEntered on %U\n  %i\n  %a")
+     ("n" "Note taking" entry (file "~/org/notes/note.org")
+     "* %?\n %U %f")
+     ("t" "Todo" entry (file+headline org-index-file "Inbox")
+     "* TODO %?\n")))
 #+end_src
 
 **** Task archive
