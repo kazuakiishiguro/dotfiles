@@ -1,24 +1,8 @@
 * Rust
 #+begin_src emacs-lisp
-;; (use-package rust-mode
-;;  :hook (rust-mode . lsp)
-;;  :custom ((lsp-rust-server 'rust-analyzer)
-;;  (lsp-rust-analyzer-server-command '("~/.cargo/bin/rust-analyzer"))
-;;  (lsp-rust-analyzer-display-parameter-hints t)
-;;  (lsp-rust-analyzer-display-chaining-hints t)
-;;  ))
-
-(use-package rust-mode
+(use-package rustic
   :ensure t
-  :defines lsp-rust-server
-  :mode ("\\.rs\\'" . rust-mode)
-  :config
-  ;; Prefer `rust-analyzer' over `rls'
-  (with-eval-after-load 'lsp-mode
-    (when (executable-find "rust-analyzer")
-      (setq lsp-rust-server 'rust-analyzer)))
-  :custom
-  (rust-format-on-save (executable-find "rustfmt")))
+  :mode ("\\.rs$" . rustic-mode))
 #+end_src
 
 * Cargo

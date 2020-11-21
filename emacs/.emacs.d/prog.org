@@ -26,36 +26,22 @@
 ** lsp-mode
 #+begin_src emacs-lisp
 (use-package lsp-mode
- :custom((lsp-prefer-flymake nil)
- (lsp-auto-configure t)
- (lsp-rust-server 'rust-analyzer)
- (lsp-keep-workspace-alive nil))
- :hook (lsp-mode . lsp-enable-which-key-integration))
-#+end_src
-
-** rust-analyzer for rust-server
-#+begin_src emacs-lisp
-(setq lsp-rust-server 'rust-analyzer)
-#+end_src
-
-** lsp-ui
-#+begin_src emacs-lisp
-(use-package lsp-ui
-  :hook (lsp-mode . lsp-ui-mode)
-  :custom ((lsp-ui-doc-include-signature t)
-           (lsp-ui-doc-enable nil))
-  :bind (:map lsp-ui-mode-map
-              ([remap xref-find-definitions] . lsp-ui-peek-find-definitions)
-              ([remap xref-find-references] . lsp-ui-peek-find-references)
-              ("C-c l i" . lsp-ui-imenu)
-              ("C-c l d" . lsp-ui-doc-show)))
-#+end_src
-
-** company-lsp
-#+begin_src emacs-lisp
-(use-package company-lsp
-  :config (push 'company-lsp company-backends)
-  :custom (company-lsp-async t))
+  :custom((lsp-prefer-flymake nil)
+          (lsp-auto-configure t)
+          (lsp-rust-server 'rust-analyzer)
+          (lsp-keep-workspace-alive nil))
+  ;; reformat code and add missing (or remove old) imports
+  :hook
+  (before-save . lsp-format-buffer)
+  (before-save . lsp-organize-imports)
+  (lsp-mode . lsp-enable-which-key-integration)
+  :bind
+  ("M-," . lsp-describe-thing-at-point)
+  :init
+  (setq lsp-rust-analyzer-display-chaining-hints t)
+  (setq lsp-rust-analyzer-display-parameter-hints t)
+  (setq lsp-rust-analyzer-server-display-inlay-hints t)
+  (setq lsp-rust-analyzer-inlay-hints-mode t))
 #+end_src
 
 ** lsp-treemacs
