@@ -43,7 +43,11 @@ function _git_branch () {
 
 # comand prompt
 if [ "$platform" = osx ]; then
-  export PS1="[${arch}]\u@\h:\[\e[36m\]\w\[\e[32m\]\$(_git_branch)\[\e[0m\]\$ "
+  if [ "$arch" == 'arch64' ]; then
+    export PS1="[${arch}]\u@\h:\[\e[36m\]\w\[\e[32m\]\$(_git_branch)\[\e[0m\]\$ "
+  else
+    export PS1="\u@\h:\[\e[36m\]\w\[\e[32m\]\$(_git_branch)\[\e[0m\]\$ "
+  fi
 elif [ "$platform" = debian ]; then
   # set variable identifying the chroot you work in (used in the prompt below)
   if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
