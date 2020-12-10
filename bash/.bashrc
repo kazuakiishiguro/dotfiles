@@ -43,7 +43,7 @@ function _git_branch () {
 
 # comand prompt
 if [ "$platform" = osx ]; then
-  if [ "$arch" == 'arch64' ]; then
+  if [ "$arch" == 'arm64' ]; then
     export PS1="[${arch}]\u@\h:\[\e[36m\]\w\[\e[32m\]\$(_git_branch)\[\e[0m\]\$ "
   else
     export PS1="\u@\h:\[\e[36m\]\w\[\e[32m\]\$(_git_branch)\[\e[0m\]\$ "
