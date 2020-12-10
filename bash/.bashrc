@@ -1,6 +1,9 @@
 HISTSIZE=1000
 HISTFILESIZE=2000
 
+# arch
+arch=`uname -m`
+
 # os
 platform='unknown'
 unamestr=`uname`
@@ -40,7 +43,7 @@ function _git_branch () {
 
 # comand prompt
 if [ "$platform" = osx ]; then
-  export PS1="\u@\h:\[\e[36m\]\w\[\e[32m\]\$(_git_branch)\[\e[0m\]\$ "
+  export PS1="[${arch}]\u@\h:\[\e[36m\]\w\[\e[32m\]\$(_git_branch)\[\e[0m\]\$ "
 elif [ "$platform" = debian ]; then
   # set variable identifying the chroot you work in (used in the prompt below)
   if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
