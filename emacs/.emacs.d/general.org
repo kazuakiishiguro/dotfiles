@@ -1,8 +1,8 @@
 * Helm
 #+begin_src emacs-lisp
-(use-package helm
-  :config
-  (helm-mode 1))
+;; (use-package helm
+;;   :config
+;;   (helm-mode 1))
 #+end_src
 
 * Magit
@@ -14,9 +14,9 @@
 
 * Which-key
 #+begin_src emacs-lisp
-(use-package which-key
-  :custom (which-key-popup-type 'minibuffer)
-  :config (which-key-mode))
+;; (use-package which-key
+;;   :custom (which-key-popup-type 'minibuffer)
+;;   :config (which-key-mode))
 #+end_src
 
 * Docker
