@@ -3,11 +3,13 @@
 set -eu
 
 # os setting
-# if [[ `uname` == 'Darwin' ]]; then
-#  source ./scripts/setup_macos.sh
-# elif [[ `uname -a` == *Ubuntu* ]]; then
-#  source ./scripts/setup_ubuntu.sh
-# fi
+if [[ `uname` == 'Darwin' ]]; then
+    source ./scripts/setup_macos.sh
+    source ./scripts/install-rust.sh mac
+ elif [[ `uname -a` == *Ubuntu* ]]; then
+    source ./scripts/setup_ubuntu.sh
+    source ./scripts/install-rust.sh linux
+ fi
 
 modules='
     bash

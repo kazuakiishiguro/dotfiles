@@ -110,7 +110,6 @@ else
     alias screen='/usr/local/bin/screen'
 fi
 
-
 # fzf
 #if which fzf > /dev/null 2>&1; then
 #  [ -f ~/.fzf.bash ] && source ~/.fzf.bash

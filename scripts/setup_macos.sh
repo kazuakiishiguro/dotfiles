@@ -8,7 +8,7 @@ exists() { type -t "$1" > /dev/null 2>&1; }
 
 if exists brew; then
   echo 'Homebrew exists. Skipping install.'
-else if [ '${uname}' == 'arch64' ]; then
+elif [ '${uname}' == 'arch64' ]; then
     cd /opt
     mkdir homebrew
     sudo chown $USER:admin homebrew

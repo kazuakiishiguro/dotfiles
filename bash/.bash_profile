@@ -3,7 +3,7 @@ if [ -f ~/.bashrc ] ; then
     . ~/.bashrc
 fi
 
-# silence macos warning
+# silence macos bash warning
 export BASH_SILENCE_DEPRECATION_WARNING=1
 
 # added by Nix installer

@@ -88,3 +88,8 @@
   ("C-c m a" . mc/mark-all-like-this))
 #+end_src
 
+** Exec path
+#+begin_src emacs-lisp
+(setq exec-path (cons (expand-file-name "~/.bin") exec-path))
+(setq exec-path (cons (expand-file-name "~/.cargo/bin") exec-path))
+#+end_src
