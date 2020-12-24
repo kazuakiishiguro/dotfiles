@@ -1,17 +1,13 @@
 * Rust
 #+begin_src emacs-lisp
-(use-package rustic
-  :init
-  (setq rustic-lsp-server 'rust-analyer)
-  :config
-  (setq rust-indent-method-chain t)
-  (setq rustic-format-on-save t))
+(use-package rust-mode
+  :custom rust-format-on-save t)
 #+end_src
 
 * Cargo
 #+begin_src emacs-lisp
 (use-package cargo
- :hook (rust-mode . cargo-minor-mode))
+  :hook (rust-mode . cargo-minor-mode))
 #+end_src
 
 * ob-rust

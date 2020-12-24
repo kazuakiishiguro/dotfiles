@@ -26,24 +26,16 @@
 ** lsp-mode
 #+begin_src emacs-lisp
 (use-package lsp-mode
-  :custom((lsp-prefer-flymake nil)
-          (lsp-auto-configure t)
-          (lsp-rust-server 'rust-analyzer)
-          (lsp-keep-workspace-alive nil))
   ;; reformat code and add missing (or remove old) imports
-  :hook
-  (before-save . lsp-format-buffer)
-  (before-save . lsp-organize-imports)
-  (lsp-mode . lsp-enable-which-key-integration)
-  :bind
-  ("M-," . lsp-describe-thing-at-point)
-  :init
-  (setq lsp-rust-analyzer-display-chaining-hints t)
-  (setq lsp-rust-analyzer-display-parameter-hints t)
-  (setq lsp-rust-analyzer-server-display-inlay-hints t)
-  (setq lsp-rust-analyzer-inlay-hints-mode t))
+  :hook (rust-mode . lsp)
+  :bind ("C-c h" . lsp-describe-thing-at-point)
+  :custom (lsp-rust-server 'rust-analyzer))
 #+end_src
 
+** lsp-ui
+#+begin_src emacs-lisp
+(use-package lsp-ui)
+#+end_src
 ** lsp-treemacs
 #+begin_src emacs-lisp
 (use-package lsp-treemacs

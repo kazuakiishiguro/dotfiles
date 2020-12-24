@@ -26,5 +26,5 @@ else
   brew install ansible
 fi
 
-echo 'Ansible playbook exec. Running command ansible-playbook to localhost.'
-ansible-playbook -i localhost, -c local ./scripts/macos.yml
+# echo 'Ansible playbook exec. Running command ansible-playbook to localhost.'
+# ansible-playbook -i localhost, -c local ./scripts/macos.yml
