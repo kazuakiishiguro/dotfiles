@@ -148,10 +148,10 @@ if [ "$arch" == 'arm64' ]; then
 fi
 
 # go
-#if [ -x "`which go`" ]; then
-#  export GOPATH=$HOME/.go
-#  export PATH=$PATH:$GOPATH/bin
-#fi
+if [ -x "`which go`" ]; then
+  export GOPATH=$HOME/.go
+  export PATH=$PATH:$GOPATH/bin
+fi
 
 # rustc
 if [ -e "$HOME/.cargo" ]; then
@@ -173,7 +173,6 @@ if [ "$platform" = osx ]; then
     fi
   fi
 fi
-
 
 
 # This loads nvm bash_completion
