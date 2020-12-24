@@ -45,6 +45,8 @@ function _git_branch () {
 if [ "$platform" = osx ]; then
   if [ "$arch" == 'arm64' ]; then
     export PS1="[${arch}]\u@\h:\[\e[36m\]\w\[\e[32m\]\$(_git_branch)\[\e[0m\]\$ "
+    # export brew path
+    export PATH=/opt/homebrew/bin:$PATH
   else
     export PS1="\u@\h:\[\e[36m\]\w\[\e[32m\]\$(_git_branch)\[\e[0m\]\$ "
   fi
@@ -101,32 +103,48 @@ alias dockerstop='docker stop $(docker ps -aq)'
 alias dockerkill='docker kill $(docker ps -aq)'
 alias emacsmin='emacs -nw --no-init-file --no-site-file'
 alias emacs='emacs -nw'
-alias screen='/usr/local/bin/screen'
+## check if it's arm64
+if [ "$arch" == 'arm64' ]; then
+    alias screen='/opt/homebrew/bin/screen'
+else
+    alias screen='/usr/local/bin/screen'
+fi
 
 # fzf
-if which fzf > /dev/null 2>&1; then
-  [ -f ~/.fzf.bash ] && source ~/.fzf.bash
-else
-  echo "installing fzf..."
-  if [ "$platform" = osx ]; then
-    brew install fzf
-    $(brew --prefix)/opt/fzf/install
-  fi
-  source ~/.bashrc
-fi
+#if which fzf > /dev/null 2>&1; then
+#  [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+#else
+#  echo "installing fzf..."
+#  if [ "$platform" = osx ]; then
+#    brew install fzf
+#    $(brew --prefix)/opt/fzf/install
+#  fi
+#  source ~/.bashrc
+#fi
 
 # nvm
 if [ -e "$HOME/bin" ];then
-  export PATH="$HOME/bin:./node_modules/.bin:$PATH"
+    export PATH="$HOME/bin:./node_modules/.bin:$PATH"
 fi
 
 if [ -e "$HOME/.nvm" ]; then
-  export NVM_DIR="$HOME/.nvm"
-  if [ -e "/usr/local/opt/nvm/nvm.sh" ]; then
-    . "/usr/local/opt/nvm/nvm.sh"
-  elif [ -e "$NVM_DIR/nvm.sh" ]; then
-    . "$NVM_DIR/nvm.sh"
-  fi
+    export NVM_DIR="$HOME/.nvm"
+    if [ -e "/usr/local/opt/nvm/nvm.sh" ]; then
+	. "/usr/local/opt/nvm/nvm.sh"
+    elif [ -e "$NVM_DIR/nvm.sh" ]; then
+	. "$NVM_DIR/nvm.sh"
+    fi
+fi
+
+
+if [ "$arch" == 'arm64' ]; then
+    export NVM_DIR="$HOME/.nvm"
+    if [ -e "/opt/homebrew/opt/nvm/nvm.sh" ]; then
+	# This loads nvm
+	[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"
+	# This loads nvm bash_completion
+	[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && . "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"	
+    fi
 fi
 
 # go
@@ -156,5 +174,6 @@ if [ "$platform" = osx ]; then
   fi
 fi
 
+
 # This loads nvm bash_completion
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+# [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
