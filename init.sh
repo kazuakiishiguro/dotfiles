@@ -4,12 +4,14 @@ set -eu
 
 # os setting
 if [[ `uname` == 'Darwin' ]]; then
+    OS="mac"
     source ./scripts/setup_macos.sh
-    source ./scripts/install-rust.sh mac
 elif [[ `uname -a` == *Ubuntu* ]]; then
+    OS="linux"
     source ./scripts/setup_ubuntu.sh
-    source ./scripts/install-rust.sh linux
- fi
+fi
+
+    source ./scripts/install-rust.sh ${OS}
 
 modules='
     bash

@@ -4,31 +4,37 @@ set -eu
 
 sudo apt update
 
-exists() { type -t "$1" > /dev/null 2>&1; }
+is_command() {
+    # Checks for existence of string passed in as only function argument.
+    # Exit value of 0 when exists, 1 if not exists. Value is the result
+    # of the `command` shell built-in call.
+    local check_command="$1"
+    command -v "${check_command}" > /dev/null 2>&1
+}
 
 # install git
-if exists git; then
+if is_command git; then
   echo "git exists"
 else
   sudo apt install -y git
 fi
 
 # install xcape
-if exists xcape; then
+if is_command xcape; then
   echo "xcape exists"
 else
   sudo apt install -y xcape
 fi
 
 # install fzf
-if exists fzf; then
+if is_command fzf; then
   echo "fzf exists"
 else
   sudo apt install -y fzf
 fi
 
 # install emacs
-if exists emacs; then
+if is_command emacs; then
   echo "emacs exists"
 else
   sudo add-apt-repository ppa:kelleyk/emacs
@@ -38,7 +44,7 @@ fi
 
 # install brave browser
 # this will install apt-transport https and curl packages as well
-if exists brave-browser; then
+if is_command brave-browser; then
   echo "brave browser exists"
 else
   sudo apt install -y apt-transport-https curl
@@ -49,7 +55,7 @@ else
 fi
 
 # install keybase
-if exists keybase; then
+if is_command keybase; then
   echo "keybase exists"
 else
   curl --remote-name https://prerelease.keybase.io/keybase_amd64.deb

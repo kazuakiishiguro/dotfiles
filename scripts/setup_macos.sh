@@ -4,10 +4,16 @@ set -eu
 
 arch=`uname -m`
 
-exists() { type -t "$1" > /dev/null 2>&1; }
+is_command() {
+    # Checks for existence of string passed in as only function argument.
+    # Exit value of 0 when exists, 1 if not exists. Value is the result
+    # of the `command` shell built-in call.
+    local check_command="$1"
+    command -v "${check_command}" > /dev/null 2>&1
+}
 
-if exists brew; then
-  echo 'Homebrew exists. Skipping install.'
+if is_command brew; then
+    echo 'Homebrew is_command. Skipping install.'
 elif [ '${uname}' == 'arch64' ]; then
     cd /opt
     mkdir homebrew
@@ -20,10 +26,10 @@ fi
 echo 'Updating Homebrew...'
 brew update
 
-if exists ansible; then
-  echo 'Ansible exists. Skipping brew install ansible.'
+if is_command ansible; then
+    echo 'Ansible exists. Skipping brew install ansible.'
 else
-  brew install ansible
+    brew install ansible
 fi
 
 # echo 'Ansible playbook exec. Running command ansible-playbook to localhost.'
