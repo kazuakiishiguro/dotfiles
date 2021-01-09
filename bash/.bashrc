@@ -149,15 +149,19 @@ fi
 
 # go
 if [ -x "`which go`" ]; then
-  export GOPATH=$HOME/.go
-  export PATH=$PATH:$GOPATH/bin
+    # I chose to download arm64 go binary from here: https://golang.org/doc/install?download=go1.16beta1.darwin-arm64.pkg
+    if [ "$arch" == 'arm64' ]; then
+	export GOPATH=/usr/local/go
+    else
+	export GOPATH=$HOME/.go
+    fi
+    export PATH=$PATH:$GOPATH/bin
 fi
 
 # rustc
 if [ -e "$HOME/.cargo" ]; then
   export PATH="$HOME/.cargo/bin:$PATH"
 fi
-
 
 # for macos only setting
 if [ "$platform" = osx ]; then
@@ -173,7 +177,6 @@ if [ "$platform" = osx ]; then
     fi
   fi
 fi
-
 
 # This loads nvm bash_completion
 # [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
