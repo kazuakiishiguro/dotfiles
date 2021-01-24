@@ -8,13 +8,13 @@
   vars:
     homebrew_taps:
       - homebrew/cask
+      - d12frosted/emacs-plus # for emacs-plus
 
     homebrew_cask_packages:
       - name: android-file-transfer
       - name: android-studio
       - name: appcleaner
       - name: bettertouchtool
-      - name: docker
       - name: gpg-suite
       - name: keybase
       - name: kindle
@@ -32,14 +32,11 @@
       - name: ansible
       - name: autogen
       - name: bash
-      - name: bat
       - name: cmake
       - name: coreutils
       - name: curl
-      - name: docker
-      - name: emacs
+      - name: emacs-plus
       - name: fzf
-      - name: git
       - name: go
       - name: htop
       - name: hub
@@ -54,12 +51,11 @@
       - name: rustup-init
       - name: screen
       - name: stow
-      - name: tig
       - name: tree
       - name: wget
 
   tasks:
-    - name: homebrew update
+    - name: homebrew updatep
       homebrew:
         update_homebrew: yes
 
@@ -69,11 +65,13 @@
         state: present
       with_items: '{{ homebrew_taps }}'
 
-    - name: homebrew cask packages install
-      homebrew_cask: name={{ item.name }} state=installed
-      environment:
-        HOMEBREW_CASK_OPTS: "--appdir=/Applications"
-      with_items: '{{ homebrew_cask_packages }}'
+    # - name: homebrew cask packages install
+    #   homebrew:
+    #     name: '{{ item.name }}'
+    #     state: present
+    #   environment:
+    #     HOMEBREW_CASK_OPTS: "--cask --appdir=/Applications"
+    #   with_items: '{{ homebrew_cask_packages }}'
 
     - name: homebrew packages install
       homebrew:
