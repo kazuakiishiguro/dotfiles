@@ -1,7 +1,7 @@
 [user]
 	email = kazuakiishiguro@protonmail.com
 	name = Kazuaki Ishiguro
-	signingkey = 13E27513
+	signingkey = FB51D03313E27513
 
 [commit]
 	gpgsign = true
@@ -15,3 +15,5 @@
 	branch = auto
 [core]
 	editor = emacs -nw
+[gpg]
+	program = gpg

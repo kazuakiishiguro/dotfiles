@@ -15,7 +15,6 @@
       - name: android-studio
       - name: appcleaner
       - name: bettertouchtool
-      - name: gpg-suite
       - name: keybase
       - name: kindle
       - name: sketch
@@ -38,6 +37,7 @@
       - name: emacs-plus
       - name: fzf
       - name: go
+      - name: gpg
       - name: htop
       - name: hub
       - name: jq
