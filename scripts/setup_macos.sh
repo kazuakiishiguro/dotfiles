@@ -14,13 +14,8 @@ is_command() {
 
 if is_command brew; then
     echo 'Homebrew is_command. Skipping install.'
-elif [ '${uname}' == 'arch64' ]; then
-    cd /opt
-    mkdir homebrew
-    sudo chown $USER:admin homebrew
-    curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C homebrew
 else
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
 echo 'Updating Homebrew...'
