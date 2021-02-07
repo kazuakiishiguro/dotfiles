@@ -42,6 +42,7 @@
       - name: hub
       - name: jq
       - name: nvm
+      - name: pinentry-mac
       - name: procs
       - name: pyenv
       - name: python
