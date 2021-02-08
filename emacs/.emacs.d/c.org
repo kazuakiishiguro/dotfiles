@@ -1,0 +1,5 @@
+* C Styles
+#+begin_src emacs-lisp
+(setq c-default-style "linux"
+      c-basic-offset 4)
+#+end_src

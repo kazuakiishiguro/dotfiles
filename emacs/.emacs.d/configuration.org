@@ -37,6 +37,11 @@
 (load-config "prog.org")
 #+end_src
 
+** C
+#+begin_src emacs-lisp
+(load-config "c.org")
+#+end_src
+
 ** Rust
 #+begin_src emacs-lisp
 (load-config "rust.org")
