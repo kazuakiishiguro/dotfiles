@@ -1,9 +1,9 @@
 * UI settings
 ** Theme
+*** Disable overlay for =sp-pair-overlay-face= (smartparens)
 #+begin_src emacs-lisp
-(use-package dracula-theme
-  :config
-  (load-theme 'dracula t))
+(custom-set-faces
+ '(sp-pair-overlay-face ((t nil))))
 #+end_src
 
 ** Mode-line
