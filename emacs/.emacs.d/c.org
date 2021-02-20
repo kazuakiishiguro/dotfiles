@@ -1,5 +1,12 @@
 * C Styles
 #+begin_src emacs-lisp
-(setq c-default-style "linux"
-      c-basic-offset 4)
+(use-package google-c-style
+    :init
+    (require 'google-c-style)
+    (defun cc-mode-init ()
+      (google-set-c-style)
+      (setq c-basic-offset 4)
+      )
+    (add-hook 'c-mode-hook 'cc-mode-init)
+    )
 #+end_src
