@@ -26,14 +26,14 @@ if [[ -z "$LANG" ]]; then
 fi
 
 # add line for prompt
-function add_line {
-  if [[ -z "${PS1_NEWLINE_LOGIN}" ]]; then
-    PS1_NEWLINE_LOGIN=false
-  else
-    printf '\n'
-  fi
-}
-PROMPT_COMMAND='add_line'
+# function add_line {
+#   if [[ -z "${PS1_NEWLINE_LOGIN}" ]]; then
+#     PS1_NEWLINE_LOGIN=false
+#   else
+#     printf '\n'
+#   fi
+# }
+# PROMPT_COMMAND='add_line'
 
 # git branch
 function _git_branch () {
