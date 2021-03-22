@@ -167,13 +167,13 @@ fi
 if [ "$platform" = osx ]; then
   # dircolors
   export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
-  LS_COLORS="di=01;36"
-  export LS_COLORS
+#  LS_COLORS="di=01;36"
+#  export LS_COLORS
   if [ -f "$HOME/.dircolors" ]; then
     if type dircolors > /dev/null 2>&1; then
-      eval $(dircolors $HOME/.dircolors/dircolors.ansi-dark)
+      eval $(dircolors $HOME/.dircolors/dircolors.256dark)
     elif type gdircolors > /dev/null 2>&1; then
-      eval $(gdircolors $HOME/.dircolors/dircolors.ansi-dark)
+      eval $(gdircolors $HOME/.dircolors/dircolors.256dark)
     fi
   fi
 fi

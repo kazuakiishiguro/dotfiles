@@ -26,3 +26,6 @@ hardstatus alwayslastline "%{= wk} %-w%{= dw} %n* %t %{-}%+w %=%D %m/%d/%Y %C "
 # color
 defbce on
 term xterm-256color
+
+# switching window
+bind 'o' focus # C-t o

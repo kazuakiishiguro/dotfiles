@@ -40,6 +40,18 @@
   :hook ((org-mode . visual-line-mode)))
 #+end_src
 
+** Load Languages
+#+begin_src emacs-lisp
+(org-babel-do-load-languages
+  'org-babel-load-languages
+  '((C . t)
+    (emacs-lisp . t)
+    (shell . t)
+    (js . t)
+    (latex . t)
+    (python . t)))
+#+end_src
+
 ** Template
 *** Load org-tempo
 #+begin_src emacs-lisp
@@ -156,13 +168,6 @@
 *** LaTeX
 #+begin_src emacs-lisp
 (require 'ox-latex)
-(org-babel-do-load-languages
-  'org-babel-load-languages
-  '((emacs-lisp . t)
-    (shell . t)
-    (js . t)
-    (latex . t)
-    (python . t)))
 #+end_src
 
 *** Disable asking before evaluation
