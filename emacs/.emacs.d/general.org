@@ -63,6 +63,11 @@
 (add-to-list 'org-structure-template-alist
              '("s" . "src"))
 #+end_src
+*** C
+#+begin_src emacs-lisp
+(add-to-list 'org-structure-template-alist
+             '("kr" . "src C"))
+#+end_src
 
 *** emacs-lisp
 #+begin_src emacs-lisp
