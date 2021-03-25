@@ -39,7 +39,7 @@ if is_command emacs; then
 else
   sudo add-apt-repository ppa:kelleyk/emacs
   sudo apt update
-  sudo apt-get install -y emacs26
+  sudo apt-get install -y emacs27
 fi
 
 # install brave browser

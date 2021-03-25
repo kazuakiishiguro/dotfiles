@@ -45,6 +45,7 @@
 *** Window threshold
 #+begin_src emacs-lisp
 (setq split-height-threshold nil)
+(setq split-width-threshold 0)
 #+end_src
 
 ** Minormodes
