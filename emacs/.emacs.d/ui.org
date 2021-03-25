@@ -24,11 +24,14 @@
 *** Line numbers
 [[https://github.com/kisswiki/kisswiki/blob/master/src/code_editors/emacs/line-numbers.md][https://github.com/kisswiki/kisswiki/blob/master/src/code_editors/emacs/line-numbers.md]]
 #+begin_src emacs-lisp
-(defun init-line-numbers-mode ()
-(display-line-numbers-mode)
-(setq display-line-numbers-witdth-start t))
+(defun my/init-line-numbers-mode ()
+  "Initialize line numbers mode."
+  (display-line-numbers-mode)
+  (setq display-line-numbers-witdth-start t))
+#+end_src
 
-(add-hook 'prog-mode-hook 'init-line-numbers-mode)
+#+begin_src emacs-lisp
+(add-hook 'prog-mode-hook 'my/init-line-numbers-mode)
 #+end_src
 *** Hilight line
 #+begin_src emacs-lisp
@@ -36,6 +39,19 @@
  '(line-number-current-line ((t (:foreground "Royalblue" :background "DarkGray")))))
 #+end_src
 ** Window settings
+*** Three way split
+#+begin_src emacs-lisp
+(defun my/three-way-split ()
+  "Split the screen three ways."
+  (interactive)
+  (split-window-horizontally)
+  (other-window 1 nil)
+  (switch-to-next-buffer)
+  (split-window-horizontally)
+  (other-window 1 nil)
+  (switch-to-next-buffer)
+  (balance-windows))
+#+end_src
 *** Window split
 #+begin_src emacs-lisp
 (global-set-key (kbd "C-c w h") 'split-window-horizontally)
@@ -79,5 +95,4 @@
   (add-to-list 'git-gutter:update-hooks 'focus-in-hook)
   (add-hook 'magit-post-refresh-hook 'git-gutter:update-all-windows)
   (global-git-gutter-mode t))
-
 #+end_src
