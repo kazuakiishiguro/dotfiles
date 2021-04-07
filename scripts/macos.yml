@@ -27,7 +27,6 @@
       - name: zoomus
 
     homebrew_packages:
-      - name: awscli
       - name: ansible
       - name: autogen
       - name: bash
