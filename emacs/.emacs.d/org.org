@@ -1,127 +1,136 @@
 #+TITLE: ORG-MODE
 
 #+begin_src emacs-lisp
-  (require 'org)
-  (require 'org-tempo)
+ (require 'org)
+ (require 'org-tempo)
 #+end_src
 
 ** BASE SETTINGS
 
 #+begin_src emacs-lisp
-  (setq org-directory "~/org")
-  (setq org-agenda-files (file-expand-wildcards "~/*.org"))
-  (setq org-agenda-files (quote ("~/org/index.org")))
-  (setq org-archive-location (concat "~/org/archive.org" "::* From %s"))
-  (setq org-todo-keywords
-	'((sequence "TODO(t)" "NOTE(n)" "DONE(d)" "CANCEL(c)")))
-  (setq org-log-done 'time)
-  (setq org-src-fontify-natively t)
-  (setq org-src-tab-acts-natively nil)
-  (setq org-edit-src-content-indentation 0)
-  (setq org-export-with-smart-quotes t)
-  (setq org-export-with-toc t)
-  (setq org-adapt-indentation nil)
-  (setq org-src-preserve-indentation t)
-  (setq org-hide-emphasis-markers t)
-  (setq org-list-indent-offset 1)
+ (setq org-directory "~/org")
+ (setq org-agenda-files (file-expand-wildcards "~/*.org"))
+ (setq org-agenda-files (quote ("~/org/index.org")))
+ (setq org-archive-location (concat "~/org/archive.org" "::* From %s"))
+ (setq org-todo-keywords
+       '((sequence "TODO(t)" "NOTE(n)" "DONE(d)" "CANCEL(c)")))
+ (setq org-log-done 'time)
+ (setq org-src-fontify-natively t)
+ (setq org-src-tab-acts-natively t)
+ (setq org-edit-src-content-indentation 1)
+ (setq org-export-with-smart-quotes t)
+ (setq org-export-with-toc t)
+ (setq org-hide-emphasis-markers t)
 #+end_src
 
 ** LOAD BABEL LANGUAGES
 
 #+begin_src emacs-lisp
-  (org-babel-do-load-languages
-    'org-babel-load-languages
-    '((C . t)
-      (emacs-lisp . t)
-      (shell . t)
-      (js . t)
-      (latex . t)
-      (python . t)
-      (scheme .t)))
+ (org-babel-do-load-languages
+  'org-babel-load-languages
+  '((C . t)
+    (emacs-lisp . t)
+    (shell . t)
+    (js . t)
+    (latex . t)
+    (python . t)
+    (scheme .t)))
 #+end_src
 
 ** STRUCTURE TEMPLATES
 
 #+begin_src emacs-lisp
-  (add-to-list 'org-structure-template-alist '("s" . "src"))
-  (add-to-list 'org-structure-template-alist '("kr" . "src C"))
-  (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
-  (add-to-list 'org-structure-template-alist '("rs" . "src rust"))
-  (add-to-list 'org-structure-template-alist '("tex" . "src latex"))
+ (add-to-list 'org-structure-template-alist '("s" . "src"))
+ (add-to-list 'org-structure-template-alist '("kr" . "src C"))
+ (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+ (add-to-list 'org-structure-template-alist '("rs" . "src rust"))
+ (add-to-list 'org-structure-template-alist '("tex" . "src latex"))
 #+end_src
 
 ** CAPTURE TASK
 
 #+begin_src emacs-lisp
-(setq org-capture-templates
-     '(("b" "Blog ideas" entry (file+datetree "~/org/notes/blog-ideas.org" "BLOG IDEA")
-     "* %?\n %i\n %a")
-     ("w" "Work log" entry (file+datetree "~/org/log.org" "WORK")
-     "* %?\nEntered on %U\n  %i\n  %a")
-     ("p" "Programming Note" entry (file+headline "~/org/notes/note.org" "PROGRAMMING")
-     "* %?\n %U %f")
-     ("m" "Misc Note" entry (file+headline "~/org/notes/note.org" "MISC")
-     "* %?\n %U %f")
-     ("l" "Life Note" entry (file+headline "~/org/notes/note.org" "LIFE")
-     "* %?\n %U %f")
-     ("t" "TODO Entry" entry (file+headline "~/org/index.org" "CURRENT")
-     "* TODO %?\n %i\n %a")))
+ (setq org-capture-templates
+       '(("b" "Blog ideas" entry (file+datetree "~/org/notes/blog-ideas.org" "BLOG IDEA")
+	  "* %?\n %i\n %a")
+	 ("w" "Work log" entry (file+datetree "~/org/log.org" "WORK")
+	  "* %?\nEntered on %U\n  %i\n  %a")
+	 ("p" "Programming Note" entry (file+headline "~/org/notes/note.org" "PROGRAMMING")
+	  "* %?\n %U %f")
+	 ("m" "Misc Note" entry (file+headline "~/org/notes/note.org" "MISC")
+	  "* %?\n %U %f")
+	 ("l" "Life Note" entry (file+headline "~/org/notes/note.org" "LIFE")
+	  "* %?\n %U %f")
+	 ("t" "TODO Entry" entry (file+headline "~/org/index.org" "CURRENT")
+	  "* TODO %?\n %i\n %a")))
 #+end_src
 
 **** TASK ARCHIVE
 
 #+begin_src emacs-lisp
-(defun my/mark-done-and-archive ()
-  "Mark the state of an org-mode item as DONE and archive it."
-  (interactive)
-  (org-todo 'done)
-  (org-archive-subtree))
+ (defun my/mark-done-and-archive ()
+   "Mark the state of an org-mode item as DONE and archive it."
+   (interactive)
+   (org-todo 'done)
+   (org-archive-subtree))
 
-(define-key org-mode-map (kbd "C-c C-x C-s") 'my/mark-done-and-archive)
+ (define-key org-mode-map (kbd "C-c C-x C-s") 'my/mark-done-and-archive)
 #+end_src
 
 ** KEYBINDINGS
 
 #+begin_src emacs-lisp
-  (define-key global-map "\C-ca" 'org-agenda)
-  (define-key global-map "\C-cc" 'org-capture)
-  (define-key global-map "\C-cp" (lambda () (interactive) (org-capture nil "p")))
-  (define-key global-map "\C-ct" (lambda () (interactive) (org-capture nil "t")))
-  (define-key global-map "\C-ci" (lambda () (interactive) (find-file "~/org/index.org") (flycheck-mode -1) (end-of-buffer)))
+ (define-key global-map "\C-ca" 'org-agenda)
+ (define-key global-map "\C-cc" 'org-capture)
+ (define-key global-map "\C-cp"
+   (lambda ()
+     (interactive)
+     (org-capture nil "p")))
+ (define-key global-map "\C-ct"
+   (lambda ()
+     (interactive)
+     (org-capture nil "t")))
+ (define-key global-map "\C-ci"
+   (lambda ()
+     (interactive)
+     (find-file "~/ofrg/index.org")
+     (flycheck-mode -1)
+     (end-of-buffer)))
 #+end_src
 
 ** EXPORTING
 *** LATEX
 
 #+begin_src emacs-lisp
-  (require 'ox-latex)
+ (require 'ox-latex)
 #+end_src
 
 *** DISABLE ASKING BEFORE EVALUATION
 
 #+begin_src emacs-lisp
-  (setq org-confirm-babel-evaluate nil)
+ (setq org-confirm-babel-evaluate nil)
 #+end_src
 
 *** HTMLIZE FOR ORG EXPORTS
 
 #+begin_src emacs-lisp
-  (use-package htmlize)
+ (use-package htmlize)
 #+end_src
 
 **** Footer configuration
+
 #+begin_src emacs-lisp
-(setq org-html-postamble nil)
+ (setq org-html-postamble nil)
 #+end_src
 
 *** ORG EXPORT FOR GITHUB MARKDOWN
 
 #+begin_src emacs-lisp
-  (use-package ox-gfm)
+ (use-package ox-gfm)
 #+end_src
 
 ** HOOKS
 
 #+begin_src emacs-lisp
-  (add-hook 'org-mode-hook 'auto-fill-mode)
+ (add-hook 'org-mode-hook 'auto-fill-mode)
 #+end_src
