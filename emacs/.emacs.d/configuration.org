@@ -71,3 +71,13 @@
 #+begin_src emacs-lisp
 (load-config "markdown.org")
 #+end_src
+
+** Org
+#+begin_src emacs-lisp
+(load-config "org.org")
+#+end_src
+
+** Gauche
+#+begin_src emacs-lisp
+(load-config "gauche.org")
+#+end_src
