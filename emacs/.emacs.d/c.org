@@ -5,8 +5,6 @@
     (require 'google-c-style)
     (defun cc-mode-init ()
       (google-set-c-style)
-      (setq c-basic-offset 4)
-      )
-    (add-hook 'c-mode-hook 'cc-mode-init)
-    )
+        (setq c-basic-offset 4))
+	(add-hook 'c-mode-hook 'cc-mode-init))
 #+end_src
