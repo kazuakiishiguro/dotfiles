@@ -1,10 +1,11 @@
-* C Styles
+#+TITLE: C-STYLES
+
 #+begin_src emacs-lisp
-(use-package google-c-style
-    :init
-    (require 'google-c-style)
-    (defun cc-mode-init ()
-      (google-set-c-style)
-        (setq c-basic-offset 4))
-	(add-hook 'c-mode-hook 'cc-mode-init))
+ (use-package google-c-style
+     :init
+     (require 'google-c-style)
+     (defun cc-mode-init ()
+       (google-set-c-style)
+       (setq c-basic-offset 4))
+     (add-hook 'c-mode-hook 'cc-mode-init))
 #+end_src
