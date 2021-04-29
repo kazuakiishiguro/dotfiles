@@ -93,7 +93,7 @@
  (define-key global-map "\C-ci"
    (lambda ()
      (interactive)
-     (find-file "~/ofrg/index.org")
+     (find-file "~/org/index.org")
      (flycheck-mode -1)
      (end-of-buffer)))
 #+end_src
