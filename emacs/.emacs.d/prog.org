@@ -32,10 +32,6 @@
   :custom (lsp-rust-server 'rust-analyzer))
 #+end_src
 
-** lsp-ui
-#+begin_src emacs-lisp
-(use-package lsp-ui)
-#+end_src
 ** lsp-treemacs
 #+begin_src emacs-lisp
 (use-package lsp-treemacs
