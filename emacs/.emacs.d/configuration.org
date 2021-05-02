@@ -5,84 +5,84 @@
 * BASIC CONFIGS
 
 #+begin_src emacs-lisp
- (eval-when-compile
-   (require 'use-package))
+(eval-when-compile
+  (require 'use-package))
 #+end_src
 
 ** ALWAYS =:ensure t=
 #+begin_src emacs-lisp
- (require 'use-package-ensure)
- (setq use-package-always-ensure t)
+(require 'use-package-ensure)
+(setq use-package-always-ensure t)
 #+end_src
 
 * LOAD CONFIGS
 
 #+begin_src emacs-lisp
-  (defun load-config (file)
-    (org-babel-load-file
-     (expand-file-name
-      (concat user-emacs-directory file))))
+(defun load-config (file)
+  (org-babel-load-file
+   (expand-file-name
+    (concat user-emacs-directory file))))
 #+end_src
 
 ** GENERAL
 
 #+begin_src emacs-lisp
-  (load-config "general.org")
+ (load-config "general.org")
 #+end_src
 
 ** UI
 
 #+begin_src emacs-lisp
-  (load-config "ui.org")
+ (load-config "ui.org")
 #+end_src
 
 ** PROGRAMMING
 
 #+begin_src emacs-lisp
-  (load-config "prog.org")
+ (load-config "prog.org")
 #+end_src
 
 ** C
 #+begin_src emacs-lisp
-  (load-config "c.org")
+ (load-config "c.org")
 #+end_src
 
 ** RUST
 #+begin_src emacs-lisp
-  (load-config "rust.org")
+ (load-config "rust.org")
 #+end_src
 
 ** SOLIDITY
 #+begin_src emacs-lisp
-  (load-config "solidity.org")
+ (load-config "solidity.org")
 #+end_src
 
 ** PYTHON
 #+begin_src emacs-lisp
-  (load-config "python.org")
+ (load-config "python.org")
 #+end_src
 
 ** WEB
 #+begin_src emacs-lisp
-  (load-config "web.org")
+ (load-config "web.org")
 #+end_src
 
 ** JAVASCRIPT
 #+begin_src emacs-lisp
-  (load-config "javascript.org")
+ (load-config "javascript.org")
 #+end_src
 
 ** MARKDOWN
 #+begin_src emacs-lisp
-  (load-config "markdown.org")
+ (load-config "markdown.org")
 #+end_src
 
 ** ORG
 #+begin_src emacs-lisp
-  (load-config "org.org")
+ (load-config "org.org")
 #+end_src
 
 ** GAUCHE
 #+begin_src emacs-lisp
-  (load-config "gauche.org")
+ (load-config "gauche.org")
 #+end_src
