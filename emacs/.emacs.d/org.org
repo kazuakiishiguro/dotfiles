@@ -58,13 +58,13 @@
 	 "* %?\n %i\n %a")
 	("w" "Work log" entry (file+datetree "~/org/log.org" "WORK")
 	 "* %?\nEntered on %U\n  %i\n  %a")
-	("p" "Programming Note" entry (file+headline org-note-files "PROGRAMMING")
+	("p" "Programming Note" entry (file+headline "~/org/notes/note.org" "PROGRAMMING")
 	 "* %?\n %U %f")
-	("m" "Misc Note" entry (file+headline org-note-files "MISC")
+	("m" "Misc Note" entry (file+headline "~/org/notes/note.org" "MISC")
 	 "* %?\n %U %f")
-	("l" "Life Note" entry (file+headline org-note-files "LIFE")
+	("l" "Life Note" entry (file+headline "~/org/notes/note.org" "LIFE")
 	 "* %?\n %U %f")
-	("t" "TODO Entry" entry (file+headline org-agenda-files "CURRENT")
+	("t" "TODO Entry" entry (file+headline "~/org/index.org" "CURRENT")
 	 "* TODO %?\n %i\n %a")))
 #+end_src
 
@@ -96,13 +96,13 @@
 (define-key global-map "\C-ci"
   (lambda ()
     (interactive)
-    (find-file org-agenda-files)
+    (find-file "~/org/index.org")
     (flycheck-mode -1)
     (end-of-buffer)))
 (define-key global-map "\C-cn"
   (lambda ()
     (interactive)
-    (find-file org-note-files)
+    (find-file "~/org/notes/note.org")
     (flycheck-mode -1)
     (end-of-buffer)))
 #+end_src
