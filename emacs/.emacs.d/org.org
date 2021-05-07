@@ -8,21 +8,25 @@
 ** BASE SETTINGS
 
 #+begin_src emacs-lisp
- (setq org-directory "~/org")
- (setq org-agenda-files (quote ("~/org/index.org")))
- (setq org-note-files (quote ("~/org/notes/note.org")))
- (setq org-refile-targets '((org-agenda-files :maxlevel . 3)
-			    (org-note-files :maxlevel . 2)))
- (setq org-archive-location (concat "~/org/archive.org" "::* From %s"))
- (setq org-todo-keywords
-       '((sequence "TODO(t)" "NOTE(n)" "DONE(d)" "CANCEL(c)")))
- (setq org-log-done 'time)
- (setq org-src-fontify-natively t)
- (setq org-src-tab-acts-natively t)
- (setq org-edit-src-content-indentation 1)
- (setq org-export-with-smart-quotes t)
- (setq org-export-with-toc t)
- (setq org-hide-emphasis-markers t)
+   (setq org-directory "~/org")
+   (setq org-agenda-files (quote ("~/org/index.org")))
+   (setq org-note-files (quote ("~/org/notes/note.org")))
+   (setq org-reading-files (quote ("~/org/notes/reading.org")))
+   (setq org-life-files (quote ("~/org/notes/life.org")))
+   (setq org-refile-targets '((org-agenda-files :maxlevel . 3)
+			      (org-note-files :maxlevel . 2)
+			      (org-reading-files :maxlevel . 2)
+			      (org-life-files :maxlevel . 2)))
+   (setq org-archive-location (concat "~/org/archive.org" "::* From %s"))
+   (setq org-todo-keywords
+	 '((sequence "TODO(t)" "NOTE(n)" "DONE(d)" "CANCEL(c)")))
+   (setq org-log-done 'time)
+   (setq org-src-fontify-natively t)
+   (setq org-src-tab-acts-natively t)
+   (setq org-edit-src-content-indentation 1)
+   (setq org-export-with-smart-quotes t)
+   (setq org-export-with-toc t)
+   (setq org-hide-emphasis-markers t)
 #+end_src
 
 ** LOAD BABEL LANGUAGES
@@ -53,19 +57,21 @@
 ** CAPTURE TASK
 
 #+begin_src emacs-lisp
-(setq org-capture-templates
-      '(("b" "Blog ideas" entry (file+datetree "~/org/notes/blog-ideas.org" "BLOG IDEA")
-	 "* %?\n %i\n %a")
-	("w" "Work log" entry (file+datetree "~/org/log.org" "WORK")
-	 "* %?\nEntered on %U\n  %i\n  %a")
-	("p" "Programming Note" entry (file+headline "~/org/notes/note.org" "PROGRAMMING")
-	 "* %?\n %U %f")
-	("m" "Misc Note" entry (file+headline "~/org/notes/note.org" "MISC")
-	 "* %?\n %U %f")
-	("l" "Life Note" entry (file+headline "~/org/notes/note.org" "LIFE")
-	 "* %?\n %U %f")
-	("t" "TODO Entry" entry (file+headline "~/org/index.org" "CURRENT")
-	 "* TODO %?\n %i\n %a")))
+ (setq org-capture-templates
+       '(("b" "Blog ideas" entry (file+datetree "~/org/notes/blog-ideas.org" "BLOG IDEA")
+	  "* %?\n %i\n %a")
+	 ("w" "Work log" entry (file+datetree "~/org/log.org" "WORK")
+	  "* %?\nEntered on %U\n  %i\n  %a")
+	 ("p" "Programming Note" entry (file+headline "~/org/notes/note.org" "PROGRAMMING")
+	  "* %?\n %U %f")
+	 ("r" "Reading Note" entry (file+headline "~/org/notes/reading.org" "READING")
+	  "* %?\n %U %f")
+	 ("m" "Misc Note" entry (file+headline "~/org/notes/note.org" "MISC")
+	  "* %?\n %U %f")
+	 ("l" "Life Note" entry (file+headline "~/org/notes/life.org" "LIFE")
+	  "* %?\n %U %f")
+	 ("t" "TODO Entry" entry (file+headline "~/org/index.org" "CURRENT")
+	  "* TODO %?\n %i\n %a")))
 #+end_src
 
 **** TASK ARCHIVE
