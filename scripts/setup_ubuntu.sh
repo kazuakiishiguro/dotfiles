@@ -42,40 +42,24 @@ else
   sudo apt-get install -y emacs27
 fi
 
-check_if_desktop() {
-    IS_DESKTOP="false"
 
-    displayManager=(
-	'xserver-common'
-	'zwayland'
-    )
-    for i in "${displayManager[@]}"; do
-	dpkg-query --show --showformat='${Status}\n' $i 2> /dev/null | grep "install ok installed" &> /dev/null
-	if [[ $? -eq 0 ]]; then
-	    IS_DESKTOP="true"
-	fi
-    done
-}
+# install brave browser
+# this will install apt-transport https and curl packages as well
+if is_command brave-browser; then
+    echo "brave browser exists"
+else
+    sudo apt install -y apt-transport-https curl
+    curl -s https://brave-browser-apt-release.s3.brave.com/brave-core.asc | sudo apt-key --keyring /etc/apt/trusted.gpg.d/brave-browser-release.gpg add -
+    echo "deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main" | sudo tee /etc/apt/sources.list.d/brave-browser-release.list
+    sudo apt update
+    sudo apt install -y brave-browser
+fi
 
-if $IS_DESKTOP; then
-    # install brave browser
-    # this will install apt-transport https and curl packages as well
-    if is_command brave-browser; then
-	echo "brave browser exists"
-    else
-	sudo apt install -y apt-transport-https curl
-	curl -s https://brave-browser-apt-release.s3.brave.com/brave-core.asc | sudo apt-key --keyring /etc/apt/trusted.gpg.d/brave-browser-release.gpg add -
-	echo "deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main" | sudo tee /etc/apt/sources.list.d/brave-browser-release.list
-	sudo apt update
-	sudo apt install -y brave-browser
-    fi
-
-    # install keybase
-    if is_command keybase; then
-	echo "keybase exists"
-    else
-	curl --remote-name https://prerelease.keybase.io/keybase_amd64.deb
-	sudo apt install -y ./keybase_amd64.deb
-	run_keybase
-    fi
+# install keybase
+if is_command keybase; then
+    echo "keybase exists"
+else
+    curl --remote-name https://prerelease.keybase.io/keybase_amd64.deb
+    sudo apt install -y ./keybase_amd64.deb
+    run_keybase
 fi
