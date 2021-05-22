@@ -60,7 +60,7 @@
  (setq org-capture-templates
        '(("b" "Blog ideas" entry (file+datetree "~/org/notes/blog-ideas.org" "BLOG IDEA")
 	  "* %?\n %i\n %a")
-	 ("w" "Work log" entry (file+datetree "~/org/log.org" "WORK")
+	 ("w" "Work log" entry (file+datetree "~/org/log.org")
 	  "* %?\nEntered on %U\n  %i\n  %a")
 	 ("p" "Programming Note" entry (file+headline "~/org/notes/note.org" "PROGRAMMING")
 	  "* %?\n %U %f")
