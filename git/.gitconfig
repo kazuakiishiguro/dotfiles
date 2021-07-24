@@ -1,7 +1,7 @@
 [user]
 	email = kazuakiishiguro@protonmail.com
 	name = Kazuaki Ishiguro
-	signingkey = 22C01E286855914D
+	signingkey = 89BECD98A8A99831
 
 [commit]
 	gpgsign = true
