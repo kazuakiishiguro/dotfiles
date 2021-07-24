@@ -25,16 +25,6 @@ if [[ -z "$LANG" ]]; then
   export LC_ALL="en_US.UTF-8"
 fi
 
-# add line for prompt
-# function add_line {
-#   if [[ -z "${PS1_NEWLINE_LOGIN}" ]]; then
-#     PS1_NEWLINE_LOGIN=false
-#   else
-#     printf '\n'
-#   fi
-# }
-# PROMPT_COMMAND='add_line'
-
 # git branch
 function _git_branch () {
   # Get current Git branch
@@ -103,24 +93,13 @@ alias dockerstop='docker stop $(docker ps -aq)'
 alias dockerkill='docker kill $(docker ps -aq)'
 alias emacsmin='emacs -nw --no-init-file --no-site-file'
 alias emacs='emacs -nw'
+
 ## check if it's arm64
 if [ "$arch" == 'arm64' ]; then
     alias screen='/opt/homebrew/bin/screen'
 else
     alias screen='/usr/local/bin/screen'
 fi
-
-# fzf
-#if which fzf > /dev/null 2>&1; then
-#  [ -f ~/.fzf.bash ] && source ~/.fzf.bash
-#else
-#  echo "installing fzf..."
-#  if [ "$platform" = osx ]; then
-#    brew install fzf
-#    $(brew --prefix)/opt/fzf/install
-#  fi
-#  source ~/.bashrc
-#fi
 
 # nvm
 if [ -e "$HOME/bin" ];then
@@ -181,3 +160,4 @@ fi
 # This loads nvm bash_completion
 # [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 source "$HOME/.cargo/env"
+. "$HOME/.cargo/env"
