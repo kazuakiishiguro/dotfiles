@@ -42,19 +42,6 @@ else
   sudo apt-get install -y emacs27
 fi
 
-
-# install brave browser
-# this will install apt-transport https and curl packages as well
-if is_command brave-browser; then
-    echo "brave browser exists"
-else
-    sudo apt install -y apt-transport-https curl
-    curl -s https://brave-browser-apt-release.s3.brave.com/brave-core.asc | sudo apt-key --keyring /etc/apt/trusted.gpg.d/brave-browser-release.gpg add -
-    echo "deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main" | sudo tee /etc/apt/sources.list.d/brave-browser-release.list
-    sudo apt update
-    sudo apt install -y brave-browser
-fi
-
 # install keybase
 if is_command keybase; then
     echo "keybase exists"
