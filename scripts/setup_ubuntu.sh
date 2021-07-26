@@ -12,20 +12,6 @@ is_command() {
     command -v "${check_command}" > /dev/null 2>&1
 }
 
-# install git
-if is_command git; then
-  echo "git exists"
-else
-  sudo apt install -y git
-fi
-
-# install xcape
-if is_command xcape; then
-  echo "xcape exists"
-else
-  sudo apt install -y xcape
-fi
-
 # install fzf
 if is_command fzf; then
   echo "fzf exists"

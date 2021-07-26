@@ -12,7 +12,7 @@ if [[ "$unamestr" == 'Darwin' ]]; then
 elif [[ "$unamestr" == 'Linux' ]]; then
   platform='debian'
   # set xcape keymap
-  source $HOME/.bin/start-xcape.sh
+  # source $HOME/.bin/start-xcape.sh
 fi
 
 # env
@@ -156,8 +156,3 @@ if [ "$platform" = osx ]; then
     fi
   fi
 fi
-
-# This loads nvm bash_completion
-# [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-source "$HOME/.cargo/env"
-. "$HOME/.cargo/env"
