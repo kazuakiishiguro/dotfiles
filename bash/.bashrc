@@ -156,3 +156,6 @@ if [ "$platform" = osx ]; then
     fi
   fi
 fi
+
+# for gpg sign
+export GPG_TTY=$(tty)
