@@ -1,5 +1,6 @@
 #+TITLE: C-STYLES
 
+** C styles
 #+begin_src emacs-lisp
  (use-package google-c-style
      :init
@@ -9,3 +10,10 @@
        (setq c-basic-offset 4))
      (add-hook 'c-mode-hook 'cc-mode-init))
 #+end_src
+
+** CMake
+   #+begin_src emacs-lisp
+    (use-package cmake-mode
+      :mode (("CMakeLists\\.txt\\'" . cmake-mode))
+             ("\\.cmake\\'" . cmake-mode))
+   #+end_src
