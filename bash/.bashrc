@@ -1,6 +1,11 @@
 HISTSIZE=1000
 HISTFILESIZE=2000
 
+function _is_command() {
+    local check_command="$1"
+    command -v "${check_command}" > /dev/null 2>&1
+}
+
 # arch
 arch=`uname -m`
 
@@ -10,9 +15,11 @@ unamestr=`uname`
 if [[ "$unamestr" == 'Darwin' ]]; then
   platform='osx'
 elif [[ "$unamestr" == 'Linux' ]]; then
-  platform='debian'
-  # set xcape keymap
-  # source $HOME/.bin/start-xcape.sh
+    platform='debian'
+    if _is_command Xorg; then
+      # set xcape keymap
+      source $HOME/.bin/start-xcape.sh
+    fi
 fi
 
 # env

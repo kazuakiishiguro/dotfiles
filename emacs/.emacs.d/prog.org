@@ -27,7 +27,7 @@
 #+begin_src emacs-lisp
 (use-package lsp-mode
   ;; reformat code and add missing (or remove old) imports
-  :hook (rust-mode . lsp)
+  :hook ((rust-mode c++-mode) . lsp)
   :bind ("C-c h" . lsp-describe-thing-at-point)
   :custom (lsp-rust-server 'rust-analyzer))
 #+end_src

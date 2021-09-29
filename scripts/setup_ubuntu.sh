@@ -28,11 +28,13 @@ else
   sudo apt-get install -y emacs27
 fi
 
-# install keybase
-if is_command keybase; then
-    echo "keybase exists"
-else
-    curl --remote-name https://prerelease.keybase.io/keybase_amd64.deb
-    sudo apt install -y ./keybase_amd64.deb
-    run_keybase
+if is_command Xorg; then # check if desktop or server
+    # install keybase
+    if is_command keybase; then
+	echo "keybase exists"
+    else
+	curl --remote-name https://prerelease.keybase.io/keybase_amd64.deb
+	sudo apt install -y ./keybase_amd64.deb
+	run_keybase
+    fi
 fi
