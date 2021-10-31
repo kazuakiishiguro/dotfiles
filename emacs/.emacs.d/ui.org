@@ -1,5 +1,11 @@
 * UI settings
 ** Theme
+*** Color theme
+#+begin_src emacs-lisp
+  (use-package plan9-theme
+    :init (load-theme 'plan9 t))
+#+end_src
+
 *** Disable overlay for =sp-pair-overlay-face= (smartparens)
 #+begin_src emacs-lisp
 (custom-set-faces

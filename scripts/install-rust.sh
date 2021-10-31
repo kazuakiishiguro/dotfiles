@@ -20,6 +20,6 @@ else
     echo "Installing rsut-analyzer"
     curl -L \
 	 https://github.com/rust-analyzer/rust-analyzer/releases/latest/download/rust-analyzer-$OS \
-	 -o ~/.bin/rust-analyzer    
+	 -o ~/.bin/rust-analyzer
 fi
 

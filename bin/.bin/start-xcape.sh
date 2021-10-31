@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # make CapsLock behave like Ctrl:
 setxkbmap -option ctrl:nocaps
