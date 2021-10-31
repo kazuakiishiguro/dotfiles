@@ -2,8 +2,6 @@
 
 set -eu
 
-OS=$1
-
 # install rust analyzer
 
 is_command() {
@@ -18,8 +16,7 @@ if is_command rust-analyzer; then
     echo "rust-analyzer exists"
 else
     echo "Installing rsut-analyzer"
-    curl -L \
-	 https://github.com/rust-analyzer/rust-analyzer/releases/latest/download/rust-analyzer-$OS \
-	 -o ~/.bin/rust-analyzer
+    git clone https://github.com/rust-analyzer/rust-analyzer.git
+    cd rust-analyzer
+    cargo xtask install --server
 fi
-
