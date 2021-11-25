@@ -6,8 +6,7 @@
      :init
      (require 'google-c-style)
      (defun cc-mode-init ()
-       (google-set-c-style)
-       (setq c-basic-offset 4))
+       (google-set-c-style))
      (add-hook 'c-mode-hook 'cc-mode-init)
      (add-hook 'c++-mode-hook 'cc-mode-init))
 #+end_src
