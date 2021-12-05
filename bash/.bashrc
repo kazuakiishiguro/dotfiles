@@ -11,10 +11,9 @@ arch=`uname -m`
 
 # os
 platform='unknown'
-unamestr=`uname`
-if [[ "$unamestr" == 'Darwin' ]]; then
+if [[ `uname` == 'Darwin' ]]; then
   platform='osx'
-elif [[ "$unamestr" == 'Linux' ]]; then
+elif [[ `uname -a` == *Ubuntu* ]]; then
     platform='debian'
     if _is_command Xorg; then
       # set xcape keymap
@@ -166,3 +165,6 @@ fi
 
 # for gpg sign
 export GPG_TTY=$(tty)
+
+# for mosh
+export LC_ALL="en_US.UTF-8"

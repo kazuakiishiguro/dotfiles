@@ -4,14 +4,26 @@ set -eu
 
 # os setting
 if [[ `uname` == 'Darwin' ]]; then
-    OS="mac"
-    source ./scripts/setup_macos.sh
+    OS="macos"
 elif [[ `uname -a` == *Ubuntu* ]]; then
-    OS="linux"
-    source ./scripts/setup_ubuntu.sh
+    OS="ubuntu"
+elif [[ `uname -a` == *arch* ]]; then
+    OS="arch"
 fi
 
-    source ./scripts/install-rust.sh ${OS}
+source ./scripts/setup_${OS}.sh
+source ./scripts/install-rust.sh
+
+if ! which stow > /dev/null 2>&1; then
+  echo "installing stow..."
+  if [ ${OS} == 'macos' ]; then
+    brew install stow
+  elif [ ${OS} == 'ubuntu' ]; then
+      sudo apt install -y stow
+  elif [ ${OS} == 'arch' ]; then
+    yay -S stow
+  fi
+fi
 
 modules='
     bash
@@ -21,17 +33,6 @@ modules='
     screen
     vim
 '
-
-if ! which stow > /dev/null 2>&1; then
-  echo "installing stow..."
-  if [[ `uname` == 'Darwin' ]]; then
-    brew install stow
-  else
-    if [[ `uname -a` == *Ubuntu* ]]; then
-      sudo apt install -y stow
-    fi
-  fi
-fi
 
 for module in $modules; do
     stow -t ~ -v $module
