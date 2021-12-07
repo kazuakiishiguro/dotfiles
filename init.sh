@@ -28,6 +28,7 @@ fi
 modules='
     bash
     bin
+    config
     emacs
     git
     screen
@@ -35,5 +36,5 @@ modules='
 '
 
 for module in $modules; do
-    stow -t ~ -v $module
+    stow -t ~ -v "$module"
 done
