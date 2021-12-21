@@ -148,6 +148,10 @@ if [ -e "$HOME/.cargo" ]; then
   export PATH="$HOME/.cargo/bin:$PATH"
 fi
 
+if _is_command sccache; then
+  export RUSTC_WRAPPER=`which sccache`
+fi
+
 # for macos only setting
 if [ "$platform" = osx ]; then
   # dircolors
