@@ -29,7 +29,13 @@
   ;; reformat code and add missing (or remove old) imports
   :hook ((rust-mode c++-mode) . lsp)
   :bind ("C-c h" . lsp-describe-thing-at-point)
-  :custom (lsp-rust-server 'rust-analyzer))
+  :custom
+  (lsp-rust-server 'rust-analyzer)
+  (lsp-rust-analyzer-cargo-watch-command "clippy")
+  (lsp-rust-analyzer-inlay-hints-mode t)
+  (lsp-rust-analyzer-server-display-inlay-hints t)
+  (lsp-rust-analyzer-display-parameter-hints t)
+  (lsp-rust-analyzer-display-chaining-hints t))
 #+end_src
 
 ** lsp-treemacs
