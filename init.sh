@@ -14,6 +14,16 @@ fi
 source ./scripts/setup_${OS}.sh
 source ./scripts/install-rust.sh
 
+modules=(
+    "bash"
+    "bin"
+    "config"
+    "emacs"
+    "git"
+    "screen"
+    "vim"
+)
+
 if ! which stow > /dev/null 2>&1; then
   echo "installing stow..."
   if [ ${OS} == 'macos' ]; then
@@ -21,20 +31,11 @@ if ! which stow > /dev/null 2>&1; then
   elif [ ${OS} == 'ubuntu' ]; then
       sudo apt install -y stow
   elif [ ${OS} == 'arch' ]; then
-    yay -S stow
+      yay -S stow
+      modules+=("xinitrc")
   fi
 fi
 
-modules='
-    bash
-    bin
-    config
-    emacs
-    git
-    screen
-    vim
-'
-
-for module in $modules; do
+for module in ${modules[@]}; do
     stow -t ~ -v "$module"
 done
