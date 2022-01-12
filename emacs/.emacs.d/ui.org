@@ -1,7 +1,8 @@
 * UI settings
 ** Theme
-*** Color theme
+*** Region color
 #+begin_src emacs-lisp
+ (set-face-attribute 'region nil :background "blue")
 #+end_src
 
 *** Disable overlay for =sp-pair-overlay-face= (smartparens)
