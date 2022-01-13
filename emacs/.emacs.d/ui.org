@@ -5,6 +5,45 @@
  (set-face-attribute 'region nil :background "blue")
 #+end_src
 
+*** Comment color and font
+#+begin_src emacs-lisp
+ (set-face-foreground 'font-lock-comment-face "bright")
+ (set-face-bold 'font-lock-comment-face t)
+#+end_src
+
+*** Keyword color and font
+#+begin_src emacs-lisp
+ (set-face-foreground 'font-lock-keyword-face "cyan")
+ (set-face-bold 'font-lock-keyword-face t)
+#+end_src
+
+*** Function name color and font
+#+begin_src emacs-lisp
+ (set-face-foreground 'font-lock-function-name-face "LightSlateBlue")
+ (set-face-bold 'font-lock-function-name-face t)
+#+end_src
+
+*** Variable color
+#+begin_src emacs-lisp
+ (set-face-foreground 'font-lock-variable-name-face "yellow")
+#+end_src
+
+*** Type color
+#+begin_src emacs-lisp
+ (set-face-foreground 'font-lock-type-face "green")
+#+end_src
+
+*** String color
+#+begin_src emacs-lisp
+ (set-face-foreground 'font-lock-string-face  "green")
+#+end_src
+
+*** Builtin color and font (like #include)
+#+begin_src emacs-lisp
+ (set-face-foreground 'font-lock-builtin-face "LightSlateBlue")
+ (set-face-bold 'font-lock-builtin-face t)
+#+end_src
+
 *** Disable overlay for =sp-pair-overlay-face= (smartparens)
 #+begin_src emacs-lisp
 (custom-set-faces
