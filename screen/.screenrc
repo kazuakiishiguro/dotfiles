@@ -1,5 +1,5 @@
-# set prefix for screen as C-t
-escape ^Tt
+# set prefix for screen as C-q
+escape ^Qq
 
 # set scrollback buffer to 10000
 defscrollback 10000
@@ -29,3 +29,9 @@ term xterm-256color
 
 # switching window
 bind 'o' focus # C-t o
+
+# first screen starts at 1 (default 0)
+bind c screen 1
+bind ^c screen 1
+bind 0 select 10
+screen 1
