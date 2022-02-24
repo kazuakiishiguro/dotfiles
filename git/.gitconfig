@@ -4,7 +4,7 @@
 	signingkey = 89BECD98A8A99831
 
 [commit]
-#	gpgsign = true
+	gpgsign = true
 
 [github]
 	user = kazuakiishiguro
@@ -13,7 +13,9 @@
 	diff = auto
 	status = auto
 	branch = auto
+	
 [core]
 	editor = emacs -nw
+	
 [gpg]
-#	program = gpg
+	program = gpg
