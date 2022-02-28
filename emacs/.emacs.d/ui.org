@@ -1,55 +1,19 @@
 * UI settings
 ** Theme
-*** Region color
-#+begin_src emacs-lisp
- (set-face-attribute 'region nil :background "blue")
-#+end_src
+   #+begin_src emacs-lisp
+    (use-package modus-themes
+      :init
+      ;; Add all your customizations prior to loading the themes
+      (setq modus-themes-italic-constructs t
+	    modus-themes-bold-constructs nil
+	    modus-themes-region '(bg-only no-extend))
 
-*** Comment color and font
-#+begin_src emacs-lisp
- (set-face-foreground 'font-lock-comment-face "bright")
- (set-face-bold 'font-lock-comment-face t)
-#+end_src
-
-*** Keyword color and font
-#+begin_src emacs-lisp
- (set-face-foreground 'font-lock-keyword-face "cyan")
- (set-face-bold 'font-lock-keyword-face t)
-#+end_src
-
-*** Function name color and font
-#+begin_src emacs-lisp
- (set-face-foreground 'font-lock-function-name-face "LightSlateBlue")
- (set-face-bold 'font-lock-function-name-face t)
-#+end_src
-
-*** Variable color
-#+begin_src emacs-lisp
- (set-face-foreground 'font-lock-variable-name-face "yellow")
-#+end_src
-
-*** Type color
-#+begin_src emacs-lisp
- (set-face-foreground 'font-lock-type-face "green")
-#+end_src
-
-*** String color
-#+begin_src emacs-lisp
- (set-face-foreground 'font-lock-string-face  "green")
-#+end_src
-
-*** Builtin color and font (like #include)
-#+begin_src emacs-lisp
- (set-face-foreground 'font-lock-builtin-face "LightSlateBlue")
- (set-face-bold 'font-lock-builtin-face t)
-#+end_src
-
-*** Disable overlay for =sp-pair-overlay-face= (smartparens)
-#+begin_src emacs-lisp
-(custom-set-faces
- '(sp-pair-overlay-face ((t nil))))
-#+end_src
-
+      ;; Load the theme files before enabling a theme (else you get an error).
+      (modus-themes-load-themes)
+      :config
+      (modus-themes-load-vivendi)
+      :bind ("<f5>" . modus-themes-toggle))
+   #+end_src
 ** Mode-line
 #+begin_src emacs-lisp
 (setq column-number-mode t)
