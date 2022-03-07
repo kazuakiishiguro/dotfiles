@@ -87,6 +87,17 @@
 (setq exec-path (cons (expand-file-name "~/.bin") exec-path))
 (setq exec-path (cons (expand-file-name "~/.cargo/bin") exec-path))
 #+end_src
+* Search
+** Counsel
+   #+begin_src emacs-lisp
+    (use-package counsel
+      :config
+      (setq ivy-use-virtual-buffers t)
+      (setq ivy-count-format "(%d/%d) ")
+      (global-set-key (kbd "C-s") 'swiper-isearch)
+      :init
+      (ivy-mode 1))
+   #+end_src
 ** Find file in projects
    #+begin_src emacs-lisp
    (use-package find-file-in-project)
