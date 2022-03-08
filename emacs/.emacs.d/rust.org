@@ -1,16 +1,20 @@
 * Rust
 #+begin_src emacs-lisp
-(use-package rust-mode
-  :custom rust-format-on-save t)
+ (use-package rust-mode
+   :custom rust-format-on-save t)
+
+ ;; Properly indent according to the rust standards
+ (add-hook `rust-mode-hook
+	   (lambda () (setq indent-tabs-mode nil)))
 #+end_src
 
 * Cargo
 #+begin_src emacs-lisp
-(use-package cargo
-  :hook (rust-mode . cargo-minor-mode))
+ (use-package cargo
+   :hook (rust-mode . cargo-minor-mode))
 #+end_src
 
 * ob-rust
 #+begin_src emacs-lisp
-(use-package ob-rust)
+ (use-package ob-rust)
 #+end_src
