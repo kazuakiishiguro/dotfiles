@@ -84,8 +84,14 @@
 
 ** Exec path
 #+begin_src emacs-lisp
-(setq exec-path (cons (expand-file-name "~/.bin") exec-path))
-(setq exec-path (cons (expand-file-name "~/.cargo/bin") exec-path))
+  (use-package exec-path-from-shell
+    :config
+    (progn
+      (when (memq window-system '(mac ns x))
+	(exec-path-from-shell-initialize))))
+
+ ;;(setq exec-path (cons (expand-file-name "~/.bin") exec-path))
+ ;; (setq exec-path (cons (expand-file-name "~/.cargo/bin") exec-path))
 #+end_src
 * Search
 ** Counsel

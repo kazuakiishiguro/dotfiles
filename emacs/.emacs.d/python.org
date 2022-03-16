@@ -1,5 +1,6 @@
 * Python
 #+begin_src emacs-lisp
-(use-package python-mode)
+ (use-package python-mode
+   :config
+   (add-hook 'python-mode-hook #'lsp))
 #+end_src
-
