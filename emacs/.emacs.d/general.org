@@ -93,3 +93,7 @@
   (ws-butler-global-mode))
 #+end_src
 
+** Start eshell
+   #+begin_src emacs-lisp
+    (global-set-key (kbd "C-x t") 'eshell)
+   #+end_src
