@@ -24,6 +24,7 @@ fi
 # env
 export PATH="$PATH:$HOME/.bin"
 export PATH="/usr/local/sbin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
 # lang
 if [[ -z "$LANG" ]]; then
