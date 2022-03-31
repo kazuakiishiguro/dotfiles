@@ -24,7 +24,7 @@ modules=(
     "vim"
 )
 
-if ! which stow > /dev/null 2>&1; then
+if ! command -v stow > /dev/null 2>&1; then
   echo "installing stow..."
   if [ ${OS} == 'macos' ]; then
     brew install stow
