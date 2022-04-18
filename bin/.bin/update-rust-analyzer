@@ -1,20 +1,22 @@
-#!/bin/sh
+#!/bin/bash
 
-set -eux
+set -eu
 
 # get arch
-if [[ $(uname -m) = arm64 ]]; then
+if [ "$(uname -m)" = arm64 ]; then
     ARCH="aarch64"
 else
     ARCH=$(uname -m)
 fi
 
 # get os
-if [[ "$OSTYPE" =~ ^darwin ]]; then
-    TRGT="apple-darwin"
-else
-    TRGT="unknown-${OSTYPE}"
-fi
+case "$OSTYPE" in
+    (*"darwin"*)
+	TRGT="apple-darwin"
+	;;
+    (*)
+	TRGT="unknown-${OSTYPE}"
+	;;esac
 
 echo "Updating rust-analyzer binary for: ${ARCH}-${TRGT}"
 curl -sL https://github.com/rust-analyzer/rust-analyzer/releases/latest/download/rust-analyzer-${ARCH}-${TRGT}.gz | zcat > $HOME/.cargo/bin/rust-analyzer
