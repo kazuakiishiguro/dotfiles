@@ -1,9 +1,21 @@
 #!/bin/sh
 
-set -e
+set -eux
 
-echo "Updating rust-analyzer binary \n"
+# get arch
+if [[ $(uname -m) = arm64 ]]; then
+    ARCH="aarch64"
+else
+    ARCH=$(uname -m)
+fi
 
-curl -sL https://github.com/rust-analyzer/rust-analyzer/releases/latest/download/rust-analyzer-x86_64-unknown-linux-gnu.gz | zcat > $HOME/.cargo/bin/rust-analyzer
+# get os
+if [[ "$OSTYPE" =~ ^darwin ]]; then
+    TRGT="apple-darwin"
+else
+    TRGT="unknown-${OSTYPE}"
+fi
 
-echo "Done! \n"
+echo "Updating rust-analyzer binary for: ${ARCH}-${TRGT}"
+curl -sL https://github.com/rust-analyzer/rust-analyzer/releases/latest/download/rust-analyzer-${ARCH}-${TRGT}.gz | zcat > $HOME/.cargo/bin/rust-analyzer
+echo "Done! 🦀"
