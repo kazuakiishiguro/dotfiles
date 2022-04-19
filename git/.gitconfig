@@ -1,13 +1,10 @@
-[user]
-	email = kazuakiishiguro@protonmail.com
-	name = Kazuaki Ishiguro
-	signingkey = 89BECD98A8A99831
+[includeIf "gitdir:~/fun/"]
+	 path = ~/.gitconfig_fun
+[includeIf "gitdir:~/work/"]
+	path = ~/.gitconfig_work
 
 [commit]
 	gpgsign = true
-
-[github]
-	user = kazuakiishiguro
 
 [color]
 	diff = auto
