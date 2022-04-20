@@ -1,5 +1,7 @@
 [includeIf "gitdir:~/fun/"]
-	 path = ~/.gitconfig_fun
+	path = ~/.gitconfig_fun
+[includeIf "gitdir:~/org/"]
+	path = ~/.gitconfig_fun
 [includeIf "gitdir:~/work/"]
 	path = ~/.gitconfig_work
 
