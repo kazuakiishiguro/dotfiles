@@ -81,6 +81,11 @@
 (defalias 'yes-or-no-p 'y-or-n-p)
 #+end_src
 
+** No redo
+#+begin_src emacs-lisp
+ (setq undo-no-redo t)
+#+end_src
+
 ** Disable visual bell
 #+begin_src emacs-lisp
 (setq rign-bell-function 'ignore)
