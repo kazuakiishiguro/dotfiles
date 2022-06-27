@@ -47,6 +47,10 @@
  '(line-number-current-line ((t (:foreground "Royalblue" :background "DarkGray")))))
 #+end_src
 ** Window settings
+*** Window size
+#+begin_src emacs-lisp
+(when window-system (set-frame-size (selected-frame) 200 80))
+#+end_src
 *** Three way split
 #+begin_src emacs-lisp
 (defun my/three-way-split ()
