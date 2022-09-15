@@ -27,7 +27,7 @@ modules=(
 if ! command -v stow > /dev/null 2>&1; then
   echo "installing stow..."
   if [ ${OS} == 'macos' ]; then
-    brew install stow
+      brew install stow
   elif [ ${OS} == 'ubuntu' ]; then
       sudo apt install -y stow
   elif [ ${OS} == 'arch' ]; then
