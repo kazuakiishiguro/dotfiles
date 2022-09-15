@@ -5,7 +5,7 @@ set -eu
 # os setting
 if [[ `uname` == 'Darwin' ]]; then
     OS="macos"
-elif [[ `uname -a` == *Ubuntu* ]]; then
+elif [[ `uname -a` == *Ubuntu* ]] || [[ `uname -a` == *pop-os* ]]; then
     OS="ubuntu"
 elif [[ `uname -a` == *arch* ]]; then
     OS="arch"
