@@ -45,6 +45,7 @@
    (lsp-rust-analyzer-display-parameter-hints nil)
    (lsp-rust-analyzer-display-reborrow-hints nil)
    :config
+   (add-to-list 'lsp-disabled-clients 'rls)
    (add-hook 'python-mode-hook 'lsp)
    (add-hook 'lsp-mode-hook 'lsp-ui-mode))
 #+end_src
