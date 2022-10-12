@@ -2,3 +2,17 @@
 #+begin_src emacs-lisp
  (use-package python-mode)
 #+end_src
+
+** Elpy
+#+begin_src emacs-lisp
+ (use-package elpy
+   :config
+   (elpy-enable))
+#+end_src
+
+** Autopep8
+#+begin_src emacs-lisp
+   (use-package py-autopep8
+     :config
+     (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save))
+#+end_src
