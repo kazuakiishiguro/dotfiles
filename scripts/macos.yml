@@ -11,19 +11,11 @@
       - d12frosted/emacs-plus # for emacs-plus
 
     homebrew_cask_packages:
-      - name: android-file-transfer
-      - name: android-studio
       - name: appcleaner
-      - name: bettertouchtool
-      - name: keybase
-      - name: kindle
-      - name: sketch
       - name: slack
-      - name: sourcetree
       - name: telegram
       - name: vagrant
       - name: virtualbox
-      - name: visual-studio-code
       - name: zoomus
 
     homebrew_packages:
