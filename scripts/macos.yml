@@ -32,13 +32,13 @@
       - name: htop
       - name: hub
       - name: jq
+      - name: mosh
       - name: nvm
       - name: pinentry-mac
       - name: procs
       - name: pyenv
       - name: python
       - name: python3
-      - name: reattach-to-user-namespace
       - name: rsync
       - name: rustup-init
       - name: screen
