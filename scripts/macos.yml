@@ -19,7 +19,6 @@
       - name: zoomus
 
     homebrew_packages:
-      - name: ansible
       - name: autogen
       - name: bash
       - name: cmake
@@ -33,7 +32,6 @@
       - name: hub
       - name: jq
       - name: mosh
-      - name: nvm
       - name: pinentry-mac
       - name: procs
       - name: pyenv
