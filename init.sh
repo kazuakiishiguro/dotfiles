@@ -22,6 +22,7 @@ modules=(
     "git"
     "screen"
     "vim"
+    "zsh"
 )
 
 if ! command -v stow > /dev/null 2>&1; then
