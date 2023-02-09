@@ -2,8 +2,13 @@
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # always load .zshrc
-if [ -f ~/.zshrc ]; then
-    . ~/.zshrc
+if [ -e "$HOME/.zshrc" ]; then
+    . "$HOME/.zshrc"
+fi
+
+# load .zprofile.local
+if [ -e "$HOME/.zprofile.local" ]; then
+    . "$HOME/.zprofile.local"
 fi
 
 # lang
