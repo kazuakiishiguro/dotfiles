@@ -32,6 +32,7 @@
       - name: hub
       - name: jq
       - name: mosh
+      - name: nvm
       - name: pinentry-mac
       - name: procs
       - name: pyenv
