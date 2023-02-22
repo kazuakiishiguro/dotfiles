@@ -3,3 +3,4 @@ emacs/.emacs.d/**
 !emacs/.emacs.d/*.org
 bin/.bin/rust-analyzer
 git/.gitconfig_work
+*.lock.json
