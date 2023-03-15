@@ -7,6 +7,7 @@ tap "d12frosted/emacs-plus"
 cask "appcleaner"
 cask "discord"
 cask "slack"
+cask "spotify"
 cask "telegram"
 cask "zoom"
 
