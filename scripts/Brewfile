@@ -9,6 +9,7 @@ cask "discord"
 cask "slack"
 cask "spotify"
 cask "telegram"
+cask "visual-studio-code"
 cask "zoom"
 
 brew "autogen"
