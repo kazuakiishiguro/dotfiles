@@ -86,3 +86,7 @@
 #+begin_src emacs-lisp
  (load-config "gauche.org")
 #+end_src
+** COPILOT
+#+begin_src emacs-lisp
+ (load-config "copilot.org")
+#+end_src

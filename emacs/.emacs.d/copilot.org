@@ -1,0 +1,14 @@
+* Copilot
+** Setup =quelpa= + =quelpa-use-package=
+   #+begin_src emacs-lisp
+    (use-package quelpa)
+    (use-package quelpa-use-package)
+   #+end_src
+** Setup =copilot.el=
+#+begin_src emacs-lisp
+ (use-package copilot
+   :quelpa (copilot :fetcher github
+		    :repo "zerolfx/copilot.el"
+		    :branch "main"
+		    :files ("dist" "*.el")))
+#+end_src
