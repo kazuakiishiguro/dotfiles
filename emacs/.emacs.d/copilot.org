@@ -1,14 +1,18 @@
 * Copilot
 ** Setup =quelpa= + =quelpa-use-package=
-   #+begin_src emacs-lisp
-    (use-package quelpa)
-    (use-package quelpa-use-package)
-   #+end_src
+#+begin_src emacs-lisp
+ (use-package quelpa)
+ (use-package quelpa-use-package)
+#+end_src
 ** Setup =copilot.el=
 #+begin_src emacs-lisp
  (use-package copilot
    :quelpa (copilot :fetcher github
 		    :repo "zerolfx/copilot.el"
 		    :branch "main"
-		    :files ("dist" "*.el")))
+		    :files ("dist" "*.el"))
+   :hook (prog-mode . copilot-mode)
+   :config
+   (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
+   (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion))
 #+end_src
