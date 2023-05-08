@@ -1,0 +1,5 @@
+* ChatGPT
+
+#+begin_src emacs-lisp
+ (use-package chatgpt)
+#+end_src
