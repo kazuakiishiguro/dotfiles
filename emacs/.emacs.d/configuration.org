@@ -103,3 +103,8 @@
 #+begin_src emacs-lisp
  (load-config "chatgpt.org")
 #+end_src
+
+** GIST
+#+begin_src emacs-lisp
+ (load-config "gist.org")
+#+end_src
