@@ -1,5 +1,7 @@
 * ChatGPT
 
 #+begin_src emacs-lisp
- (use-package chatgpt)
+ (use-package chatgpt
+   :config
+   (global-set-key (kbd "C-c g") 'chatgpt))
 #+end_src
