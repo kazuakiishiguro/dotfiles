@@ -150,6 +150,14 @@
 (use-package ox-gfm)
 #+end_src
 
+** PLUGINS
+
+ #+begin_src emacs-lisp
+  (use-package org-bullets
+    :config
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+ #+end_src
+
 ** HOOKS
 *** IN-BUFFER SETTING
 
