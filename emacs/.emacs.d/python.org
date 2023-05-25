@@ -1,6 +1,12 @@
+#+TITLE: PYTHON-MODE
+#+STARTUP: overview
+
 * Python
+
 #+begin_src emacs-lisp
- (use-package python-mode)
+ (use-package python-mode
+   :config
+   (setq python-indent-offset 4))
 #+end_src
 
 ** Elpy
@@ -12,7 +18,7 @@
 
 ** Autopep8
 #+begin_src emacs-lisp
-   (use-package py-autopep8
-     :config
-     (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save))
+ (use-package py-autopep8
+   :config
+   (add-hook 'elpy-mode-hook 'py-autopep8-mode))
 #+end_src

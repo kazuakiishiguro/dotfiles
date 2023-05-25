@@ -1,0 +1,6 @@
+#+TITLE: SAGE-MODE
+#+STARTUP: overview
+
+#+begin_src emacs-lisp
+ (use-package sage-shell-mode)
+#+end_src

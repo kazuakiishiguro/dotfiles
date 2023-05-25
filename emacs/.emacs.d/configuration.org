@@ -1,6 +1,7 @@
 #+TITLE: My Personal Emacs Configuration
 #+AUTHOR: Kazuaki Ishiguro
 #+EMAIL: kzuakiishiguro@protonmail.com
+#+STARTUP: overview
 
 * BASIC CONFIGS
 
@@ -107,4 +108,9 @@
 ** GIST
 #+begin_src emacs-lisp
  (load-config "gist.org")
+#+end_src
+
+** SAGE
+#+begin_src emacs-lisp
+ (load-config "sage.org")
 #+end_src
