@@ -17,9 +17,5 @@ if is_command rust-analyzer; then
     echo "rust-analyzer exists"
 else
     echo "Installing rsut-analyzer"
-    git clone https://github.com/rust-analyzer/rust-analyzer.git
-    cd rust-analyzer
-    cargo xtask install --server
-    cd -
-    rm -rf rust-analyzer
+    rustup component add rust-analyzer
 fi
