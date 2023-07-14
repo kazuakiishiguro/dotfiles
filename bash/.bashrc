@@ -173,3 +173,11 @@ export GPG_TTY=$(tty)
 
 # for mosh
 export LC_ALL="en_US.UTF-8"
+
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# rbenv
+if [ -d "$HOME/.rbenv" ]; then
+  export PATH=${HOME}/.rbenv/bin:${PATH} && \
+  eval "$(rbenv init -)"
+fi
