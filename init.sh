@@ -7,7 +7,7 @@ if [[ `uname` == 'Darwin' ]]; then
     OS="macos"
 elif [[ `uname -a` == *Ubuntu* ]] || [[ `uname -a` == *pop-os* ]]; then
     OS="ubuntu"
-elif [[ `uname -a` == *arch* ]]; then
+elif [[ `uname -a` == *arch* ]] || [[ `uname -a` == *asahi* ]] ; then
     OS="arch"
 fi
 
