@@ -10,6 +10,7 @@ if is_command cargo; then
 else
     echo "Install rust"
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    source "$HOME/.cargo/env"
 fi
 
 # install rust analyzer

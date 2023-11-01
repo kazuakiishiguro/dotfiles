@@ -19,6 +19,8 @@ elif [[ `uname -a` == *Ubuntu* ]]; then
       # set xcape keymap
       source $HOME/.bin/start-xcape.sh
     fi
+elif [[ `uname -a` == *Linux* ]] || [[ `uname -a` == *asahi* ]] ; then
+    platform='fedora'
 fi
 
 # env
@@ -47,7 +49,7 @@ if [ "$platform" = osx ]; then
   else
     export PS1="\u@\h:\[\e[36m\]\w\[\e[32m\]\$(_git_branch)\[\e[0m\]\$ "
   fi
-elif [ "$platform" = debian ]; then
+elif [[ "$platform" = debian ]] || [[ "$platform" = fedora ]] ; then
   # set variable identifying the chroot you work in (used in the prompt below)
   if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
     debian_chroot=$(cat /etc/debian_chroot)
@@ -101,48 +103,48 @@ alias dockerkill='docker kill $(docker ps -aq)'
 alias emacsmin='emacs -nw --no-init-file --no-site-file'
 alias emacs='emacs -nw'
 
-## check if it's arm64
-if [ "$arch" == 'arm64' ]; then
-    alias screen='/opt/homebrew/bin/screen'
-else
-    alias screen='/usr/local/bin/screen'
-fi
+# ## check if it's arm64
+# if [ "$arch" == 'arm64' ]; then
+#     alias screen='/opt/homebrew/bin/screen'
+# else
+#     alias screen='/usr/local/bin/screen'
+# fi
 
-# nvm
-if [ -e "$HOME/bin" ];then
-    export PATH="$HOME/bin:./node_modules/.bin:$PATH"
-fi
+# # nvm
+# if [ -e "$HOME/bin" ];then
+#     export PATH="$HOME/bin:./node_modules/.bin:$PATH"
+# fi
 
-if [ -e "$HOME/.nvm" ]; then
-    export NVM_DIR="$HOME/.nvm"
-    if [ -e "/usr/local/opt/nvm/nvm.sh" ]; then
-	. "/usr/local/opt/nvm/nvm.sh"
-    elif [ -e "$NVM_DIR/nvm.sh" ]; then
-	. "$NVM_DIR/nvm.sh"
-    fi
-fi
+# if [ -e "$HOME/.nvm" ]; then
+#     export NVM_DIR="$HOME/.nvm"
+#     if [ -e "/usr/local/opt/nvm/nvm.sh" ]; then
+# 	. "/usr/local/opt/nvm/nvm.sh"
+#     elif [ -e "$NVM_DIR/nvm.sh" ]; then
+# 	. "$NVM_DIR/nvm.sh"
+#     fi
+# fi
 
 
-if [ "$arch" == 'arm64' ]; then
-    export NVM_DIR="$HOME/.nvm"
-    if [ -e "/opt/homebrew/opt/nvm/nvm.sh" ]; then
-	# This loads nvm
-	[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"
-	# This loads nvm bash_completion
-	[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && . "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"	
-    fi
-fi
+# if [ "$arch" == 'arm64' ]; then
+#     export NVM_DIR="$HOME/.nvm"
+#     if [ -e "/opt/homebrew/opt/nvm/nvm.sh" ]; then
+# 	# This loads nvm
+# 	[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"
+# 	# This loads nvm bash_completion
+# 	[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && . "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
+#     fi
+# fi
 
-# go
-if [ -x "`which go`" ]; then
-    # I chose to download arm64 go binary from here: https://golang.org/doc/install?download=go1.16beta1.darwin-arm64.pkg
-    if [ "$arch" == 'arm64' ]; then
-	export GOPATH=/usr/local/go
-    else
-	export GOPATH=$HOME/.go
-    fi
-    export PATH=$PATH:$GOPATH/bin
-fi
+# # go
+# if [ -x "`which go`" ]; then
+#     # I chose to download arm64 go binary from here: https://golang.org/doc/install?download=go1.16beta1.darwin-arm64.pkg
+#     if [ "$arch" == 'arm64' ]; then
+# 	export GOPATH=/usr/local/go
+#     else
+# 	export GOPATH=$HOME/.go
+#     fi
+#     export PATH=$PATH:$GOPATH/bin
+# fi
 
 # rustc
 if [ -e "$HOME/.cargo" ]; then
