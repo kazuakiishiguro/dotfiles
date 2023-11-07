@@ -1,8 +1,7 @@
 * ChatGPT
 
 #+begin_src emacs-lisp
- (use-package chatgpt
+ (use-package chatgpt-shell
    :config
-   (global-set-key (kbd "C-c g") 'chatgpt)
-   (add-hook 'chatgpt-input-mode-hook #'delete-selection-mode))
+   (global-set-key (kbd "C-c g") 'chatgpt-shell))
 #+end_src
