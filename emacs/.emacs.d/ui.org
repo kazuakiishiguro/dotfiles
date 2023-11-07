@@ -10,7 +10,7 @@
 
       ;; Load the theme files before enabling a theme (else you get an error).
       :config
-      (load-theme 'modus-operandi-deuteranopia)
+      (load-theme 'modus-vivendi)
       (define-key global-map (kbd "<f5>") #'modus-themes-toggle))
    #+end_src
 ** Mode-line
