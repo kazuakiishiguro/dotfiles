@@ -114,3 +114,8 @@
 #+begin_src emacs-lisp
  (load-config "sage.org")
 #+end_src
+
+** ZIG
+#+begin_src emacs-lisp
+ (load-config "zig.org")
+#+end_src
