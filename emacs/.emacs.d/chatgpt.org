@@ -3,6 +3,6 @@
 #+begin_src emacs-lisp
  (use-package chatgpt-shell
    :config
-   (setq chatgpt-shell-model-version "gpt-4-turbo-preview")
+   (setq chatgpt-shell-model-version "gpt-4o")
    (global-set-key (kbd "C-c g") 'chatgpt-shell))
 #+end_src
