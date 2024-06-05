@@ -17,8 +17,5 @@ fi
 if is_command emacs; then
     echo "emacs exists"
 else
-    sudo apt remove --autoremove emacs emacs-common
-    sudo add-apt-repository ppa:kelleyk/emacs
-    sudo apt update
-    sudo apt-get install -y emacs28
+    sudo apt install -y emacs
 fi
