@@ -1,0 +1,7 @@
+* Claude
+
+#+begin_src emacs-lisp
+ (use-package claude-shell
+   :config
+   (setq claude-shell-model "claude-3-5-sonnet-20240620"))
+#+end_src

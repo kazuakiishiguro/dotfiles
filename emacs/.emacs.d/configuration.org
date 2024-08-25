@@ -119,3 +119,7 @@
 #+begin_src emacs-lisp
  (load-config "zig.org")
 #+end_src
+** CLAUDE
+#+begin_src emacs-lisp
+ (load-config "claude.org")
+#+end_src
