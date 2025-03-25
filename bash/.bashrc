@@ -15,7 +15,7 @@ if [[ `uname` == 'Darwin' ]]; then
     platform='osx'
 elif [[ `uname -a` == *Ubuntu* ]]; then
     platform='debian'
-    if _is_command Xorg; then
+    if _is_command Xorg && [ -n "$DISPLAY" ]; then
 	# set xcape keymap
 	source $HOME/.bin/start-xcape.sh
     fi
