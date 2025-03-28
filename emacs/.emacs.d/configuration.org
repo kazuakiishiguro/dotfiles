@@ -95,11 +95,6 @@
  (load-config "gauche.org")
 #+end_src
 
-** COPILOT
-#+begin_src emacs-lisp
- (load-config "copilot.org")
-#+end_src
-
 ** CHATGPT
 #+begin_src emacs-lisp
  (load-config "chatgpt.org")
