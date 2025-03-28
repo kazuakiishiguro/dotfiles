@@ -130,18 +130,5 @@ fi
 # for gpg sign
 export GPG_TTY=$(tty)
 
-# for mosh
-export LC_ALL="en_US.UTF-8"
-
-# nvm
-if [ -d "$HOME/.nvm" ]; then
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-fi
-
-# rbenv
-if [ -d "$HOME/.rbenv" ]; then
-    export PATH=${HOME}/.rbenv/bin:${PATH} && \
-	eval "$(rbenv init -)"
-fi
+# Set up fzf key bindings and fuzzy completion
+eval "$(fzf --bash)"

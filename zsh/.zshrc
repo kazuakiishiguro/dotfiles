@@ -45,3 +45,6 @@ alias emacs='emacs -nw'
 
 # for gpg sign
 export GPG_TTY=$(tty)
+
+# Set up fzf key bindings and fuzzy completion
+source <(fzf --zsh)
