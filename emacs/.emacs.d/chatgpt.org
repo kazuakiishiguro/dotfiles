@@ -3,6 +3,7 @@
 #+begin_src emacs-lisp
  (use-package chatgpt-shell
    :config
-   (setq chatgpt-shell-model-version "gpt-4o")
+   (chatgpt-shell-google-load-models)
+   (setq chatgpt-shell-model-version "gemini-2.5-pro-exp-03-25")
    (global-set-key (kbd "C-c g") 'chatgpt-shell))
 #+end_src
