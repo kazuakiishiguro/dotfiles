@@ -5,6 +5,8 @@ cask "discord"
 cask "slack"
 cask "zoom"
 
+brew "arm-none-eabi-gcc"
+brew "arm-none-eabi-gdb"
 brew "autogen"
 brew "cmake"
 brew "coreutils"
