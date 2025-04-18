@@ -7,7 +7,7 @@ if [[ `uname` == 'Darwin' ]]; then
     OS="macos"
 elif [[ `uname -a` == *Ubuntu* ]] || [[ `uname -a` == *pop-os* ]]; then
     OS="ubuntu"
-elif [[ `uname -a` == *Linux* ]] || [[ `uname -a` == *asahi* ]] ; then
+elif [[ `uname -a` == *asahi* ]] ; then
     OS="fedora"
 elif [[ `uname -a` == *arch* ]] ; then
     OS="arch"
@@ -17,7 +17,6 @@ source ./scripts/setup_${OS}.sh
 source ./scripts/install-rust.sh
 
 modules=(
-    "bash"
     "bin"
     "config"
     "emacs"
@@ -26,6 +25,14 @@ modules=(
     "vim"
     "zsh"
 )
+
+if [ ${OS} == 'arch' ]; then
+    modules+=(
+	"xinitrc"
+	"Xmodmap"
+	"xprofile"
+    )
+fi
 
 if ! command -v stow > /dev/null 2>&1; then
   echo "installing stow..."
@@ -37,7 +44,6 @@ if ! command -v stow > /dev/null 2>&1; then
       sudo dnf install -y stow
   elif [ ${OS} == 'arch' ]; then
       yay -S stow
-      modules+=("xinitrc")
   fi
 fi
 
