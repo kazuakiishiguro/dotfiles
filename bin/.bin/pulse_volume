@@ -1,0 +1,15 @@
+#!/bin/sh
+
+if ! command -v pamixer > /dev/null; then
+    echo "ERR: pamixer not found"
+    exit 1
+fi
+
+volume=$(pamixer --get-volume)
+muted=$(pamixer --get-mute)
+
+if [ "$muted" = "true" ]; then
+    echo "M ${volume}%%"
+else
+    echo "${volume}%%"
+fi
