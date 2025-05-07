@@ -1,12 +1,7 @@
 #!/bin/sh
 
-prefix="/usr"
-exec_prefix="${prefix}"
-xrdb="xrdb"
 xinitdir="/etc/X11/xinit"
-xclock="xclock"
 xterm="xterm"
-twm="twm"
 xmodmap="xmodmap"
 
 userresources="$HOME/.Xresources"
@@ -17,26 +12,8 @@ userprofile="$HOME/.xprofile"
 
 # merge in defaults and keymaps
 
-# [ -f "$userprofile" ] && . "$userprofile"
-
-if [ -f "$sysresources" ]; then
-    if [ -x /usr/bin/cpp ] ; then
-        "$xrdb" -merge "$sysresources"
-    else
-        "$xrdb" -nocpp -merge "$sysresources"
-    fi
-fi
-
 if [ -f "$sysmodmap" ]; then
     "$xmodmap" "$sysmodmap"
-fi
-
-if [ -f "$userresources" ]; then
-    if [ -x /usr/bin/cpp ] ; then
-        "$xrdb" -merge "$userresources"
-    else
-        "$xrdb" -nocpp -merge "$userresources"
-    fi
 fi
 
 if [ -f "$usermodmap" ]; then
@@ -55,8 +32,17 @@ fi
 # trackpoing sensivity
 xinput set-prop "TPPS/2 IBM TrackPoint" "Device Accel Constant Deceleration" 1
 
+# for wallpaper
+~/.fehbg &
+
+# for JA lang
+fcitx5 &
+
+# for statusbar
+slstatus &
+
 case $2 in
-    "" | "i3" ) exec i3 ;;
+    "" | "dwm" ) exec dwm ;;
     "exec" ) exec $3 ;;
     * ) ;;
 esac
