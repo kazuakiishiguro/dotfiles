@@ -30,16 +30,19 @@ if [ -d "$xinitdir"/xinitrc.d ] ; then
 fi
 
 # trackpoing sensivity
-xinput set-prop "TPPS/2 IBM TrackPoint" "Device Accel Constant Deceleration" 1
+# xinput set-prop "TPPS/2 IBM TrackPoint" "Device Accel Constant Deceleration" 1
 
 # for wallpaper
-~/.fehbg &
+# ~/.fehbg &
 
 # for JA lang
 fcitx5 &
 
 # for statusbar
 slstatus &
+
+# for display size (only for framework 2.8k)
+xrandr --dpi 221 &
 
 case $2 in
     "" | "dwm" ) exec dwm ;;

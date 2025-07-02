@@ -1,15 +1,15 @@
 #!/bin/sh
 
-if ! command -v pamixer > /dev/null; then
-    echo "ERR: pamixer not found"
+if ! command -v pactl > /dev/null; then
+    echo "ERR: pactl not found"
     exit 1
 fi
 
-volume=$(pamixer --get-volume)
-muted=$(pamixer --get-mute)
+VOLUME=$(pactl get-sink-volume @DEFAULT_SINK@ | grep -oP '\d+%' | head -1)
+MUTE_STATUS=$(pactl get-sink-mute @DEFAULT_SINK@ | awk '{print $2}')
 
-if [ "$muted" = "true" ]; then
-    echo "M ${volume}%"
+if [ "$MUTE_STATUS" = "yes" ]; then
+    echo "MUTE"
 else
-    echo "${volume}%"
+    echo "${VOLUME}"
 fi
