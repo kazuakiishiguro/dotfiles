@@ -17,10 +17,12 @@ source ./scripts/setup_${OS}.sh
 source ./scripts/install-rust.sh
 
 modules=(
+    "bash"
     "bin"
     "config"
     "emacs"
     "git"
+    "local"
     "screen"
     "vim"
     "zsh"

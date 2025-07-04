@@ -1,0 +1,11 @@
+# aliases
+alias l='ls -ltrG'
+alias ls='ls -G'
+alias la='ls -laG'
+alias ll='ls -lG'
+alias dockerrm='docker rm $(docker ps -aq)'
+alias dockerrmi='docker rmi $(docker images -aq)'
+alias dockerstop='docker stop $(docker ps -aq)'
+alias dockerkill='docker kill $(docker ps -aq)'
+alias emacsmin='emacs -nw --no-init-file --no-site-file'
+alias emacs='emacs -nw'

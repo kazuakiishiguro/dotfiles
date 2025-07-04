@@ -6,10 +6,10 @@ if [ -f ~/.bashrc ]; then
     . ~/.bashrc
 fi
 
-# lang
+# Language settings
 if [[ -z "$LANG" ]]; then
-  export LANG='en_US.UTF-8'
-  export LC_ALL="en_US.UTF-8"
+    export LANG='en_US.UTF-8'
+    export LC_ALL="en_US.UTF-8"
 fi
 
 # export Homebrew's sbin if apple m1
@@ -17,9 +17,14 @@ if [ `uname -m` == "arm64" ]; then
     export PATH="/opt/homebrew/sbin:$PATH"
 fi
 
-# cargo
+# Rust toolchain
 if [ -e "$HOME/.cargo" ]; then
-  export PATH="$HOME/.cargo/bin:$PATH"
+    export PATH="$HOME/.cargo/bin:$PATH"
+fi
+
+# sccache for Rust builds
+if _is_command sccache; then
+    export RUSTC_WRAPPER=$(which sccache)
 fi
 
 # nvm
@@ -34,3 +39,9 @@ if [ -d "$HOME/.rbenv" ]; then
     export PATH=${HOME}/.rbenv/bin:${PATH} && \
     eval "$(rbenv init -)"
 fi
+
+# GPG Agent
+export GPG_TTY=$(tty)
+
+# fzf setup
+eval "$(fzf --bash)"
