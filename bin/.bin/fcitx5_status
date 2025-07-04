@@ -6,14 +6,14 @@ current_im=$(fcitx5-remote -n)
 # Customize the output based on the input method name
 case "$current_im" in
     "keyboard-us" | "keyboard-gb" | "1") # '1' is sometimes the default XKB layout
-        echo "EN"
+        echo "A"
         ;;
     "mozc" | "anthy" | "rime-japanese" | "2") # '2' might be another layout if you only have two
-        echo "JP"
+        echo "あ"
         ;;
     *)
         # Fallback for other input methods or if fcitx5 is not running
         # You could also display the raw name: echo "$current_im"
-        echo "??"
+        echo "A"
         ;;
 esac
