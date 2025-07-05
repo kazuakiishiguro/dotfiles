@@ -1,0 +1,4 @@
+source ~/.local/share/dotfiles/bash/aliases
+source ~/.local/share/dotfiles/bash/language
+source ~/.local/share/dotfiles/bash/prompt
+source ~/.local/share/dotfiles/bash/shell

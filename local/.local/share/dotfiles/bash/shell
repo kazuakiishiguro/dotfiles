@@ -1,0 +1,8 @@
+# --- General Configuration ---
+HISTSIZE=1000
+HISTFILESIZE=2000
+
+# Environment Paths
+export PATH="$PATH:$HOME/.bin"
+export PATH="/usr/local/sbin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"

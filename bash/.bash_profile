@@ -1,17 +1,3 @@
-# silence macos bash warning
-export BASH_SILENCE_DEPRECATION_WARNING=1
-
-# always load .bashrc
-if [ -f ~/.bashrc ]; then
-    . ~/.bashrc
-fi
-
-# Language settings
-if [[ -z "$LANG" ]]; then
-    export LANG='en_US.UTF-8'
-    export LC_ALL="en_US.UTF-8"
-fi
-
 # export Homebrew's sbin if apple m1
 if [ `uname -m` == "arm64" ]; then
     export PATH="/opt/homebrew/sbin:$PATH"
