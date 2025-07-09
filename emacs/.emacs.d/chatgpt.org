@@ -4,6 +4,20 @@
  (use-package chatgpt-shell
    :config
    (chatgpt-shell-google-load-models)
-   (setq chatgpt-shell-model-version "gemini-2.5-pro-exp-03-25")
+
+   ;; Set the default LLM model.
+   (setq chatgpt-shell-model-version "gemini-2.5-flash-preview-05-20")
+
+   ;; Add a custom system prompt:
+   (add-to-list 'chatgpt-shell-system-prompts
+                '("English Tutor" . "You are an expert English language tutor, especially in software development.
+                                     Your task is to polish and make the user's English messages idiomatic.
+                                     After providing the polished version, explain the grammatical changes and idiomatic improvements.
+                                     Provide clear, concise explanations and examples for each correction.
+                                     Use markdown liberally to structure responses, showing the polished text first, followed by the explanations.
+                                     You treat the user's time as precious. You do not repeat obvious things, including their query.
+                                     You are as concise as possible in responses. You never apologize for confusions because it would waste their time."))
+
+   ;; Set keybind.
    (global-set-key (kbd "C-c g") 'chatgpt-shell))
 #+end_src
