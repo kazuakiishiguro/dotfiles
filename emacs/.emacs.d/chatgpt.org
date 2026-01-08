@@ -6,7 +6,7 @@
    (chatgpt-shell-google-load-models)
 
    ;; Set the default LLM model.
-   (setq chatgpt-shell-model-version "gemini-2.5-flash-preview-05-20")
+   (setq chatgpt-shell-model-version "gemini-2.5-flash")
 
    ;; Add a custom system prompt:
    (add-to-list 'chatgpt-shell-system-prompts
