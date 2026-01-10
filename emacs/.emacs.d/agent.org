@@ -1,0 +1,9 @@
+** Agent shell
+
+#+begin_src emacs-lisp
+   (use-package agent-shell
+     :ensure t
+     :config
+     (setq agent-shell-google-authentication
+     (agent-shell-google-make-authentication :login t)))
+#+end_src

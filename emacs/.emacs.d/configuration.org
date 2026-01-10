@@ -118,3 +118,7 @@
 #+begin_src emacs-lisp
  (load-config "claude.org")
 #+end_src
+** AGENT
+#+begin_src emacs-lisp
+ (load-config "agent.org")
+#+end_src
