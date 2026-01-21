@@ -4,3 +4,4 @@ emacs/.emacs.d/**
 bin/.bin/rust-analyzer
 git/.gitconfig_work
 *.lock.json
+.agent-shell
