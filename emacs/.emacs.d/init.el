@@ -10,6 +10,7 @@
 (setq package-archives '(("org"   . "http://orgmode.org/elpa/")
 			 ("gnu"   . "http://elpa.gnu.org/packages/")
 			 ("melpa" . "https://melpa.org/packages/")
+			 ("nongnu" . "https://elpa.nongnu.org/nongnu/")
 			 ( "jcs-elpa" . "https://jcs-emacs.github.io/jcs-elpa/packages/")))
 
 (package-initialize)
