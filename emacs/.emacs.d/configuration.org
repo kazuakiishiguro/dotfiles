@@ -32,93 +32,44 @@
     (concat user-emacs-directory file))))
 #+end_src
 
-** GENERAL
+** Core
 
 #+begin_src emacs-lisp
- (load-config "general.org")
+(dolist (config '("general.org"
+                  "ui.org"))
+  (load-config config))
 #+end_src
 
-** UI
+** Programming Languages
 
 #+begin_src emacs-lisp
- (load-config "ui.org")
+(dolist (config '("prog.org"
+                  "c.org"
+                  "rust.org"
+                  "python.org"
+                  "zig.org"
+                  "solidity.org"
+                  "gauche.org"
+                  "web.org"
+                  "javascript.org"))
+  (load-config config))
 #+end_src
 
-** PROGRAMMING
+** Markup
 
 #+begin_src emacs-lisp
- (load-config "prog.org")
+(dolist (config '("markdown.org"
+                  "org.org"))
+  (load-config config))
 #+end_src
 
-** C
-#+begin_src emacs-lisp
- (load-config "c.org")
-#+end_src
+** AI & Tools
 
-** RUST
 #+begin_src emacs-lisp
- (load-config "rust.org")
-#+end_src
-
-** SOLIDITY
-#+begin_src emacs-lisp
- (load-config "solidity.org")
-#+end_src
-
-** PYTHON
-#+begin_src emacs-lisp
- (load-config "python.org")
-#+end_src
-
-** WEB
-#+begin_src emacs-lisp
- (load-config "web.org")
-#+end_src
-
-** JAVASCRIPT
-#+begin_src emacs-lisp
- (load-config "javascript.org")
-#+end_src
-
-** MARKDOWN
-#+begin_src emacs-lisp
- (load-config "markdown.org")
-#+end_src
-
-** ORG
-#+begin_src emacs-lisp
- (load-config "org.org")
-#+end_src
-
-** GAUCHE
-#+begin_src emacs-lisp
- (load-config "gauche.org")
-#+end_src
-
-** CHATGPT
-#+begin_src emacs-lisp
- (load-config "chatgpt.org")
-#+end_src
-
-** GIST
-#+begin_src emacs-lisp
- (load-config "gist.org")
-#+end_src
-
-** SAGE
-#+begin_src emacs-lisp
- (load-config "sage.org")
-#+end_src
-
-** ZIG
-#+begin_src emacs-lisp
- (load-config "zig.org")
-#+end_src
-** CLAUDE
-#+begin_src emacs-lisp
- (load-config "claude.org")
-#+end_src
-** AGENT
-#+begin_src emacs-lisp
- (load-config "agent.org")
+(dolist (config '("chatgpt.org"
+                  "claude.org"
+                  "agent.org"
+                  "gist.org"
+                  "sage.org"))
+  (load-config config))
 #+end_src
