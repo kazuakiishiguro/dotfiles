@@ -10,15 +10,9 @@
 
 #+begin_src emacs-lisp
  (setq org-directory "~/org")
- (setq org-agenda-files (quote ("~/org/index.org")))
- (setq org-note-files (quote ("~/org/notes/note.org")))
- (setq org-reading-files (quote ("~/org/notes/reading.org")))
- (setq org-life-files (quote ("~/org/notes/life.org")))
- (setq org-refile-targets '((org-agenda-files :maxlevel . 3)
-			    (org-note-files :maxlevel . 2)
-			    (org-reading-files :maxlevel . 2)
-			    (org-life-files :maxlevel . 2)))
- (setq org-archive-location (concat "~/org/archive.org" "::* From %s"))
+ (setq org-agenda-files '("~/org/todo.org"))
+ (setq org-refile-targets '(("~/org/todo.org" :maxlevel . 3)))
+ (setq org-archive-location "~/org/archive.org::* From %s")
  (setq org-todo-keywords
        '((sequence "TODO(t)" "NOTE(n)" "DONE(d)" "CANCEL(c)")))
  (setq org-log-done 'time)
@@ -61,23 +55,65 @@
 ** CAPTURE TASK
 
 #+begin_src emacs-lisp
+ (defun my/sync-reference-categories ()
+   "Rebuild ~/org/.categories from FILETAGS across all org files."
+   (when (and buffer-file-name
+              (string-suffix-p ".org" buffer-file-name)
+              (string-prefix-p (expand-file-name org-directory)
+                               (expand-file-name buffer-file-name)))
+     (let (tags)
+       (dolist (f (directory-files-recursively org-directory "\\.org$"))
+         (with-temp-buffer
+           (insert-file-contents f nil 0 512)
+           (when (re-search-forward "^#\\+TYPE:[ \t]*category" nil t)
+             (cl-pushnew (file-name-base f) tags :test #'string=))))
+       (with-temp-file (expand-file-name ".categories" org-directory)
+         (insert (mapconcat #'identity (sort tags #'string<) "\n") "\n")))))
+
+ (add-hook 'after-save-hook #'my/sync-reference-categories)
+
+ (defun my/reference-categories ()
+   "Read categories from ~/org/.categories for completing-read."
+   (let ((file (expand-file-name ".categories" org-directory)))
+     (completing-read "Category: "
+       (when (file-exists-p file)
+         (with-temp-buffer
+           (insert-file-contents file)
+           (split-string (buffer-string) "\n" t))))))
+
  (setq org-capture-templates
-       '(("b" "Blog ideas" entry (file+datetree "~/org/notes/blog-ideas.org" "BLOG IDEA")
-	  "* %?\n %i\n %a")
-	 ("w" "Work log" entry (file+datetree "~/org/log.org")
-	  "* %?\nEntered on %U\n  %i\n  %a")
-	 ("j" "Journal" entry (file+datetree "~/org/journal.org")
-	  "* %?\nEntered on %U\n %i\n")
-	 ("p" "Programming Note" entry (file+headline "~/org/notes/note.org" "PROGRAMMING")
-	  "* %?\n %U %f")
-	 ("r" "Reading Note" entry (file+headline "~/org/notes/reading.org" "READING")
-	  "* %?\n %U %f")
-	 ("m" "Misc Note" entry (file+headline "~/org/notes/note.org" "MISC")
-	  "* %?\n %U %f")
-	 ("l" "Life Note" entry (file+headline "~/org/notes/life.org" "LIFE")
-	  "* %?\n %U %f")
-	 ("t" "TODO Entry" entry (file+headline "~/org/index.org" "CURRENT")
-	  "* TODO %?\n %i\n %a")))
+       '(("t" "TODO" entry (file+headline "~/org/todo.org" "CURRENT")
+	  "* TODO %?\n %i\n %a")
+
+	 ("n" "Note" plain (file (lambda ()
+	   (expand-file-name
+	    (concat (replace-regexp-in-string " " "_" (read-string "Note title: ")) ".org")
+	    "~/org")))
+	  "#+TITLE: %^{Title}\n#+DATE: %U\n#+FILETAGS:\n\n[[file:Daily/%(format-time-string \"%%Y-%%m-%%d\").org][%(format-time-string \"%%Y-%%m-%%d\")]]\n\n%?")
+
+	 ("r" "Reference" plain (file (lambda ()
+	   (expand-file-name
+	    (concat (replace-regexp-in-string " " "_" (read-string "Reference title: ")) ".org")
+	    "~/org/References")))
+	  "#+TITLE: %^{Title}\n#+DATE: %U\n#+FILETAGS: :%(my/reference-categories):\n\n%?")
+
+	 ("K" "Category" plain (file (lambda ()
+	   (expand-file-name
+	    (concat (replace-regexp-in-string " " "_" (read-string "Category name: ")) ".org")
+	    "~/org")))
+	  "#+TITLE: %^{Title}\n#+DATE: %U\n#+TYPE: category\n\n%?")
+
+	 ("c" "Clipping" plain (file (lambda ()
+	   (expand-file-name
+	    (concat (replace-regexp-in-string " " "_" (read-string "Clipping title: ")) ".org")
+	    "~/org/Clippings")))
+	  "#+TITLE: %^{Title}\n#+DATE: %U\n#+FILETAGS: :Manuscripts:\n\nSource: %^{URL}\n\n%?")
+
+	 ("w" "Weekly review" plain (file (lambda ()
+	   (expand-file-name
+	    (concat "Week" (format-time-string "%U") "_-_" (format-time-string "%b_%Y") ".org")
+	    "~/org")))
+	  "#+TITLE: Week%(format-time-string \"%%U\") - %(format-time-string \"%%b %%Y\")\n#+DATE: %U\n#+FILETAGS: :weekly:\n\n* What happened\n\n%?\n\n* What I learned\n\n* Next week\n")))
 #+end_src
 
 **** TASK ARCHIVE
@@ -95,28 +131,21 @@
 ** KEYBINDINGS
 
 #+begin_src emacs-lisp
+ (defun my/org-daily-file ()
+   "Open or create today's daily anchor file."
+   (interactive)
+   (let* ((dir (expand-file-name "Daily" org-directory))
+	  (file (expand-file-name (format-time-string "%Y-%m-%d.org") dir)))
+     (unless (file-exists-p dir) (make-directory dir t))
+     (find-file file)
+     (when (= (buffer-size) 0)
+       (insert (format "#+TITLE: %s\n#+DATE: %s\n"
+		       (format-time-string "%Y-%m-%d")
+		       (format-time-string "[%Y-%m-%d %a]"))))))
+
  (define-key global-map "\C-ca" 'org-agenda)
  (define-key global-map "\C-cc" 'org-capture)
- (define-key global-map "\C-cp"
-   (lambda ()
-     (interactive)
-     (org-capture nil "p")))
- (define-key global-map "\C-ct"
-   (lambda ()
-     (interactive)
-     (org-capture nil "t")))
- (define-key global-map "\C-ci"
-   (lambda ()
-     (interactive)
-     (find-file "~/org/index.org")
-     (flycheck-mode -1)
-     (end-of-buffer)))
- (define-key global-map "\C-cn"
-   (lambda ()
-     (interactive)
-     (find-file "~/org/notes/note.org")
-     (flycheck-mode -1)
-     (end-of-buffer)))
+ (define-key global-map "\C-cn" 'my/org-daily-file)
 #+end_src
 
 ** EXPORTING
