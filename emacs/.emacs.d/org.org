@@ -96,8 +96,9 @@ Errors on empty input or if file already exists."
 
  (add-hook 'after-save-hook #'my/sync-reference-categories)
 
- (defun my/reference-categories ()
-   "Read categories from ~/org/.categories for completing-read."
+ (defun my/select-categories (prompt)
+   "Select one or more categories from ~/org/.categories with PROMPT.
+Returns a list of selected category strings."
    (let* ((file (expand-file-name ".categories" org-directory))
           (cats (when (file-exists-p file)
                   (with-temp-buffer
@@ -105,7 +106,27 @@ Errors on empty input or if file already exists."
                     (split-string (buffer-string) "\n" t)))))
      (unless cats
        (user-error "No categories found. Create one with C-c c K first"))
-     (completing-read "Category: " cats nil t)))
+     (let ((chosen '())
+           (done nil))
+       (while (not done)
+         (let* ((remaining (cl-remove-if (lambda (c) (member c chosen)) cats))
+                (candidates (if chosen (append '("[done]") remaining) remaining))
+                (pick (completing-read
+                       (if chosen
+                           (format "%s [%s]: " prompt
+                                   (mapconcat #'identity (reverse chosen) ", "))
+                         (format "%s: " prompt))
+                       candidates nil t)))
+           (if (or (string-empty-p pick) (string= pick "[done]"))
+               (setq done t)
+             (push pick chosen))))
+       (unless chosen
+         (user-error "No selection made"))
+       (nreverse chosen))))
+
+ (defun my/reference-categories ()
+   "Select categories for a Reference capture template."
+   (mapconcat #'identity (my/select-categories "Category") ":"))
 
  (setq org-capture-templates
        '(("t" "TODO" entry (file+headline "~/org/todo.org" "CURRENT")
@@ -196,6 +217,28 @@ Errors on empty input or if file already exists."
  (define-key global-map "\C-cn" 'my/org-daily-file)
 #+end_src
 
+*** SET FILETAGS
+
+#+begin_src emacs-lisp
+ (defun my/set-filetags ()
+   "Set #+FILETAGS: in current buffer, completing from .categories."
+   (interactive)
+   (let ((value (concat ":" (mapconcat #'identity (my/select-categories "Tags") ":") ":")))
+         (save-excursion
+           (goto-char (point-min))
+           (if (re-search-forward "^#\\+FILETAGS:.*$" nil t)
+               (replace-match (concat "#+FILETAGS: " value))
+             ;; Insert after the last #+KEYWORD line in the header
+             (goto-char (point-min))
+             (let ((insert-pos (point)))
+               (while (re-search-forward "^#\\+[A-Z_]+:" nil t)
+                 (setq insert-pos (line-end-position)))
+               (goto-char insert-pos)
+               (insert "\n#+FILETAGS: " value)))))))))
+
+ (define-key org-mode-map (kbd "C-c t") #'my/set-filetags)
+#+end_src
+
 ** EXPORTING
 *** LATEX
 
@@ -258,6 +301,30 @@ Errors on empty input or if file already exists."
 
 #+begin_src emacs-lisp
  (add-hook 'org-mode-hook 'auto-fill-mode)
+#+end_src
+
+*** INLINE IMAGES
+
+#+begin_src emacs-lisp
+ (setq org-startup-with-inline-images t)
+#+end_src
+
+*** LAST MODIFIED TIMESTAMP
+
+#+begin_src emacs-lisp
+ (defun my/org-update-last-modified ()
+   "Update #+LAST_MODIFIED: on save for org files under ~/org/."
+   (when (and (derived-mode-p 'org-mode)
+              (buffer-file-name)
+              (string-prefix-p (expand-file-name org-directory)
+                               (expand-file-name (buffer-file-name))))
+     (save-excursion
+       (goto-char (point-min))
+       (when (re-search-forward "^#\\+LAST_MODIFIED:.*$" (min (point-max) 1000) t)
+         (replace-match (format "#+LAST_MODIFIED: %s"
+                                (format-time-string "[%Y-%m-%d %a %H:%M]")))))))
+
+ (add-hook 'before-save-hook #'my/org-update-last-modified)
 #+end_src
 
 *** TITLE / FILENAME SYNC
