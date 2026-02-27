@@ -55,6 +55,30 @@
 ** CAPTURE TASK
 
 #+begin_src emacs-lisp
+ (defvar my/capture-last-title nil
+   "Title from the last my/capture-file call, reused in template body.")
+
+ (defun my/capture-file (dir prompt)
+   "Prompt for a title, validate, and return a new .org file path in DIR.
+Capitalizes first letter, replaces spaces with underscores.
+Errors on empty input or if file already exists."
+   (let* ((raw (read-string prompt))
+          (trimmed (string-trim raw)))
+     (when (string-empty-p trimmed)
+       (user-error "Title cannot be empty"))
+     (let* ((capitalized (concat (upcase (substring trimmed 0 1))
+                                 (substring trimmed 1)))
+            (filename (concat (replace-regexp-in-string " " "_" capitalized) ".org"))
+            (path (expand-file-name filename dir)))
+       (when (file-exists-p path)
+         (user-error "File already exists: %s" path))
+       (setq my/capture-last-title capitalized)
+       path)))
+
+ (defun my/capture-title ()
+   "Return the title saved by my/capture-file."
+   my/capture-last-title)
+
  (defun my/sync-reference-categories ()
    "Rebuild ~/org/.categories from FILETAGS across all org files."
    (when (and buffer-file-name
@@ -74,40 +98,34 @@
 
  (defun my/reference-categories ()
    "Read categories from ~/org/.categories for completing-read."
-   (let ((file (expand-file-name ".categories" org-directory)))
-     (completing-read "Category: "
-       (when (file-exists-p file)
-         (with-temp-buffer
-           (insert-file-contents file)
-           (split-string (buffer-string) "\n" t))))))
+   (let* ((file (expand-file-name ".categories" org-directory))
+          (cats (when (file-exists-p file)
+                  (with-temp-buffer
+                    (insert-file-contents file)
+                    (split-string (buffer-string) "\n" t)))))
+     (unless cats
+       (user-error "No categories found. Create one with C-c c K first"))
+     (completing-read "Category: " cats nil t)))
 
  (setq org-capture-templates
        '(("t" "TODO" entry (file+headline "~/org/todo.org" "CURRENT")
 	  "* TODO %?\n %i\n %a")
 
 	 ("n" "Note" plain (file (lambda ()
-	   (expand-file-name
-	    (concat (replace-regexp-in-string " " "_" (read-string "Note title: ")) ".org")
-	    "~/org")))
-	  "#+TITLE: %^{Title}\n#+DATE: %U\n#+FILETAGS:\n\n[[file:Daily/%(format-time-string \"%%Y-%%m-%%d\").org][%(format-time-string \"%%Y-%%m-%%d\")]]\n\n%?")
+	   (my/capture-file "~/org" "Note title: ")))
+	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+FILETAGS:\n\n[[file:Daily/%(format-time-string \"%%Y-%%m-%%d\").org][%(format-time-string \"%%Y-%%m-%%d\")]]\n\n%?")
 
 	 ("r" "Reference" plain (file (lambda ()
-	   (expand-file-name
-	    (concat (replace-regexp-in-string " " "_" (read-string "Reference title: ")) ".org")
-	    "~/org/References")))
-	  "#+TITLE: %^{Title}\n#+DATE: %U\n#+FILETAGS: :%(my/reference-categories):\n\n%?")
+	   (my/capture-file "~/org/References" "Reference title: ")))
+	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+FILETAGS: :%(my/reference-categories):\n\n%?")
 
 	 ("K" "Category" plain (file (lambda ()
-	   (expand-file-name
-	    (concat (replace-regexp-in-string " " "_" (read-string "Category name: ")) ".org")
-	    "~/org")))
-	  "#+TITLE: %^{Title}\n#+DATE: %U\n#+TYPE: category\n\n%?")
+	   (my/capture-file "~/org" "Category name: ")))
+	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+TYPE: category\n\n%?")
 
 	 ("c" "Clipping" plain (file (lambda ()
-	   (expand-file-name
-	    (concat (replace-regexp-in-string " " "_" (read-string "Clipping title: ")) ".org")
-	    "~/org/Clippings")))
-	  "#+TITLE: %^{Title}\n#+DATE: %U\n#+FILETAGS: :Manuscripts:\n\nSource: %^{URL}\n\n%?")
+	   (my/capture-file "~/org/Clippings" "Clipping title: ")))
+	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+FILETAGS: :Manuscripts:\n\nSource: %^{URL}\n\n%?")
 
 	 ("w" "Weekly review" plain (file (lambda ()
 	   (expand-file-name
