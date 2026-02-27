@@ -113,7 +113,7 @@ Errors on empty input or if file already exists."
 
 	 ("n" "Note" plain (file (lambda ()
 	   (my/capture-file "~/org" "Note title: ")))
-	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+FILETAGS:\n\n[[file:Daily/%(format-time-string \"%%Y-%%m-%%d\").org][%(format-time-string \"%%Y-%%m-%%d\")]]\n\n%?")
+	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+FILETAGS:\n\n[[file:Daily/%(format-time-string \"%Y-%m-%d\").org][%(format-time-string \"%Y-%m-%d\")]]\n\n%?")
 
 	 ("r" "Reference" plain (file (lambda ()
 	   (my/capture-file "~/org/References" "Reference title: ")))
@@ -132,6 +132,36 @@ Errors on empty input or if file already exists."
 	    (concat "Week" (format-time-string "%U") "_-_" (format-time-string "%b_%Y") ".org")
 	    "~/org")))
 	  "#+TITLE: Week%(format-time-string \"%%U\") - %(format-time-string \"%%b %%Y\")\n#+DATE: %U\n#+FILETAGS: :weekly:\n\n* What happened\n\n%?\n\n* What I learned\n\n* Next week\n")))
+#+end_src
+
+**** DAILY BACKLINK ON CAPTURE
+
+#+begin_src emacs-lisp
+ (defun my/org-capture-add-daily-backlink ()
+   "After capturing a note, add a backlink in today's daily file."
+   (when (and (equal (plist-get org-capture-plist :key) "n")
+              my/capture-last-title)
+     (let* ((daily-dir (expand-file-name "Daily" org-directory))
+            (daily-file (expand-file-name (format-time-string "%Y-%m-%d.org") daily-dir))
+            (note-file (expand-file-name
+                        (concat (my/org-title-to-filename my/capture-last-title) ".org")
+                        org-directory))
+            (rel-path (file-relative-name note-file (file-name-directory daily-file)))
+            (link (format "[[file:%s][%s]]" rel-path my/capture-last-title)))
+       (unless (file-exists-p daily-dir) (make-directory daily-dir t))
+       (with-current-buffer (find-file-noselect daily-file)
+         (when (= (buffer-size) 0)
+           (insert (format "#+TITLE: %s\n#+DATE: %s\n\n"
+                           (format-time-string "%Y-%m-%d")
+                           (format-time-string "[%Y-%m-%d %a]"))))
+         (goto-char (point-max))
+         (unless (search-backward link nil t)
+           (goto-char (point-max))
+           (unless (bolp) (insert "\n"))
+           (insert (format "- %s\n" link)))
+         (save-buffer)))))
+
+ (add-hook 'org-capture-after-finalize-hook #'my/org-capture-add-daily-backlink)
 #+end_src
 
 **** TASK ARCHIVE
@@ -228,4 +258,149 @@ Errors on empty input or if file already exists."
 
 #+begin_src emacs-lisp
  (add-hook 'org-mode-hook 'auto-fill-mode)
+#+end_src
+
+*** TITLE / FILENAME SYNC
+
+#+begin_src emacs-lisp
+ (defvar my/org-sync-in-progress nil
+   "Non-nil while title/filename sync is running, to prevent recursion.")
+
+ (defvar-local my/org-prev-title nil
+   "The #+TITLE value when the buffer was opened or last synced.")
+
+ (defun my/org-get-title ()
+   "Return the #+TITLE value from the current buffer, or nil."
+   (save-excursion
+     (goto-char (point-min))
+     (when (re-search-forward "^#\\+TITLE:[ \t]+\\(.+\\)" nil t)
+       (let ((val (string-trim (match-string-no-properties 1))))
+         (unless (string-empty-p val) val)))))
+
+ (defun my/org-title-to-filename (title)
+   "Convert TITLE to filename base (spaces → underscores)."
+   (replace-regexp-in-string " " "_" title))
+
+ (defun my/org-filename-to-title (base)
+   "Convert filename BASE to title (underscores → spaces)."
+   (replace-regexp-in-string "_" " " base))
+
+ (defun my/org-sync-scope-p (&optional file)
+   "Return non-nil if FILE should participate in title/filename sync.
+ Excludes daily files, weekly reviews, and files outside the vault."
+   (let ((f (or file buffer-file-name)))
+     (and f
+          (string-suffix-p ".org" f)
+          (string-prefix-p (expand-file-name org-directory)
+                           (expand-file-name f))
+          (let ((base (file-name-base f)))
+            (not (or (string-match-p "\\`[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\'" base)
+                     (string-match-p "\\`Week[0-9]" base)))))))
+
+ (defun my/org-update-backlinks (old-base new-base old-title new-title)
+   "Rewrite every org link referencing OLD-BASE.org in the vault.
+ Updates the file path and, when the description matches OLD-TITLE,
+ the description text.  Returns the number of files modified."
+   (let ((files (directory-files-recursively org-directory "\\.org$"))
+         (count 0)
+         (link-re (concat "\\[\\[file:\\([^]]*?\\)"
+                          (regexp-quote (concat old-base ".org"))
+                          "\\]"))
+         (desc-old (concat "][" old-title "]]"))
+         (desc-new (concat "][" new-title "]]")))
+     (dolist (f files)
+       (let ((buf (find-buffer-visiting f)))
+         (if buf
+             ;; File is open in a buffer — edit the buffer
+             (with-current-buffer buf
+               (save-excursion
+                 (let ((mod nil))
+                   (goto-char (point-min))
+                   (while (re-search-forward link-re nil t)
+                     (replace-match (concat "[[file:\\1" new-base ".org]") t)
+                     (setq mod t))
+                   (unless (string= old-title new-title)
+                     (goto-char (point-min))
+                     (while (search-forward desc-old nil t)
+                       (replace-match desc-new t t)
+                       (setq mod t)))
+                   (when mod (save-buffer) (cl-incf count)))))
+           ;; File not open — use temp buffer for speed
+           (with-temp-buffer
+             (insert-file-contents f)
+             (let ((mod nil))
+               (goto-char (point-min))
+               (while (re-search-forward link-re nil t)
+                 (replace-match (concat "[[file:\\1" new-base ".org]") t)
+                 (setq mod t))
+               (unless (string= old-title new-title)
+                 (goto-char (point-min))
+                 (while (search-forward desc-old nil t)
+                   (replace-match desc-new t t)
+                   (setq mod t)))
+               (when mod
+                 (write-region (point-min) (point-max) f)
+                 (cl-incf count)))))))
+     count))
+
+ ;; Record title on open for change detection
+ (defun my/org-record-title ()
+   "Snapshot #+TITLE so we can detect changes on the next save."
+   (when (my/org-sync-scope-p)
+     (setq my/org-prev-title (my/org-get-title))))
+
+ (add-hook 'find-file-hook #'my/org-record-title)
+
+ ;; Title changed → rename file + update backlinks
+ (defun my/org-sync-title-to-filename ()
+   "After save: if #+TITLE changed, rename the file and rewrite backlinks."
+   (when (and (my/org-sync-scope-p)
+              (not my/org-sync-in-progress))
+     (let* ((title (my/org-get-title))
+            (fname (file-name-base buffer-file-name))
+            (expected (when title (my/org-title-to-filename title))))
+       (when (and title expected
+                  (not (string= expected fname))
+                  my/org-prev-title
+                  (not (string= title my/org-prev-title)))
+         (let* ((dir (file-name-directory buffer-file-name))
+                (new-path (expand-file-name (concat expected ".org") dir))
+                (my/org-sync-in-progress t))
+           (when (file-exists-p new-path)
+             (user-error "Cannot rename: %s already exists" new-path))
+           (rename-file buffer-file-name new-path)
+           (set-visited-file-name new-path t t)
+           (set-buffer-modified-p nil)
+           (let ((n (my/org-update-backlinks fname expected
+                                             my/org-prev-title title)))
+             (message "Renamed → %s.org  (%d backlink file%s updated)"
+                      expected n (if (= n 1) "" "s")))
+           (setq my/org-prev-title title))))))
+
+ (add-hook 'after-save-hook #'my/org-sync-title-to-filename)
+
+ ;; File renamed externally → update title + backlinks
+ (defun my/org-sync-filename-to-title ()
+   "On open: if filename doesn't match #+TITLE, sync title and backlinks."
+   (when (and (my/org-sync-scope-p)
+              (not my/org-sync-in-progress))
+     (let* ((title (my/org-get-title))
+            (fname (file-name-base buffer-file-name))
+            (expected (when title (my/org-title-to-filename title))))
+       (when (and title expected
+                  (not (string= expected fname)))
+         (let ((new-title (my/org-filename-to-title fname))
+               (old-base expected)
+               (my/org-sync-in-progress t))
+           (save-excursion
+             (goto-char (point-min))
+             (when (re-search-forward "^#\\+TITLE:[ \t]+.*$" nil t)
+               (replace-match (concat "#+TITLE: " new-title))))
+           (save-buffer)
+           (let ((n (my/org-update-backlinks old-base fname title new-title)))
+             (message "Title synced → %s  (%d backlink file%s updated)"
+                      new-title n (if (= n 1) "" "s")))
+           (setq my/org-prev-title new-title))))))
+
+ (add-hook 'find-file-hook #'my/org-sync-filename-to-title)
 #+end_src
