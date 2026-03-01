@@ -131,6 +131,12 @@ Returns a list of selected category strings."
    "Select categories for a Reference capture template."
    (mapconcat #'identity (my/select-categories "Category") ":"))
 
+ (defun my/cliplink-from-prompt ()
+   "Prompt for a URL and return an org link with the page title fetched automatically."
+   (let* ((url (read-string "URL: "))
+          (title (org-cliplink-retrieve-title-synchronously url)))
+     (org-cliplink-org-mode-link-transformer url title)))
+
  (setq org-capture-templates
        '(("t" "TODO" entry (file+headline "~/org/todo.org" "CURRENT")
 	  "* TODO %?\n %i\n %a")
@@ -149,7 +155,7 @@ Returns a list of selected category strings."
 
 	 ("c" "Clipping" plain (file (lambda ()
 	   (my/capture-file "~/org/Clippings" "Clipping title: ")))
-	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+FILETAGS: :Manuscripts:\n\nSource: %^{URL}\n\n%?")
+	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+FILETAGS: :Manuscripts:\n\nSource: %(my/cliplink-from-prompt)\n\n%?")
 
 	 ("w" "Weekly review" plain (file (lambda ()
 	   (expand-file-name
