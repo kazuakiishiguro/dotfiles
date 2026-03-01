@@ -249,6 +249,18 @@ Returns a list of selected category strings."
  (add-hook 'after-save-hook #'my/org-sync-backlinks)
 #+end_src
 
+** DEFT
+
+#+begin_src emacs-lisp
+ (use-package deft
+   :config
+   (setq deft-directory org-directory
+         deft-extensions '("org")
+         deft-recursive t
+         deft-use-filename-as-title nil
+         deft-org-mode-title-prefix t))
+#+end_src
+
 **** TASK ARCHIVE
 
 #+begin_src emacs-lisp
