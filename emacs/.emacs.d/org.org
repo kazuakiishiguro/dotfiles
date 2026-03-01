@@ -155,6 +155,47 @@ Returns a list of selected category strings."
 	  "#+TITLE: Week%(format-time-string \"%%U\") - %(format-time-string \"%%b %%Y\")\n#+DATE: %U\n#+FILETAGS: :weekly:\n\n* What happened\n\n%?\n\n* What I learned\n\n* Next week\n")))
 #+end_src
 
+**** BACKLINK HELPERS
+
+#+begin_src emacs-lisp
+ (defun my/org-ensure-backlink (target-file source-file source-title)
+   "Ensure TARGET-FILE contains a backlink to SOURCE-FILE with SOURCE-TITLE.
+ Opens TARGET-FILE, inserts the link under a `* Backlinks (N)' heading
+ (created if absent), and updates the count."
+   (when (file-exists-p target-file)
+     (let* ((rel-path (file-relative-name source-file (file-name-directory target-file)))
+            (link (format "[[file:%s][%s]]" rel-path source-title)))
+       (with-current-buffer (find-file-noselect target-file)
+         ;; Check for duplicate anywhere in the buffer
+         (goto-char (point-min))
+         (unless (search-forward link nil t)
+           ;; Find or create the Backlinks heading
+           (goto-char (point-min))
+           (if (re-search-forward "^\\* Backlinks ([0-9]+)" nil t)
+               ;; Heading exists — go to end of its subtree
+               (let ((start (point)))
+                 (org-end-of-subtree t)
+                 (unless (bolp) (insert "\n"))
+                 (insert (format "- %s\n" link))
+                 ;; Update count
+                 (goto-char start)
+                 (beginning-of-line)
+                 (let ((count 0))
+                   (save-excursion
+                     (org-end-of-subtree t)
+                     (let ((end (point)))
+                       (goto-char start)
+                       (while (re-search-forward "^- \\[\\[file:" end t)
+                         (cl-incf count))))
+                   (when (re-search-forward "(\\([0-9]+\\))" (line-end-position) t)
+                     (replace-match (number-to-string count) t t nil 1))))
+             ;; No heading yet — create at end of file
+             (goto-char (point-max))
+             (unless (bolp) (insert "\n"))
+             (insert (format "* Backlinks (1)\n\n- %s\n" link))))
+         (save-buffer)))))
+#+end_src
+
 **** DAILY BACKLINK ON CAPTURE
 
 #+begin_src emacs-lisp
@@ -166,23 +207,46 @@ Returns a list of selected category strings."
             (daily-file (expand-file-name (format-time-string "%Y-%m-%d.org") daily-dir))
             (note-file (expand-file-name
                         (concat (my/org-title-to-filename my/capture-last-title) ".org")
-                        org-directory))
-            (rel-path (file-relative-name note-file (file-name-directory daily-file)))
-            (link (format "[[file:%s][%s]]" rel-path my/capture-last-title)))
+                        org-directory)))
        (unless (file-exists-p daily-dir) (make-directory daily-dir t))
        (with-current-buffer (find-file-noselect daily-file)
          (when (= (buffer-size) 0)
            (insert (format "#+TITLE: %s\n#+DATE: %s\n\n"
                            (format-time-string "%Y-%m-%d")
-                           (format-time-string "[%Y-%m-%d %a]"))))
-         (goto-char (point-max))
-         (unless (search-backward link nil t)
-           (goto-char (point-max))
-           (unless (bolp) (insert "\n"))
-           (insert (format "- %s\n" link)))
-         (save-buffer)))))
+                           (format-time-string "[%Y-%m-%d %a]")))))
+       (my/org-ensure-backlink daily-file note-file my/capture-last-title))))
 
  (add-hook 'org-capture-after-finalize-hook #'my/org-capture-add-daily-backlink)
+#+end_src
+
+**** INTERNAL LINK BACKLINKS ON SAVE
+
+#+begin_src emacs-lisp
+ (defun my/org-sync-backlinks ()
+   "After saving an org file, ensure backlinks exist in all internally linked files.
+ Category files (#+TYPE: category) are skipped so that backlinks accumulated
+ in them do not trigger reverse links."
+   (when (and (my/org-sync-scope-p)
+              (not my/org-sync-in-progress)
+              (not (save-excursion
+                     (goto-char (point-min))
+                     (re-search-forward "^#\\+TYPE:[ \t]*category" nil t))))
+     (let ((my/org-sync-in-progress t)
+           (source-file buffer-file-name)
+           (source-title (or (my/org-get-title)
+                             (file-name-base buffer-file-name)))
+           (source-dir (file-name-directory buffer-file-name)))
+       (save-excursion
+         (goto-char (point-min))
+         (while (re-search-forward "\\[\\[file:\\([^]]+\\.org\\)\\]" nil t)
+           (let* ((rel (match-string-no-properties 1))
+                  (target (expand-file-name rel source-dir)))
+             (when (and (file-exists-p target)
+                        (not (equal (file-truename target)
+                                    (file-truename source-file))))
+               (my/org-ensure-backlink target source-file source-title))))))))
+
+ (add-hook 'after-save-hook #'my/org-sync-backlinks)
 #+end_src
 
 **** TASK ARCHIVE
@@ -212,29 +276,58 @@ Returns a list of selected category strings."
 		       (format-time-string "%Y-%m-%d")
 		       (format-time-string "[%Y-%m-%d %a]"))))))
 
+ (defun my/org-insert-link ()
+   "Insert an org file link with description derived from filename.
+Prompts for an .org file under `org-directory' and inserts a relative
+link with the title inferred from the filename (underscores → spaces)."
+   (interactive)
+   (let* ((files (directory-files-recursively org-directory "\\.org$"))
+          (names (mapcar (lambda (f) (file-relative-name f org-directory)) files))
+          (pick (completing-read "Link to: " names nil t))
+          (abs (expand-file-name pick org-directory))
+          (base-dir (if buffer-file-name
+                        (file-name-directory buffer-file-name)
+                      (expand-file-name org-directory)))
+          (rel (file-relative-name abs base-dir))
+          (title (my/org-filename-to-title (file-name-base abs))))
+     (insert (format "[[file:%s][%s]]" rel title))))
+
  (define-key global-map "\C-ca" 'org-agenda)
  (define-key global-map "\C-cc" 'org-capture)
  (define-key global-map "\C-cn" 'my/org-daily-file)
+ (define-key org-mode-map (kbd "C-c l") #'my/org-insert-link)
 #+end_src
 
 *** SET FILETAGS
 
 #+begin_src emacs-lisp
  (defun my/set-filetags ()
-   "Set #+FILETAGS: in current buffer, completing from .categories."
+   "Set #+FILETAGS: in current buffer, completing from .categories.
+ Also creates backlinks in each selected category file."
    (interactive)
-   (let ((value (concat ":" (mapconcat #'identity (my/select-categories "Tags") ":") ":")))
-         (save-excursion
-           (goto-char (point-min))
-           (if (re-search-forward "^#\\+FILETAGS:.*$" nil t)
-               (replace-match (concat "#+FILETAGS: " value))
-             ;; Insert after the last #+KEYWORD line in the header
-             (goto-char (point-min))
-             (let ((insert-pos (point)))
-               (while (re-search-forward "^#\\+[A-Z_]+:" nil t)
-                 (setq insert-pos (line-end-position)))
-               (goto-char insert-pos)
-               (insert "\n#+FILETAGS: " value)))))))))
+   (let* ((tags (my/select-categories "Tags"))
+          (value (concat ":" (mapconcat #'identity tags ":") ":")))
+     (save-excursion
+       (goto-char (point-min))
+       (if (re-search-forward "^#\\+FILETAGS:.*$" nil t)
+           (replace-match (concat "#+FILETAGS: " value))
+         (goto-char (point-min))
+         (let ((insert-pos (point)))
+           (while (re-search-forward "^#\\+[A-Z_]+:" nil t)
+             (setq insert-pos (line-end-position)))
+           (goto-char insert-pos)
+           (insert "\n#+FILETAGS: " value))))
+     ;; Create backlinks in category files
+     (when buffer-file-name
+       (let ((source-file buffer-file-name)
+             (source-title (or (my/org-get-title)
+                               (file-name-base buffer-file-name))))
+         (dolist (tag tags)
+           (let ((cat-file (car (directory-files-recursively
+                                 org-directory
+                                 (concat "\\`" (regexp-quote tag) "\\.org\\'")))))
+             (when cat-file
+               (my/org-ensure-backlink cat-file source-file source-title))))))))
 
  (define-key org-mode-map (kbd "C-c t") #'my/set-filetags)
 #+end_src
