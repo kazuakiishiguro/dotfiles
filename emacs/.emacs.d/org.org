@@ -412,6 +412,10 @@ link with the title inferred from the filename (underscores → spaces)."
   (use-package org-bullets
     :config
     (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+  (use-package org-cliplink
+    :config
+    (define-key org-mode-map (kbd "C-c M-l") #'org-cliplink))
  #+end_src
 
 ** HOOKS
