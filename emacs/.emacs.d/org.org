@@ -58,22 +58,25 @@
  (defvar my/capture-last-title nil
    "Title from the last my/capture-file call, reused in template body.")
 
- (defun my/capture-file (dir prompt)
-   "Prompt for a title, validate, and return a new .org file path in DIR.
+ (defun my/org-title-to-path (dir title)
+   "Return a new .org file path in DIR for TITLE.
 Capitalizes first letter, replaces spaces with underscores.
-Errors on empty input or if file already exists."
-   (let* ((raw (read-string prompt))
-          (trimmed (string-trim raw)))
+Sets `my/capture-last-title'.  Errors if file already exists."
+   (let* ((capitalized (concat (upcase (substring title 0 1))
+                               (substring title 1)))
+          (filename (concat (replace-regexp-in-string " " "_" capitalized) ".org"))
+          (path (expand-file-name filename dir)))
+     (when (file-exists-p path)
+       (user-error "File already exists: %s" path))
+     (setq my/capture-last-title capitalized)
+     path))
+
+ (defun my/capture-file (dir prompt)
+   "Prompt for a title and return a new .org file path in DIR."
+   (let ((trimmed (string-trim (read-string prompt))))
      (when (string-empty-p trimmed)
        (user-error "Title cannot be empty"))
-     (let* ((capitalized (concat (upcase (substring trimmed 0 1))
-                                 (substring trimmed 1)))
-            (filename (concat (replace-regexp-in-string " " "_" capitalized) ".org"))
-            (path (expand-file-name filename dir)))
-       (when (file-exists-p path)
-         (user-error "File already exists: %s" path))
-       (setq my/capture-last-title capitalized)
-       path)))
+     (my/org-title-to-path dir trimmed)))
 
  (defun my/capture-title ()
    "Return the title saved by my/capture-file."
@@ -199,22 +202,28 @@ Returns a list of selected category strings."
 **** DAILY BACKLINK ON CAPTURE
 
 #+begin_src emacs-lisp
+ (defun my/org-add-daily-backlink (note-file title)
+   "Ensure today's daily file exists and has a backlink to NOTE-FILE with TITLE."
+   (let* ((daily-dir (expand-file-name "Daily" org-directory))
+          (daily-path (expand-file-name (format-time-string "%Y-%m-%d.org") daily-dir)))
+     (unless (file-exists-p daily-dir) (make-directory daily-dir t))
+     (with-current-buffer (find-file-noselect daily-path)
+       (when (= (buffer-size) 0)
+         (insert (format "#+TITLE: %s\n#+DATE: %s\n\n"
+                         (format-time-string "%Y-%m-%d")
+                         (format-time-string "[%Y-%m-%d %a]")))
+         (save-buffer)))
+     (my/org-ensure-backlink daily-path note-file title)))
+
  (defun my/org-capture-add-daily-backlink ()
    "After capturing a note, add a backlink in today's daily file."
    (when (and (equal (plist-get org-capture-plist :key) "n")
               my/capture-last-title)
-     (let* ((daily-dir (expand-file-name "Daily" org-directory))
-            (daily-file (expand-file-name (format-time-string "%Y-%m-%d.org") daily-dir))
-            (note-file (expand-file-name
-                        (concat (my/org-title-to-filename my/capture-last-title) ".org")
-                        org-directory)))
-       (unless (file-exists-p daily-dir) (make-directory daily-dir t))
-       (with-current-buffer (find-file-noselect daily-file)
-         (when (= (buffer-size) 0)
-           (insert (format "#+TITLE: %s\n#+DATE: %s\n\n"
-                           (format-time-string "%Y-%m-%d")
-                           (format-time-string "[%Y-%m-%d %a]")))))
-       (my/org-ensure-backlink daily-file note-file my/capture-last-title))))
+     (my/org-add-daily-backlink
+      (expand-file-name
+       (concat (my/org-title-to-filename my/capture-last-title) ".org")
+       org-directory)
+      my/capture-last-title)))
 
  (add-hook 'org-capture-after-finalize-hook #'my/org-capture-add-daily-backlink)
 #+end_src
@@ -258,7 +267,29 @@ Returns a list of selected category strings."
          deft-extensions '("org")
          deft-recursive t
          deft-use-filename-as-title nil
-         deft-org-mode-title-prefix t))
+         deft-org-mode-title-prefix t)
+   :bind (:map deft-mode-map
+               ("C-c C-n" . my/deft-new-note)))
+
+ (defun my/deft-new-note ()
+   "Create a new note from the current Deft filter string."
+   (interactive)
+   (let* ((raw (string-trim (deft-whole-filter-regexp))))
+     (when (string-empty-p raw)
+       (user-error "No search term to create a note from"))
+     (let* ((path (my/org-title-to-path org-directory raw))
+            (title my/capture-last-title)
+            (daily (format-time-string "%Y-%m-%d"))
+            (daily-link (format "[[file:Daily/%s.org][%s]]" daily daily)))
+       (let ((win (selected-window)))
+         (kill-buffer (current-buffer))
+         (select-window win)
+         (switch-to-buffer (find-file-noselect path)))
+       (insert (format "#+TITLE: %s\n#+DATE: %s\n#+FILETAGS:\n\n%s\n\n" title
+                       (format-time-string "[%Y-%m-%d %a %H:%M]")
+                       daily-link))
+       (save-buffer)
+       (my/org-add-daily-backlink path title))))
 #+end_src
 
 **** TASK ARCHIVE
