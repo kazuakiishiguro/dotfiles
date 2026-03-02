@@ -5,7 +5,7 @@ Personal dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/). E
 ## Repository layout
 
 ```
-~/fun/dotfiles/
+dotfiles/
   bash/           # .bashrc, .bash_profile
   bin/            # Custom scripts (~/.bin/)
   config/         # XDG configs: Hyprland, Ghostty, Kitty, i3, rofi

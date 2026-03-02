@@ -2,7 +2,7 @@
 
 set -eu
 
-DOTFILES_DIR="$HOME/fun/dotfiles"
+DOTFILES_DIR="$(pwd)/dotfiles"
 REPO="https://github.com/kazuakiishiguro/dotfiles.git"
 
 if [ -d "$DOTFILES_DIR" ]; then
