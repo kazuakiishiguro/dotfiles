@@ -49,10 +49,29 @@ if ! command -v stow > /dev/null 2>&1; then
   fi
 fi
 
+backup_dir="$HOME/.dotfiles-backup-$(date +%Y%m%d%H%M%S)"
+
 for module in ${modules[@]}; do
+    # Collect conflicting paths from stow dry-run
+    conflicts=$(stow -t ~ -n --adopt "$module" 2>&1 | grep "existing target" | sed 's/.*: //' || true)
+    if [ -n "$conflicts" ]; then
+        mkdir -p "$backup_dir"
+        for target in $conflicts; do
+            target_path="$HOME/$target"
+            if [ -e "$target_path" ] && [ ! -L "$target_path" ]; then
+                mkdir -p "$backup_dir/$(dirname "$target")"
+                mv "$target_path" "$backup_dir/$target"
+                echo "backed up $target_path -> $backup_dir/$target"
+            fi
+        done
+    fi
     stow -t ~ -v --adopt "$module"
 done
 
 # --adopt overwrites package files with existing target contents;
 # restore our versions from git
 git checkout .
+
+if [ -d "${backup_dir:-}" ]; then
+    echo "pre-existing files backed up to $backup_dir"
+fi
