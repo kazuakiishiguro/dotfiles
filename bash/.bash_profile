@@ -31,5 +31,9 @@ export GPG_TTY=$(tty)
 
 # fzf setup
 if command -v fzf >/dev/null 2>&1; then
-    eval "$(fzf --bash)"
+    if fzf --bash >/dev/null 2>&1; then
+        eval "$(fzf --bash)"
+    elif [ -f ~/.fzf.bash ]; then
+        source ~/.fzf.bash
+    fi
 fi

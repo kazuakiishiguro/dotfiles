@@ -50,5 +50,9 @@ if ! command -v stow > /dev/null 2>&1; then
 fi
 
 for module in ${modules[@]}; do
-    stow -t ~ -v "$module"
+    stow -t ~ -v --adopt "$module"
 done
+
+# --adopt overwrites package files with existing target contents;
+# restore our versions from git
+git checkout .
