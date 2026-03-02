@@ -34,6 +34,9 @@ config/.config/**
 !config/.config/rofi/
 !config/.config/rofi/config.rasi
 !config/.config/rofi/slate.rasi
+!config/.config/fcitx5/
+!config/.config/fcitx5/config
+!config/.config/fcitx5/profile
 !config/.config/omarchy/
 !config/.config/omarchy/hooks/
 !config/.config/omarchy/hooks/post-update

@@ -15,6 +15,11 @@ fi
 
 yay
 
+# install fcitx5-mozc for Japanese input
+if ! pacman -Qi fcitx5-mozc &>/dev/null; then
+    yay -S fcitx5-mozc
+fi
+
 # install curl
 if is_command curl; then
     echo "curl exists"

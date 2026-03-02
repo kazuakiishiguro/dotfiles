@@ -4,7 +4,7 @@
 # omarchy uses `cp -f` which replaces symlink targets in the dotfiles repo.
 DOTFILES_DIR="$(git -C "$(dirname "$(readlink -f "$0")")" rev-parse --show-toplevel 2>/dev/null)"
 if [ -d "$DOTFILES_DIR/.git" ]; then
-    git -C "$DOTFILES_DIR" checkout -- config/.config/hypr/ bash/
+    git -C "$DOTFILES_DIR" checkout -- config/.config/hypr/ config/.config/fcitx5/ bash/
 fi
 
 # Restore default browser
