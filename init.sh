@@ -52,11 +52,42 @@ fi
 backup_dir="$HOME/.dotfiles-backup-$(date +%Y%m%d%H%M%S)"
 dotfiles_dir="$(cd "$(dirname "$0")" && pwd)"
 
+# Replace a tree-folded stow symlink with a real directory, moving contents back.
+# e.g. ~/.config -> dotfiles/config/.config becomes a real ~/.config/ with files moved back.
+unfold_tree() {
+    local module="$1"
+    for top in "$module"/.*/ "$module"/*/; do
+        [ -d "$top" ] || continue
+        local base
+        base="$(basename "$top")"
+        [[ "$base" == "." || "$base" == ".." ]] && continue
+        local rel="${top#"$module"/}"
+        rel="${rel%/}"
+        local target="$HOME/$rel"
+        if [ -L "$target" ]; then
+            local resolved
+            resolved="$(readlink -f "$target")"
+            if [[ "$resolved" == "$dotfiles_dir"* ]]; then
+                echo "unfolding tree-fold: $target -> $resolved"
+                rm "$target"
+                mkdir -p "$target"
+                # Move everything from the repo dir to the real home dir
+                local repo_dir="$dotfiles_dir/$module/$rel"
+                if [ -d "$repo_dir" ]; then
+                    find "$repo_dir" -mindepth 1 -maxdepth 1 -exec mv -n {} "$target/" \;
+                fi
+                # Restore tracked files in the repo so stow can link them
+                git -C "$dotfiles_dir" checkout -- "$module/$rel" 2>/dev/null || true
+            fi
+        fi
+    done
+}
+
 # Back up real files/dirs and foreign symlinks that would conflict with stow.
 # Anything that already resolves into our dotfiles dir is stow-managed — leave it.
 backup_conflicts() {
     local module="$1"
-    find "$module" -mindepth 1 | while read -r src; do
+    find "$module" -mindepth 1 -not -type d | while read -r src; do
         local rel="${src#"$module"/}"
         local target="$HOME/$rel"
         if [ -L "$target" ] || [ -e "$target" ]; then
@@ -73,8 +104,9 @@ backup_conflicts() {
 }
 
 for module in ${modules[@]}; do
+    unfold_tree "$module"
     backup_conflicts "$module"
-    stow -t ~ -v --adopt "$module"
+    stow -t ~ -v --no-folding --adopt "$module"
 done
 
 # --adopt overwrites package files with existing target contents;

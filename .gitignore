@@ -6,3 +6,45 @@ bin/.bin/rust-analyzer
 git/.gitconfig_work
 *.lock.json
 .agent-shell
+*.bak*
+
+# Ignore everything under config/.config except tracked files.
+# With --no-folding, stow creates real dirs — untracked app data must not leak in.
+config/.config/**
+!config/.config/ghostty/
+!config/.config/ghostty/config
+!config/.config/github-copilot/
+!config/.config/github-copilot/versions.json
+!config/.config/hypr/
+!config/.config/hypr/autostart.conf
+!config/.config/hypr/bindings.conf
+!config/.config/hypr/clamshell.conf
+!config/.config/hypr/hypridle.conf
+!config/.config/hypr/hyprland.conf
+!config/.config/hypr/hyprlock.conf
+!config/.config/hypr/hyprsunset.conf
+!config/.config/hypr/input.conf
+!config/.config/hypr/looknfeel.conf
+!config/.config/hypr/monitors.conf
+!config/.config/hypr/xdph.conf
+!config/.config/i3/
+!config/.config/i3/config
+!config/.config/kitty/
+!config/.config/kitty/kitty.conf
+!config/.config/rofi/
+!config/.config/rofi/config.rasi
+!config/.config/rofi/slate.rasi
+!config/.config/omarchy/
+!config/.config/omarchy/hooks/
+!config/.config/omarchy/hooks/post-update
+
+# Same for local/.local
+local/.local/**
+!local/.local/share/
+!local/.local/share/dotfiles/
+!local/.local/share/dotfiles/bash/
+!local/.local/share/dotfiles/bash/aliases
+!local/.local/share/dotfiles/bash/language
+!local/.local/share/dotfiles/bash/prompt
+!local/.local/share/dotfiles/bash/rc
+!local/.local/share/dotfiles/bash/shell
