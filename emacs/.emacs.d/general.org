@@ -12,6 +12,22 @@
 #+end_src
 
 * Util
+** Wayland clipboard integration
+#+begin_src emacs-lisp
+(when (and (getenv "WAYLAND_DISPLAY")
+           (executable-find "wl-paste"))
+  (setq interprogram-paste-function
+        (lambda ()
+          (string-trim-right
+           (shell-command-to-string "wl-paste --no-newline 2>/dev/null"))))
+  (setq interprogram-cut-function
+        (lambda (text)
+          (let ((process-connection-type nil))
+            (let ((proc (start-process "wl-copy" nil "wl-copy")))
+              (process-send-string proc text)
+              (process-send-eof proc))))))
+#+end_src
+
 ** No backup, auto-save
 #+begin_src emacs-lisp
 (setq make-backup-files nil)
