@@ -327,18 +327,6 @@ Sets `my/capture-last-title' and `my/cliplink-last-link'."
 ** KEYBINDINGS
 
 #+begin_src emacs-lisp
- (defun my/org-daily-file ()
-   "Open or create today's daily anchor file."
-   (interactive)
-   (let* ((dir (expand-file-name "Daily" org-directory))
-	  (file (expand-file-name (format-time-string "%Y-%m-%d.org") dir)))
-     (unless (file-exists-p dir) (make-directory dir t))
-     (find-file file)
-     (when (= (buffer-size) 0)
-       (insert (format "#+TITLE: %s\n#+DATE: %s\n"
-		       (format-time-string "%Y-%m-%d")
-		       (format-time-string "[%Y-%m-%d %a]"))))))
-
  (defun my/org-insert-link ()
    "Insert an org file link with description derived from filename.
 Prompts for an .org file under `org-directory' and inserts a relative

@@ -87,8 +87,6 @@ Kepano-inspired personal knowledge base managed via Emacs org-mode. Data lives i
 | C-c t       | Set #+FILETAGS from .categories (+ backlinks in category files) |
 | C-c C-x C-s | Mark done and archive   |
 
-Note: `my/org-daily-file` (open today's daily file) is defined but not bound to a key.
-
 ### Org conventions
 
 - Filenames use underscores for spaces, first letter capitalized (e.g. `Binary_Hacks.org`)
