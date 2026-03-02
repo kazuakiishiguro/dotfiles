@@ -11,13 +11,6 @@
 (setq use-package-always-ensure t)
 #+end_src
 
-* LOAD =env.el=
-
-#+begin_src emacs-lisp
- (if (file-exists-p "~/.emacs.d/.env.el")
-     (load "~/.emacs.d/.env.el"))
-#+end_src
-
 * LOAD CONFIGS
 
 #+begin_src emacs-lisp
