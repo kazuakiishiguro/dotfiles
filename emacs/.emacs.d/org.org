@@ -131,11 +131,26 @@ Returns a list of selected category strings."
    "Select categories for a Reference capture template."
    (mapconcat #'identity (my/select-categories "Category") ":"))
 
- (defun my/cliplink-from-prompt ()
-   "Prompt for a URL and return an org link with the page title fetched automatically."
-   (let* ((url (read-string "URL: "))
-          (title (org-cliplink-retrieve-title-synchronously url)))
-     (org-cliplink-org-mode-link-transformer url title)))
+ (defvar my/cliplink-last-link nil
+   "Org link from the last my/cliplink-capture-file call.")
+
+ (defun my/cliplink-capture-file ()
+   "Read URL from clipboard, fetch page title, and return a new Clipping file path.
+Sets `my/capture-last-title' and `my/cliplink-last-link'."
+   (let* ((url (string-trim (shell-command-to-string "wl-paste --no-newline 2>/dev/null")))
+          (_ (when (string-empty-p url)
+               (user-error "No URL in clipboard")))
+          (title (org-cliplink-retrieve-title-synchronously url))
+          (link (org-cliplink-org-mode-link-transformer url title))
+          (clean-title (if title
+                           (org-cliplink-escape-html4 title)
+                         (user-error "Could not fetch title for %s" url))))
+     (setq my/cliplink-last-link link)
+     (my/org-title-to-path (expand-file-name "Clippings" org-directory) clean-title)))
+
+ (defun my/cliplink-last-link ()
+   "Return the link saved by my/cliplink-capture-file."
+   my/cliplink-last-link)
 
  (setq org-capture-templates
        '(("t" "TODO" entry (file+headline "~/org/todo.org" "CURRENT")
@@ -153,9 +168,8 @@ Returns a list of selected category strings."
 	   (my/capture-file "~/org" "Category name: ")))
 	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+TYPE: category\n\n%?")
 
-	 ("c" "Clipping" plain (file (lambda ()
-	   (my/capture-file "~/org/Clippings" "Clipping title: ")))
-	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+FILETAGS: :Manuscripts:\n\nSource: %(my/cliplink-from-prompt)\n\n%?")
+	 ("c" "Clipping" plain (file (lambda () (my/cliplink-capture-file)))
+	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+FILETAGS: :Manuscripts:\n\nSource: %(my/cliplink-last-link)\n\n%?")
 
 	 ("w" "Weekly review" plain (file (lambda ()
 	   (expand-file-name
@@ -164,7 +178,7 @@ Returns a list of selected category strings."
 	  "#+TITLE: Week%(format-time-string \"%%U\") - %(format-time-string \"%%b %%Y\")\n#+DATE: %U\n#+FILETAGS: :weekly:\n\n* What happened\n\n%?\n\n* What I learned\n\n* Next week\n")))
 #+end_src
 
-**** BACKLINK HELPERS
+*** BACKLINK HELPERS
 
 #+begin_src emacs-lisp
  (defun my/org-ensure-backlink (target-file source-file source-title)
@@ -205,7 +219,7 @@ Returns a list of selected category strings."
          (save-buffer)))))
 #+end_src
 
-**** DAILY BACKLINK ON CAPTURE
+*** DAILY BACKLINK ON CAPTURE
 
 #+begin_src emacs-lisp
  (defun my/org-add-daily-backlink (note-file title)
@@ -234,7 +248,7 @@ Returns a list of selected category strings."
  (add-hook 'org-capture-after-finalize-hook #'my/org-capture-add-daily-backlink)
 #+end_src
 
-**** INTERNAL LINK BACKLINKS ON SAVE
+*** INTERNAL LINK BACKLINKS ON SAVE
 
 #+begin_src emacs-lisp
  (defun my/org-sync-backlinks ()
@@ -298,7 +312,7 @@ Returns a list of selected category strings."
        (my/org-add-daily-backlink path title))))
 #+end_src
 
-**** TASK ARCHIVE
+*** TASK ARCHIVE
 
 #+begin_src emacs-lisp
 (defun my/mark-done-and-archive ()
@@ -343,7 +357,7 @@ link with the title inferred from the filename (underscores → spaces)."
 
  (define-key global-map "\C-ca" 'org-agenda)
  (define-key global-map "\C-cc" 'org-capture)
- (define-key global-map "\C-cn" 'my/org-daily-file)
+ (define-key global-map "\C-cn" (lambda () (interactive) (org-capture nil "n")))
  (define-key org-mode-map (kbd "C-c l") #'my/org-insert-link)
 #+end_src
 
@@ -419,30 +433,11 @@ link with the title inferred from the filename (underscores → spaces)."
     :config
     (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
-  (use-package org-cliplink
-    :config
-    (define-key org-mode-map (kbd "C-c M-l") #'org-cliplink))
+  (use-package org-cliplink)
+  (global-set-key (kbd "C-x p i") 'org-cliplink)
  #+end_src
 
 ** HOOKS
-*** IN-BUFFER SETTING
-
-#+begin_src emacs-lisp
- (defun my/org-mode-auto-titles ()
-   (when (and (stringp buffer-file-name)
-	      (string-match "\\.org$" buffer-file-name))
-     (let ((title (file-name-base buffer-file-name)))
-       (if (string-match "\\`[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}-.*\\'" title)
-	   (progn
-	     (insert (concat "#+TITLE: " (replace-regexp-in-string "\\`[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}-" "" title) "\n"))
-	     (insert "#+LAYOUT: post\n")
-	     (insert "#+OPTIONS: f:t\n"))))))
-#+end_src
-
-#+begin_src emacs-lisp
- (add-hook 'find-file-hook 'my/org-mode-auto-titles)
-#+end_src
-
 *** AUTO FILL MODE
 
 #+begin_src emacs-lisp

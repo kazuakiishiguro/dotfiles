@@ -49,20 +49,15 @@
 (defun volatile-kill-buffer ()
   "Kill current buffer unconditionally."
   (interactive)
-  (let ((buffer-modified-p nil))
-    (kill-buffer (current-buffer))))
+  (set-buffer-modified-p nil)
+  (kill-buffer (current-buffer)))
 
 (global-set-key (kbd "C-x k") 'volatile-kill-buffer)     ;; Unconditionally kill unmodified buffers.
 #+end_src
 
 ** Delete other windows setting
 #+begin_src emacs-lisp
-(defun my/kill-another-buffer ()
-  "Kill another buffer if it exists."
-  (interactive)
-  (delete-other-windows))
-
-(global-set-key (kbd "C-q") 'my/kill-another-buffer)
+(global-set-key (kbd "C-q") 'delete-other-windows)
 #+end_src
 ** Insert line before
 #+begin_src emacs-lisp
@@ -88,7 +83,7 @@
 
 ** Disable visual bell
 #+begin_src emacs-lisp
-(setq rign-bell-function 'ignore)
+(setq ring-bell-function 'ignore)
 #+end_src
 ** Trim trailing whitespace
 #+begin_src emacs-lisp

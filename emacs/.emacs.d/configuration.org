@@ -5,11 +5,6 @@
 
 * BASIC CONFIGS
 
-#+begin_src emacs-lisp
-(eval-when-compile
-  (require 'use-package))
-#+end_src
-
 ** ALWAYS =:ensure t=
 #+begin_src emacs-lisp
 (require 'use-package-ensure)
@@ -46,12 +41,7 @@
 (dolist (config '("prog.org"
                   "c.org"
                   "rust.org"
-                  "python.org"
-                  "zig.org"
-                  "solidity.org"
-                  "gauche.org"
-                  "web.org"
-                  "javascript.org"))
+                  "python.org"))
   (load-config config))
 #+end_src
 
@@ -63,13 +53,9 @@
   (load-config config))
 #+end_src
 
-** AI & Tools
+** AI
 
 #+begin_src emacs-lisp
-(dolist (config '("chatgpt.org"
-                  "claude.org"
-                  "agent.org"
-                  "gist.org"
-                  "sage.org"))
+(dolist (config '("claude.org"))
   (load-config config))
 #+end_src

@@ -1,8 +1,0 @@
-#+TITLE: ZIG
-
-** ZIG
-#+begin_src emacs-lisp
- (use-package zig-mode
-   :config
-   (add-hook 'zig-mode-hook #'lsp-deferred))
-#+end_src

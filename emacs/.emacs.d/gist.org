@@ -1,5 +1,0 @@
-* Gist
-
-#+begin_src emacs-lisp
- (use-package gist)
-#+end_src

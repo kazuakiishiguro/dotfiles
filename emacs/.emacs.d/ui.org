@@ -1,4 +1,9 @@
 * UI settings
+** Font
+#+begin_src emacs-lisp
+(set-face-attribute 'default nil :family "JetBrainsMono Nerd Font" :height 180)
+#+end_src
+
 ** Theme
    #+begin_src emacs-lisp
     (use-package modus-themes
@@ -31,16 +36,11 @@
 (defun my/init-line-numbers-mode ()
   "Initialize line numbers mode."
   (display-line-numbers-mode)
-  (setq display-line-numbers-witdth-start t))
+  (setq display-line-numbers-width-start t))
 #+end_src
 
 #+begin_src emacs-lisp
 (add-hook 'prog-mode-hook 'my/init-line-numbers-mode)
-#+end_src
-*** Hilight line
-#+begin_src emacs-lisp
-(custom-set-faces
- '(line-number-current-line ((t (:foreground "Royalblue" :background "DarkGray")))))
 #+end_src
 ** Window settings
 *** Window size
@@ -80,11 +80,6 @@
 #+end_src
 
 ** Git
-*** Fringe helper
-#+begin_src emacs-lisp
-(use-package fringe-helper)
-#+end_src
-
 *** Git gutter
 #+begin_src emacs-lisp
 (use-package git-gutter
@@ -105,15 +100,3 @@
   (global-git-gutter-mode t))
 #+end_src
 
-*** TEMP svg error for Emacs 28.2
-see [[https://emacs.stackexchange.com/questions/74289/emacs-28-2-error-in-macos-ventura-image-type-invalid-image-type-svg][here]]
-#+begin_src emacs-lisp
-;; overriding image.el function image-type-available-p
-(defun image-type-available-p (type)
-  "Return t if image type TYPE is available.
-Image types are symbols like `xbm' or `jpeg'."
-  (if (eq 'svg type)
-      nil
-    (and (fboundp 'init-image-library)
-         (init-image-library type))))
-#+end_src
