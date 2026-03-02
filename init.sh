@@ -52,22 +52,19 @@ fi
 backup_dir="$HOME/.dotfiles-backup-$(date +%Y%m%d%H%M%S)"
 dotfiles_dir="$(cd "$(dirname "$0")" && pwd)"
 
-# Back up real files/dirs and foreign symlinks that would conflict with stow
+# Back up real files/dirs and foreign symlinks that would conflict with stow.
+# Anything that already resolves into our dotfiles dir is stow-managed — leave it.
 backup_conflicts() {
     local module="$1"
     find "$module" -mindepth 1 | while read -r src; do
         local rel="${src#"$module"/}"
         local target="$HOME/$rel"
-        if [ -L "$target" ]; then
-            # Symlink exists - back it up if it doesn't point into our dotfiles dir
-            local link_dest
-            link_dest="$(readlink -f "$target" 2>/dev/null || true)"
-            if [[ "$link_dest" != "$dotfiles_dir"* ]]; then
-                mkdir -p "$backup_dir/$(dirname "$rel")"
-                mv "$target" "$backup_dir/$rel"
-                echo "backed up foreign symlink $target -> $backup_dir/$rel"
+        if [ -L "$target" ] || [ -e "$target" ]; then
+            local resolved
+            resolved="$(readlink -f "$target" 2>/dev/null || true)"
+            if [[ "$resolved" == "$dotfiles_dir"* ]]; then
+                continue
             fi
-        elif [ -e "$target" ]; then
             mkdir -p "$backup_dir/$(dirname "$rel")"
             mv "$target" "$backup_dir/$rel"
             echo "backed up $target -> $backup_dir/$rel"
