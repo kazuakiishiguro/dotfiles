@@ -9,7 +9,7 @@ if [ -e "$HOME/.cargo" ]; then
 fi
 
 # sccache for Rust builds
-if _is_command sccache; then
+if command -v sccache >/dev/null 2>&1; then
     export RUSTC_WRAPPER=$(which sccache)
 fi
 
@@ -30,4 +30,6 @@ fi
 export GPG_TTY=$(tty)
 
 # fzf setup
-eval "$(fzf --bash)"
+if command -v fzf >/dev/null 2>&1; then
+    eval "$(fzf --bash)"
+fi

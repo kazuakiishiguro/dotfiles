@@ -1,8 +1,15 @@
 # aliases
-alias l='ls -ltrG'
-alias ls='ls -G'
-alias la='ls -laG'
-alias ll='ls -lG'
+if [[ "$(uname)" == "Darwin" ]]; then
+  alias l='ls -ltrG'
+  alias ls='ls -G'
+  alias la='ls -laG'
+  alias ll='ls -lG'
+else
+  alias l='ls -ltr --color=auto'
+  alias ls='ls --color=auto'
+  alias la='ls -la --color=auto'
+  alias ll='ls -l --color=auto'
+fi
 alias dockerrm='docker rm $(docker ps -aq)'
 alias dockerrmi='docker rmi $(docker images -aq)'
 alias dockerstop='docker stop $(docker ps -aq)'

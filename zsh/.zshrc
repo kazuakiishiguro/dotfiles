@@ -9,11 +9,13 @@ platform='unknown'
 if [[ `uname` == 'Darwin' ]]; then
   platform='osx'
 elif [[ `uname -a` == *Ubuntu* ]]; then
-    platform='debian'
-    if _is_command Xorg; then
-      # set xcape keymap
-      source $HOME/.bin/start-xcape.sh
-    fi
+  platform='debian'
+  if command -v Xorg >/dev/null 2>&1; then
+    # set xcape keymap
+    source $HOME/.bin/start-xcape.sh
+  fi
+elif [ -f /etc/arch-release ]; then
+  platform='arch'
 fi
 
 # env
@@ -32,10 +34,17 @@ precmd () { vcs_info }
 PROMPT='%n@%m:%F{cyan}%~%f%F{green}$vcs_info_msg_0_%f$ '
 
 # aliases
-alias l='ls -ltrG'
-alias ls='ls -G'
-alias la='ls -laG'
-alias ll='ls -lG'
+if [[ "$platform" == "osx" ]]; then
+  alias l='ls -ltrG'
+  alias ls='ls -G'
+  alias la='ls -laG'
+  alias ll='ls -lG'
+else
+  alias l='ls -ltr --color=auto'
+  alias ls='ls --color=auto'
+  alias la='ls -la --color=auto'
+  alias ll='ls -l --color=auto'
+fi
 alias dockerrm='docker rm $(docker ps -aq)'
 alias dockerrmi='docker rmi $(docker images -aq)'
 alias dockerstop='docker stop $(docker ps -aq)'
@@ -47,4 +56,6 @@ alias emacs='emacs -nw'
 export GPG_TTY=$(tty)
 
 # Set up fzf key bindings and fuzzy completion
-source <(fzf --zsh)
+if command -v fzf >/dev/null 2>&1; then
+  source <(fzf --zsh)
+fi
