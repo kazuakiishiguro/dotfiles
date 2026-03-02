@@ -50,21 +50,24 @@ if ! command -v stow > /dev/null 2>&1; then
 fi
 
 backup_dir="$HOME/.dotfiles-backup-$(date +%Y%m%d%H%M%S)"
+dotfiles_dir="$(cd "$(dirname "$0")" && pwd)"
+
+# Back up real files/dirs that would conflict with stow symlinks
+backup_conflicts() {
+    local module="$1"
+    find "$module" -mindepth 1 | while read -r src; do
+        local rel="${src#"$module"/}"
+        local target="$HOME/$rel"
+        if [ -e "$target" ] && [ ! -L "$target" ]; then
+            mkdir -p "$backup_dir/$(dirname "$rel")"
+            mv "$target" "$backup_dir/$rel"
+            echo "backed up $target -> $backup_dir/$rel"
+        fi
+    done
+}
 
 for module in ${modules[@]}; do
-    # Collect conflicting paths from stow dry-run
-    conflicts=$(stow -t ~ -n --adopt "$module" 2>&1 | grep "existing target" | sed 's/.*: //' || true)
-    if [ -n "$conflicts" ]; then
-        mkdir -p "$backup_dir"
-        for target in $conflicts; do
-            target_path="$HOME/$target"
-            if [ -e "$target_path" ] && [ ! -L "$target_path" ]; then
-                mkdir -p "$backup_dir/$(dirname "$target")"
-                mv "$target_path" "$backup_dir/$target"
-                echo "backed up $target_path -> $backup_dir/$target"
-            fi
-        done
-    fi
+    backup_conflicts "$module"
     stow -t ~ -v --adopt "$module"
 done
 
