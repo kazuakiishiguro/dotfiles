@@ -11,7 +11,6 @@ dotfiles/
   config/         # XDG configs: Hyprland, Ghostty, Kitty, i3, rofi
   emacs/          # Literate Emacs config (.emacs.d/*.org)
   git/            # .gitconfig, .gitconfig_fun, .gitignore_global
-  local/          # Shared shell fragments (~/.local/share/dotfiles/bash/)
   screen/         # .screenrc
   scripts/        # OS-specific setup scripts + Brewfile
   vim/            # .vimrc
@@ -37,14 +36,7 @@ Detected via `uname` in `init.sh`. OS-specific setup scripts live in `scripts/`:
 
 ## Shell config
 
-Shared fragments live in `local/.local/share/dotfiles/bash/`:
-- `shell` — common env vars and options
-- `aliases` — shared aliases
-- `language` — language-specific env (Rust, Go, etc.)
-- `prompt` — PS1 / prompt config
-- `rc` — interactive shell setup
-
-Both `.bashrc` and `.zshrc` source these fragments for consistency.
+Both `.bashrc` and `.zshrc` inline their config directly (aliases, prompt, PATH, etc.).
 
 ## Hyprland (Arch)
 

@@ -40,14 +40,3 @@ config/.config/**
 !config/.config/omarchy/
 !config/.config/omarchy/hooks/
 !config/.config/omarchy/hooks/post-update
-
-# Same for local/.local
-local/.local/**
-!local/.local/share/
-!local/.local/share/dotfiles/
-!local/.local/share/dotfiles/bash/
-!local/.local/share/dotfiles/bash/aliases
-!local/.local/share/dotfiles/bash/language
-!local/.local/share/dotfiles/bash/prompt
-!local/.local/share/dotfiles/bash/rc
-!local/.local/share/dotfiles/bash/shell

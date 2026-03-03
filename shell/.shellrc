@@ -1,4 +1,10 @@
-# aliases
+# --- Shared shell config (sourced by .bashrc and .zshrc) ---
+
+# --- History ---
+HISTSIZE=1000
+HISTFILESIZE=2000
+
+# --- Aliases ---
 if [[ "$(uname)" == "Darwin" ]]; then
   alias l='ls -ltrG'
   alias ls='ls -G'
@@ -16,3 +22,17 @@ alias dockerstop='docker stop $(docker ps -aq)'
 alias dockerkill='docker kill $(docker ps -aq)'
 alias emacsmin='emacs -nw --no-init-file --no-site-file'
 alias emacs='emacs -nw'
+
+# --- Locale ---
+if [[ -z "$LANG" ]]; then
+    export LANG='en_US.UTF-8'
+    export LC_ALL="en_US.UTF-8"
+fi
+
+# --- GPG ---
+export GPG_TTY=$(tty)
+
+# --- PATH ---
+export PATH="$PATH:$HOME/.bin"
+export PATH="/usr/local/sbin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
