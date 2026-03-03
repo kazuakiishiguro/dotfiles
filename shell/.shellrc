@@ -2,7 +2,8 @@
 
 # --- History ---
 HISTSIZE=1000
-HISTFILESIZE=2000
+HISTFILESIZE=2000   # bash
+SAVEHIST=2000       # zsh
 
 # --- Aliases ---
 if [[ "$(uname)" == "Darwin" ]]; then
