@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Org Zettelkasten Graph</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #1a1a2e; color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; height: 100vh; overflow: hidden; }
+
+#sidebar {
+  width: 260px; min-width: 260px; background: #16213e; padding: 16px;
+  display: flex; flex-direction: column; gap: 14px; overflow-y: auto;
+  border-right: 1px solid #0f3460;
+}
+#sidebar h2 { font-size: 15px; color: #7fb3ff; margin-bottom: 4px; }
+#sidebar label { font-size: 12px; color: #aaa; }
+
+input[type="text"], select {
+  width: 100%; padding: 6px 10px; background: #0f3460; border: 1px solid #1a4080;
+  color: #e0e0e0; border-radius: 4px; font-size: 13px; outline: none;
+}
+input[type="text"]:focus, select:focus { border-color: #4682b4; }
+
+input[type="range"] { width: 100%; accent-color: #4682b4; }
+
+.category-toggles { display: flex; flex-direction: column; gap: 6px; }
+.category-toggle {
+  display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;
+}
+.category-toggle input { accent-color: var(--cat-color); }
+.cat-dot {
+  width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+}
+
+#stats { font-size: 12px; color: #888; line-height: 1.6; margin-top: auto; }
+#stats span { color: #7fb3ff; }
+
+#graph-container { flex: 1; position: relative; }
+svg { width: 100%; height: 100%; }
+
+.tooltip {
+  position: absolute; pointer-events: none; background: #16213e; border: 1px solid #4682b4;
+  border-radius: 6px; padding: 10px 14px; font-size: 12px; line-height: 1.5;
+  max-width: 300px; display: none; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.tooltip .tt-title { font-size: 14px; font-weight: 600; color: #7fb3ff; margin-bottom: 4px; }
+.tooltip .tt-tags { color: #d4a017; }
+.tooltip .tt-meta { color: #888; }
+
+.node-label {
+  font-size: 9px; fill: #ccc; pointer-events: none;
+  text-anchor: middle; dominant-baseline: central;
+}
+
+#reset-btn {
+  background: #0f3460; border: 1px solid #1a4080; color: #7fb3ff;
+  padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;
+  text-align: center;
+}
+#reset-btn:hover { background: #1a4080; }
+
+/* Node detail panel */
+#node-panel {
+  position: absolute; top: 0; right: 0; width: 320px; height: 100%;
+  background: #16213e; border-left: 1px solid #0f3460;
+  transform: translateX(100%); transition: transform 0.2s ease;
+  display: flex; flex-direction: column; z-index: 20;
+  box-shadow: -4px 0 16px rgba(0,0,0,0.4);
+}
+#node-panel.open { transform: translateX(0); }
+
+#panel-header {
+  padding: 16px; border-bottom: 1px solid #0f3460;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+#panel-header .panel-title { flex: 1; font-size: 16px; font-weight: 600; color: #7fb3ff; line-height: 1.3; }
+#panel-close {
+  background: none; border: none; color: #888; font-size: 20px;
+  cursor: pointer; padding: 0 4px; line-height: 1;
+}
+#panel-close:hover { color: #e0e0e0; }
+
+#panel-meta { padding: 8px 16px; font-size: 12px; color: #888; border-bottom: 1px solid #0f3460; }
+#panel-meta .pm-tags { color: #d4a017; margin-bottom: 2px; }
+#panel-meta .pm-cat { display: flex; align-items: center; gap: 6px; }
+#panel-meta .pm-cat .cat-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+
+#panel-body { flex: 1; overflow-y: auto; padding: 0; }
+
+.link-section { padding: 12px 16px; }
+.link-section h3 {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px;
+  color: #666; margin-bottom: 8px;
+}
+.link-section + .link-section { border-top: 1px solid #0f3460; }
+
+.link-item {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+  border-radius: 4px; cursor: pointer; font-size: 13px; color: #ccc;
+  transition: background 0.1s;
+}
+.link-item:hover { background: #1a4080; color: #fff; }
+.link-item .li-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.link-item .li-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.link-item .li-count { font-size: 11px; color: #666; flex-shrink: 0; }
+
+.link-empty { font-size: 12px; color: #555; padding: 4px 8px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div>
+    <h2>Org Zettelkasten Graph</h2>
+  </div>
+
+  <div>
+    <label>Search</label>
+    <input type="text" id="search" placeholder="Filter by title...">
+  </div>
+
+  <div>
+    <label>Categories</label>
+    <div class="category-toggles" id="cat-toggles"></div>
+  </div>
+
+  <div>
+    <label>Tag filter</label>
+    <select id="tag-filter"><option value="">All tags</option></select>
+  </div>
+
+  <div>
+    <label>Min backlinks: <span id="min-bl-val">0</span></label>
+    <input type="range" id="min-bl" min="0" max="50" value="0">
+  </div>
+
+  <div>
+    <button id="reset-btn">Reset filters</button>
+  </div>
+
+  <div id="stats"></div>
+</div>
+
+<div id="graph-container">
+  <svg id="graph-svg"></svg>
+  <div class="tooltip" id="tooltip"></div>
+  <div id="node-panel">
+    <div id="panel-header">
+      <div class="panel-title" id="panel-title"></div>
+      <button id="panel-close">&times;</button>
+    </div>
+    <div id="panel-meta"></div>
+    <div id="panel-body">
+      <div class="link-section" id="section-backlinks"><h3>Backlinks</h3><div class="link-list" id="list-backlinks"></div></div>
+      <div class="link-section" id="section-links"><h3>Links</h3><div class="link-list" id="list-links"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GRAPH_DATA = null;
+
+(function() {
+  if (!GRAPH_DATA) {
+    document.getElementById('stats').innerHTML = 'No data loaded. Run org-graph.py first.';
+    return;
+  }
+
+  const { nodes, edges, categories, tags } = GRAPH_DATA;
+
+  const CAT_COLORS = {
+    root: '#4682b4',
+    clippings: '#d4a017',
+    references: '#2e8b57',
+    daily: '#aaaaaa'
+  };
+
+  // Build lookup maps
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
+  const adjacency = new Map();
+  const outgoing = new Map();  // source -> Set of targets (links FROM this node)
+  const incoming = new Map();  // target -> Set of sources (backlinks TO this node)
+  nodes.forEach(n => {
+    adjacency.set(n.id, new Set());
+    outgoing.set(n.id, new Set());
+    incoming.set(n.id, new Set());
+  });
+  edges.forEach(e => {
+    if (adjacency.has(e.source) && adjacency.has(e.target)) {
+      adjacency.get(e.source).add(e.target);
+      adjacency.get(e.target).add(e.source);
+      outgoing.get(e.source).add(e.target);
+      incoming.get(e.target).add(e.source);
+    }
+  });
+
+  // ---- Sidebar setup ----
+  const catToggles = document.getElementById('cat-toggles');
+  categories.forEach(cat => {
+    const color = CAT_COLORS[cat] || '#888';
+    const label = document.createElement('label');
+    label.className = 'category-toggle';
+    label.style.setProperty('--cat-color', color);
+    label.innerHTML = `<input type="checkbox" checked data-cat="${cat}">` +
+      `<span class="cat-dot" style="background:${color}"></span> ${cat}`;
+    catToggles.appendChild(label);
+  });
+
+  const tagSelect = document.getElementById('tag-filter');
+  tags.sort().forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    tagSelect.appendChild(opt);
+  });
+
+  const searchInput = document.getElementById('search');
+  const minBlSlider = document.getElementById('min-bl');
+  const minBlVal = document.getElementById('min-bl-val');
+  const statsEl = document.getElementById('stats');
+
+  // ---- SVG setup ----
+  const svg = d3.select('#graph-svg');
+  const container = document.getElementById('graph-container');
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  const g = svg.append('g');
+
+  const zoom = d3.zoom()
+    .scaleExtent([0.1, 8])
+    .on('zoom', (event) => g.attr('transform', event.transform));
+  svg.call(zoom);
+
+  // ---- Create simulation data ----
+  const simNodes = nodes.map(n => ({ ...n }));
+  const simEdges = edges.map(e => ({ source: e.source, target: e.target }));
+
+  // ---- Draw elements ----
+  const linkG = g.append('g');
+  const nodeG = g.append('g');
+  const labelG = g.append('g');
+
+  let linkEls = linkG.selectAll('line');
+  let nodeEls = nodeG.selectAll('circle');
+  let labelEls = labelG.selectAll('text');
+
+  // ---- Force simulation ----
+  const simulation = d3.forceSimulation()
+    .force('link', d3.forceLink().id(d => d.id).distance(60))
+    .force('charge', d3.forceManyBody().strength(-80).theta(0.8))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide().radius(d => nodeRadius(d) + 2))
+    .on('tick', ticked);
+
+  function nodeRadius(d) {
+    return 3 + Math.sqrt(d.backlinks || 0) * 1.5;
+  }
+
+  function ticked() {
+    linkEls
+      .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    nodeEls
+      .attr('cx', d => d.x).attr('cy', d => d.y);
+    labelEls
+      .attr('x', d => d.x).attr('y', d => d.y - nodeRadius(d) - 4);
+  }
+
+  // ---- Drag behavior ----
+  const drag = d3.drag()
+    .on('start', (event, d) => {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x; d.fy = d.y;
+    })
+    .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
+    .on('end', (event, d) => {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null; d.fy = null;
+    });
+
+  // ---- Tooltip ----
+  const tooltip = document.getElementById('tooltip');
+
+  function showTooltip(event, d) {
+    const tags = (d.tags || []).join(', ');
+    tooltip.innerHTML =
+      `<div class="tt-title">${d.title || d.id}</div>` +
+      (tags ? `<div class="tt-tags">${tags}</div>` : '') +
+      `<div class="tt-meta">${d.date || ''}</div>` +
+      `<div class="tt-meta">Backlinks: ${d.backlinks || 0}</div>` +
+      `<div class="tt-meta">Category: ${d.category}</div>`;
+    tooltip.style.display = 'block';
+    positionTooltip(event);
+  }
+
+  function positionTooltip(event) {
+    const rect = container.getBoundingClientRect();
+    let x = event.clientX - rect.left + 14;
+    let y = event.clientY - rect.top + 14;
+    if (x + 300 > rect.width) x = event.clientX - rect.left - 310;
+    if (y + 120 > rect.height) y = event.clientY - rect.top - 120;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+  }
+
+  function hideTooltip() { tooltip.style.display = 'none'; }
+
+  // ---- Highlight neighbors ----
+  let lockedNode = null;
+
+  function highlightNeighbors(d) {
+    const neighbors = adjacency.get(d.id) || new Set();
+    nodeEls
+      .attr('opacity', n => (n.id === d.id || neighbors.has(n.id)) ? 1 : 0.1);
+    linkEls
+      .attr('stroke-opacity', l => {
+        const sid = typeof l.source === 'object' ? l.source.id : l.source;
+        const tid = typeof l.target === 'object' ? l.target.id : l.target;
+        return (sid === d.id || tid === d.id) ? 0.7 : 0.03;
+      });
+    labelEls
+      .attr('opacity', n => (n.id === d.id || neighbors.has(n.id)) ? 1 : 0.05);
+  }
+
+  function resetHighlight() {
+    nodeEls.attr('opacity', 1);
+    linkEls.attr('stroke-opacity', 0.15);
+    labelEls.attr('opacity', 1);
+  }
+
+  // ---- Node detail panel ----
+  const nodePanel = document.getElementById('node-panel');
+  const panelTitle = document.getElementById('panel-title');
+  const panelMeta = document.getElementById('panel-meta');
+  const listBacklinks = document.getElementById('list-backlinks');
+  const listLinks = document.getElementById('list-links');
+
+  function openPanel(d) {
+    panelTitle.textContent = d.title || d.id;
+
+    const catColor = CAT_COLORS[d.category] || '#888';
+    const tagStr = (d.tags || []).length ? `<div class="pm-tags">${d.tags.join(', ')}</div>` : '';
+    panelMeta.innerHTML =
+      tagStr +
+      (d.date ? `<div>${d.date}</div>` : '') +
+      `<div class="pm-cat"><span class="cat-dot" style="background:${catColor}"></span> ${d.category}</div>` +
+      `<div>Backlinks: ${d.backlinks || 0}</div>`;
+
+    // Backlinks: nodes that link TO this node
+    const bl = incoming.get(d.id) || new Set();
+    listBacklinks.innerHTML = '';
+    if (bl.size === 0) {
+      listBacklinks.innerHTML = '<div class="link-empty">No backlinks</div>';
+    } else {
+      [...bl].sort((a, b) => {
+        const na = nodeMap.get(a), nb = nodeMap.get(b);
+        return (nb ? nb.backlinks : 0) - (na ? na.backlinks : 0);
+      }).forEach(id => {
+        const n = nodeMap.get(id);
+        if (!n) return;
+        const el = makeLinkItem(n);
+        listBacklinks.appendChild(el);
+      });
+    }
+
+    // Outgoing links: nodes this node links TO
+    const ol = outgoing.get(d.id) || new Set();
+    listLinks.innerHTML = '';
+    if (ol.size === 0) {
+      listLinks.innerHTML = '<div class="link-empty">No outgoing links</div>';
+    } else {
+      [...ol].sort((a, b) => {
+        const na = nodeMap.get(a), nb = nodeMap.get(b);
+        return (nb ? nb.backlinks : 0) - (na ? na.backlinks : 0);
+      }).forEach(id => {
+        const n = nodeMap.get(id);
+        if (!n) return;
+        const el = makeLinkItem(n);
+        listLinks.appendChild(el);
+      });
+    }
+
+    nodePanel.classList.add('open');
+  }
+
+  function makeLinkItem(n) {
+    const el = document.createElement('div');
+    el.className = 'link-item';
+    const color = CAT_COLORS[n.category] || '#888';
+    el.innerHTML =
+      `<span class="li-dot" style="background:${color}"></span>` +
+      `<span class="li-title">${n.title || n.id}</span>` +
+      `<span class="li-count">${n.backlinks || 0}</span>`;
+    el.addEventListener('click', () => navigateToNode(n.id));
+    return el;
+  }
+
+  function navigateToNode(id) {
+    // Find the simulation node object
+    const target = simNodes.find(n => n.id === id);
+    if (!target || target.x == null) return;
+
+    // Lock highlight on this node
+    lockedNode = id;
+    highlightNeighbors(target);
+    openPanel(target);
+
+    // Zoom to the node
+    const scale = 2;
+    svg.transition().duration(500).call(
+      zoom.transform,
+      d3.zoomIdentity.translate(width / 2 - target.x * scale, height / 2 - target.y * scale).scale(scale)
+    );
+  }
+
+  function closePanel() {
+    nodePanel.classList.remove('open');
+    lockedNode = null;
+    resetHighlight();
+  }
+
+  document.getElementById('panel-close').addEventListener('click', closePanel);
+
+  // ---- Filtering ----
+  function getActiveCategories() {
+    return new Set(
+      Array.from(document.querySelectorAll('#cat-toggles input:checked'))
+        .map(el => el.dataset.cat)
+    );
+  }
+
+  function applyFilters() {
+    lockedNode = null;
+    const activeCats = getActiveCategories();
+    const selectedTag = tagSelect.value;
+    const minBl = parseInt(minBlSlider.value, 10);
+    const searchTerm = searchInput.value.toLowerCase().trim();
+
+    const visibleIds = new Set();
+    simNodes.forEach(n => {
+      let vis = activeCats.has(n.category);
+      if (vis && selectedTag && !(n.tags || []).includes(selectedTag)) vis = false;
+      if (vis && minBl > 0 && (n.backlinks || 0) < minBl) vis = false;
+      if (vis && searchTerm && !(n.title || n.id).toLowerCase().includes(searchTerm)) vis = false;
+      if (vis) visibleIds.add(n.id);
+    });
+
+    const filteredNodes = simNodes.filter(n => visibleIds.has(n.id));
+    const filteredEdges = simEdges.filter(e => {
+      const sid = typeof e.source === 'object' ? e.source.id : e.source;
+      const tid = typeof e.target === 'object' ? e.target.id : e.target;
+      return visibleIds.has(sid) && visibleIds.has(tid);
+    });
+
+    // Update links
+    linkEls = linkG.selectAll('line').data(filteredEdges, d => {
+      const sid = typeof d.source === 'object' ? d.source.id : d.source;
+      const tid = typeof d.target === 'object' ? d.target.id : d.target;
+      return sid + '->' + tid;
+    });
+    linkEls.exit().remove();
+    linkEls = linkEls.enter().append('line')
+      .attr('stroke', '#334')
+      .attr('stroke-opacity', 0.15)
+      .attr('stroke-width', 0.5)
+      .merge(linkEls);
+
+    // Update nodes
+    nodeEls = nodeG.selectAll('circle').data(filteredNodes, d => d.id);
+    nodeEls.exit().remove();
+    nodeEls = nodeEls.enter().append('circle')
+      .attr('r', d => nodeRadius(d))
+      .attr('fill', d => CAT_COLORS[d.category] || '#888')
+      .attr('stroke', '#0005')
+      .attr('stroke-width', 0.5)
+      .attr('cursor', 'pointer')
+      .call(drag)
+      .on('mouseover', (event, d) => { showTooltip(event, d); if (!lockedNode) highlightNeighbors(d); })
+      .on('mousemove', (event) => positionTooltip(event))
+      .on('mouseout', () => { hideTooltip(); if (!lockedNode) resetHighlight(); })
+      .on('click', (event, d) => {
+        event.stopPropagation();
+        if (lockedNode === d.id) { closePanel(); }
+        else { lockedNode = d.id; highlightNeighbors(d); openPanel(d); }
+      })
+      .merge(nodeEls);
+
+    // Update labels (only for nodes with enough backlinks)
+    const labelThreshold = Math.max(5, minBl);
+    const labelNodes = filteredNodes.filter(n => (n.backlinks || 0) >= labelThreshold);
+    labelEls = labelG.selectAll('text').data(labelNodes, d => d.id);
+    labelEls.exit().remove();
+    labelEls = labelEls.enter().append('text')
+      .attr('class', 'node-label')
+      .text(d => {
+        const t = d.title || d.id;
+        return t.length > 24 ? t.slice(0, 22) + '...' : t;
+      })
+      .merge(labelEls);
+
+    // Restart simulation
+    simulation.nodes(filteredNodes);
+    simulation.force('link').links(filteredEdges);
+    simulation.alpha(0.8).restart();
+
+    // Update stats
+    statsEl.innerHTML =
+      `Nodes: <span>${filteredNodes.length}</span><br>` +
+      `Edges: <span>${filteredEdges.length}</span><br>` +
+      `Tags: <span>${tags.length}</span>`;
+  }
+
+  // ---- Event listeners ----
+  document.querySelectorAll('#cat-toggles input').forEach(el =>
+    el.addEventListener('change', applyFilters));
+  tagSelect.addEventListener('change', applyFilters);
+  minBlSlider.addEventListener('input', () => {
+    minBlVal.textContent = minBlSlider.value;
+    applyFilters();
+  });
+
+  let searchTimeout;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(applyFilters, 200);
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    searchInput.value = '';
+    tagSelect.value = '';
+    minBlSlider.value = 0;
+    minBlVal.textContent = '0';
+    document.querySelectorAll('#cat-toggles input').forEach(el => el.checked = true);
+    applyFilters();
+  });
+
+  svg.on('click', () => {
+    if (lockedNode) { closePanel(); }
+  });
+
+  // ---- Initial render ----
+  applyFilters();
+
+  // Center the graph after initial layout settles
+  simulation.on('end', function centerOnce() {
+    const xs = simNodes.map(n => n.x).filter(x => x !== undefined);
+    const ys = simNodes.map(n => n.y).filter(y => y !== undefined);
+    if (xs.length === 0) return;
+    const cx = (d3.min(xs) + d3.max(xs)) / 2;
+    const cy = (d3.min(ys) + d3.max(ys)) / 2;
+    const scale = 0.8;
+    svg.transition().duration(500).call(
+      zoom.transform,
+      d3.zoomIdentity.translate(width / 2 - cx * scale, height / 2 - cy * scale).scale(scale)
+    );
+    simulation.on('end', null);
+  });
+})();
+</script>
+</body>
+</html>
