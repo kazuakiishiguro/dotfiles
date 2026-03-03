@@ -49,6 +49,31 @@ if ! command -v stow > /dev/null 2>&1; then
   fi
 fi
 
+backup_dir="$HOME/.dotfiles-backup-$(date +%Y%m%d%H%M%S)"
+dotfiles_dir="$(cd "$(dirname "$0")" && pwd)"
+
+# Back up files that would conflict with stow (skip stow-managed symlinks)
+for module in ${modules[@]}; do
+    find "$module" -mindepth 1 -not -type d | while read -r src; do
+        rel="${src#"$module"/}"
+        target="$HOME/$rel"
+        if [ -L "$target" ] || [ -e "$target" ]; then
+            if command -v greadlink >/dev/null 2>&1; then
+                resolved="$(greadlink -f "$target" 2>/dev/null || true)"
+            else
+                resolved="$(readlink -f "$target" 2>/dev/null || true)"
+            fi
+            # Skip files already managed by stow (pointing into our dotfiles)
+            if [[ "$resolved" == "$dotfiles_dir"* ]]; then
+                continue
+            fi
+            mkdir -p "$backup_dir/$(dirname "$rel")"
+            mv "$target" "$backup_dir/$rel"
+            echo "backed up $target -> $backup_dir/$rel"
+        fi
+    done
+done
+
 for module in ${modules[@]}; do
     stow -t ~ -v --no-folding --adopt "$module"
 done
@@ -56,6 +81,10 @@ done
 # --adopt overwrites package files with existing target contents;
 # restore our versions from git
 git checkout .
+
+if [ -d "${backup_dir:-}" ]; then
+    echo "pre-existing files backed up to $backup_dir"
+fi
 
 # Post-stow omarchy setup
 OMARCHY_PATH="$HOME/.local/share/omarchy"

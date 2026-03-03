@@ -3,7 +3,10 @@
 # --- History ---
 HISTSIZE=1000
 HISTFILESIZE=2000   # bash
-SAVEHIST=2000       # zsh
+if [ -n "$ZSH_VERSION" ]; then
+    HISTFILE=~/.zsh_history
+    SAVEHIST=2000
+fi
 
 # --- Aliases ---
 if [[ "$(uname)" == "Darwin" ]]; then
@@ -31,7 +34,7 @@ if [[ -z "$LANG" ]]; then
 fi
 
 # --- GPG ---
-export GPG_TTY=$(tty)
+[ -t 0 ] && export GPG_TTY=$(tty)
 
 # --- PATH ---
 export PATH="$PATH:$HOME/.bin"

@@ -1,3 +1,8 @@
+# source .bashrc for shared config (aliases, history, GPG, PATH via .shellrc)
+if [ -f "$HOME/.bashrc" ]; then
+    source "$HOME/.bashrc"
+fi
+
 # export Homebrew's sbin if apple m1
 if [ `uname -m` == "arm64" ]; then
     export PATH="/opt/homebrew/sbin:$PATH"
@@ -25,9 +30,6 @@ if [ -d "$HOME/.rbenv" ]; then
     export PATH=${HOME}/.rbenv/bin:${PATH} && \
     eval "$(rbenv init -)"
 fi
-
-# GPG Agent
-export GPG_TTY=$(tty)
 
 # fzf setup
 if command -v fzf >/dev/null 2>&1; then
