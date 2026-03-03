@@ -278,6 +278,65 @@ Sets `my/capture-last-title' and `my/cliplink-last-link'."
  (add-hook 'after-save-hook #'my/org-sync-backlinks)
 #+end_src
 
+** TAG BROWSER
+
+#+begin_src emacs-lisp
+ (defun my/org-collect-tags ()
+   "Collect all FILETAGS across org files in `org-directory'.
+ Returns an alist of (TAG . ((FILE . TITLE) ...)) sorted by count descending."
+   (let ((table (make-hash-table :test #'equal)))
+     (dolist (f (directory-files-recursively org-directory "\\.org$"))
+       (with-temp-buffer
+         (insert-file-contents f nil 0 512)
+         (let ((title (when (re-search-forward "^#\\+TITLE:[ \t]+\\(.+\\)" nil t)
+                        (string-trim (match-string 1))))
+               (tags (progn
+                       (goto-char (point-min))
+                       (when (re-search-forward "^#\\+FILETAGS:[ \t]+\\(.+\\)" nil t)
+                         (split-string (match-string 1) ":" t "[ \t]+")))))
+           (dolist (tag tags)
+             (push (cons f (or title (file-name-base f)))
+                   (gethash tag table))))))
+     (let (result)
+       (maphash (lambda (k v) (push (cons k (nreverse v)) result)) table)
+       (sort result (lambda (a b) (> (length (cdr a)) (length (cdr b))))))))
+
+ (defun my/org-list-tags ()
+   "Display all FILETAGS with counts in a buffer."
+   (interactive)
+   (let ((tags (my/org-collect-tags))
+         (buf (get-buffer-create "*Org Tags*")))
+     (with-current-buffer buf
+       (read-only-mode -1)
+       (erase-buffer)
+       (insert (format "%-5s %s\n" "Count" "Tag"))
+       (insert (make-string 40 ?-) "\n")
+       (dolist (entry tags)
+         (insert (format "%-5d %s\n" (length (cdr entry)) (car entry))))
+       (goto-char (point-min))
+       (read-only-mode 1))
+     (pop-to-buffer buf)))
+
+ (defun my/org-filter-by-tag ()
+   "Select a tag, then pick a matching file to open."
+   (interactive)
+   (let* ((tags (my/org-collect-tags))
+          (candidates (mapcar (lambda (e)
+                                (format "%s (%d)" (car e) (length (cdr e))))
+                              tags))
+          (pick (completing-read "Tag: " candidates nil t))
+          (tag (replace-regexp-in-string " ([0-9]+)$" "" pick))
+          (files (cdr (assoc tag tags)))
+          (file-candidates (mapcar (lambda (ft) (cons (cdr ft) (car ft))) files))
+          (chosen (completing-read (format "[%s] Open: " tag)
+                                   (mapcar #'car file-candidates) nil t))
+          (path (cdr (assoc chosen file-candidates))))
+     (find-file path)))
+
+ (define-key global-map (kbd "C-c T") #'my/org-list-tags)
+ (define-key global-map (kbd "C-c F") #'my/org-filter-by-tag)
+#+end_src
+
 ** DEFT
 
 #+begin_src emacs-lisp
