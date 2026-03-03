@@ -13,6 +13,7 @@ dotfiles/
   git/            # .gitconfig, .gitconfig_fun, .gitignore_global
   screen/         # .screenrc
   scripts/        # OS-specific setup scripts + Brewfile
+  shell/          # .shellrc (shared shell config sourced by bash & zsh)
   vim/            # .vimrc
   xinitrc/        # .xinitrc (Arch only)
   Xmodmap/        # .Xmodmap (Arch only)
@@ -36,7 +37,7 @@ Detected via `uname` in `init.sh`. OS-specific setup scripts live in `scripts/`:
 
 ## Shell config
 
-Both `.bashrc` and `.zshrc` inline their config directly (aliases, prompt, PATH, etc.).
+Shared config (aliases, PATH, history, locale, GPG) lives in `shell/.shellrc`. Both `.bashrc` and `.zshrc` source `~/.shellrc`, then add shell-specific bits (bash: prompt, omarchy; zsh: vcs_info prompt, fzf, xcape).
 
 ## Hyprland (Arch)
 
