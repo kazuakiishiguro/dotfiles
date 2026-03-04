@@ -33,6 +33,10 @@ if [[ -z "$LANG" ]]; then
     export LC_ALL="en_US.UTF-8"
 fi
 
+# --- Editor ---
+export EDITOR="emacsclient -t -a ''"
+export VISUAL="$EDITOR"
+
 # --- GPG ---
 [ -t 0 ] && export GPG_TTY=$(tty)
 
