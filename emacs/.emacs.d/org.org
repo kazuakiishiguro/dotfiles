@@ -169,7 +169,7 @@ Sets `my/capture-last-title' and `my/cliplink-last-link'."
 	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+TYPE: category\n\n%?")
 
 	 ("c" "Clipping" plain (file (lambda () (my/cliplink-capture-file)))
-	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+FILETAGS: :Manuscripts:\n\nSource: %(my/cliplink-last-link)\n\n%?")
+	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+FILETAGS: :Clippings:\n\nSource: %(my/cliplink-last-link)\n\n%?")
 
 	 ("w" "Weekly review" plain (file (lambda ()
 	   (expand-file-name

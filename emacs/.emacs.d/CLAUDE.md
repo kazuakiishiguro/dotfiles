@@ -23,6 +23,8 @@ After editing any `.org` config, reload with:
 
 Wayland clipboard integration (wl-paste/wl-copy) is in `general.org`, guarded by `WAYLAND_DISPLAY` so it's skipped on macOS.
 
+Literate config source: `~/fun/dotfiles/emacs/.emacs.d/org.org`. Compiled output: `~/.emacs.d/org.el`. Edit both when changing config.
+
 ---
 
 ## Org vault
@@ -35,7 +37,7 @@ Kepano-inspired personal knowledge base managed via Emacs org-mode. Data lives i
 ~/org/
   Daily/          # Daily anchor files (YYYY-MM-DD.org)
   References/     # Books, people, tools, protocols
-  Clippings/      # Saved external essays/articles
+  Clippings/      # ONLY files with #+FILETAGS: :Clippings: belong here
   .categories     # Auto-generated category list (do not edit manually)
   todo.org        # Task inbox
   archive.org     # Archived tasks
@@ -49,7 +51,7 @@ Kepano-inspired personal knowledge base managed via Emacs org-mode. Data lives i
 | n   | Note          | `~/org/`      | Prompts for title, links to today's Daily, adds backlink in Daily file |
 | r   | Reference     | `References/` | Prompts for title + category from `.categories` |
 | K   | Category      | `~/org/`      | Creates file with `#+TYPE: category`            |
-| c   | Clipping      | `Clippings/`  | Auto-tagged `:Manuscripts:`, reads URL from clipboard via wl-paste, auto-derives title and link via org-cliplink |
+| c   | Clipping      | `Clippings/`  | Auto-tagged `:Clippings:`, reads URL from clipboard via wl-paste, auto-derives title and link via org-cliplink |
 | w   | Weekly review | `~/org/`      | Auto-named `WeekNN_-_Mon_YYYY.org`              |
 
 ### Shared helpers
