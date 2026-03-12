@@ -54,6 +54,9 @@ def parse_org_file(filepath: Path, org_dir: Path) -> dict:
     backlink_count = 0
     links = []
     in_backlinks = False
+    seen_frontmatter = False
+    in_body = False
+    body_lines = []
 
     try:
         text = filepath.read_text(encoding="utf-8", errors="replace")
@@ -70,6 +73,10 @@ def parse_org_file(filepath: Path, org_dir: Path) -> dict:
 
         # Parse front-matter
         if not in_backlinks:
+            is_frontmatter = line.startswith("#+")
+            if is_frontmatter:
+                seen_frontmatter = True
+
             if title is None:
                 m = TITLE_RE.match(line)
                 if m:
@@ -89,6 +96,13 @@ def parse_org_file(filepath: Path, org_dir: Path) -> dict:
                     tags = [t for t in raw.split(":") if t]
                     continue
 
+            # Collect body lines between frontmatter and Backlinks
+            if not in_body and seen_frontmatter and not is_frontmatter and line.strip():
+                in_body = True
+
+            if in_body:
+                body_lines.append(line)
+
         # Collect links (only before Backlinks section)
         if not in_backlinks:
             for lm in LINK_RE.finditer(line):
@@ -101,6 +115,13 @@ def parse_org_file(filepath: Path, org_dir: Path) -> dict:
                     continue
                 links.append(target_rel)
 
+    # Strip leading/trailing blank lines and cap at 50 lines
+    while body_lines and not body_lines[0].strip():
+        body_lines.pop(0)
+    while body_lines and not body_lines[-1].strip():
+        body_lines.pop()
+    body_lines = body_lines[:50]
+
     return {
         "id": rel,
         "title": title or Path(rel).stem.replace("-", " ").replace("_", " "),
@@ -109,6 +130,7 @@ def parse_org_file(filepath: Path, org_dir: Path) -> dict:
         "category": classify(rel),
         "backlinks": backlink_count,
         "links": links,
+        "content": "\n".join(body_lines),
     }
 
 
@@ -175,6 +197,7 @@ def build_graph(org_dir: Path, include_daily: bool, include_orphans: bool, min_b
             "tags": n["tags"],
             "category": n["category"],
             "backlinks": n["backlinks"],
+            "content": n["content"],
         })
 
     print(f"Nodes: {len(out_nodes)}  Edges: {len(edges)}  Tags: {len(all_tags)}", file=sys.stderr)
