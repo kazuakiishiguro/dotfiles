@@ -4,10 +4,16 @@
 Usage:
     cd ~/org && python3 org-zettel.py && xdg-open org-zettel-view.html
 
-Or add a shell alias:
+Live server with inline editing:
+    cd ~/org && python3 org-zettel.py --serve
+
+Or add shell aliases:
     alias org-zettel='cd ~/org && python3 org-zettel.py && xdg-open org-zettel-view.html'
+    alias org-serve='cd ~/org && python3 org-zettel.py --serve'
 
 Flags:
+    --serve              Start live HTTP server with editing support
+    --port PORT          Server port (default: 8080)
     --include-daily      Include daily notes (excluded by default)
     --include-orphans    Include unlinked nodes (excluded by default)
     --min-backlinks N    Only show nodes with >= N backlinks
@@ -259,7 +265,8 @@ def make_handler(org_dir, template_path, build_args):
             file_id = unquote(raw)
             # Path traversal protection
             resolved = (org_dir / file_id).resolve()
-            if not str(resolved).startswith(str(org_dir.resolve())):
+            org_root = str(org_dir.resolve())
+            if not (str(resolved) == org_root or str(resolved).startswith(org_root + os.sep)):
                 return None, None
             if not resolved.suffix == '.org':
                 return None, None
