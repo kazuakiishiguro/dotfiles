@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Scan ~/org/ .org files and produce a self-contained graph visualization.
+"""Scan ~/org/ .org files and produce a self-contained zettelkasten viewer.
 
 Usage:
-    cd ~/org && python3 org-graph.py && xdg-open org-graph-view.html
+    cd ~/org && python3 org-zettel.py && xdg-open org-zettel-view.html
 
 Or add a shell alias:
-    alias org-graph='cd ~/org && python3 org-graph.py && xdg-open org-graph-view.html'
+    alias org-zettel='cd ~/org && python3 org-zettel.py && xdg-open org-zettel-view.html'
 
 Flags:
     --include-daily      Include daily notes (excluded by default)
@@ -18,12 +18,13 @@ import json
 import os
 import re
 import sys
+import time
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 ORG_DIR = Path.cwd()
-TEMPLATE = SCRIPT_DIR / "org-graph.html"
-OUTPUT = ORG_DIR / "org-graph-view.html"
+TEMPLATE = SCRIPT_DIR / "org-zettel.html"
+OUTPUT = ORG_DIR / "org-zettel-view.html"
 
 LINK_RE = re.compile(r"\[\[file:(.*?\.org)(?:::[^\]]*?)?\]")
 TITLE_RE = re.compile(r"^#\+TITLE:\s*(.+)", re.IGNORECASE)
@@ -122,6 +123,9 @@ def parse_org_file(filepath: Path, org_dir: Path) -> dict:
         body_lines.pop()
     body_lines = body_lines[:50]
 
+    mtime = os.path.getmtime(filepath)
+    mtime_iso = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(mtime))
+
     return {
         "id": rel,
         "title": title or Path(rel).stem.replace("-", " ").replace("_", " "),
@@ -131,6 +135,7 @@ def parse_org_file(filepath: Path, org_dir: Path) -> dict:
         "backlinks": backlink_count,
         "links": links,
         "content": "\n".join(body_lines),
+        "mtime": mtime_iso,
     }
 
 
@@ -198,6 +203,7 @@ def build_graph(org_dir: Path, include_daily: bool, include_orphans: bool, min_b
             "category": n["category"],
             "backlinks": n["backlinks"],
             "content": n["content"],
+            "mtime": n["mtime"],
         })
 
     print(f"Nodes: {len(out_nodes)}  Edges: {len(edges)}  Tags: {len(all_tags)}", file=sys.stderr)
@@ -211,7 +217,7 @@ def build_graph(org_dir: Path, include_daily: bool, include_orphans: bool, min_b
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Build org-mode graph visualization")
+    parser = argparse.ArgumentParser(description="Build org-mode zettelkasten viewer")
     daily_group = parser.add_mutually_exclusive_group()
     daily_group.add_argument("--exclude-daily", action="store_true", default=True,
                              help="Exclude daily notes (default)")

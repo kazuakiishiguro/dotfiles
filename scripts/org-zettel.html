@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Org Zettelkasten</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #F2F0E5;
+  --card-bg: #FFFCF0;
+  --card-border: #CECDC3;
+  --card-shadow: 0 1px 3px rgba(16,15,15,0.06);
+  --text: #100F0F;
+  --text-muted: #6F6E69;
+  --text-light: #878580;
+  --accent: #66800B;
+  --accent-hover: #4D6600;
+  --link: #205EA6;
+  --tag: #AD8301;
+  --topbar-bg: #FFFCF0;
+  --topbar-border: #DAD8CE;
+  --divider: #E6E4D9;
+  --hover-bg: #F2F0E5;
+  --pin-color: #AD8301;
+  --search-bg: #F2F0E5;
+  --search-border: #CECDC3;
+  --code-bg: #F2F0E5;
+  --content-max-width: 720px;
+  --red: #AF3029;
+  --orange: #BC5215;
+  --yellow: #AD8301;
+  --green: #66800B;
+  --cyan: #24837B;
+  --blue: #205EA6;
+  --purple: #5E409D;
+  --magenta: #A02F6F;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ---- Top bar ---- */
+#topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: var(--topbar-bg);
+  border-bottom: 1px solid var(--topbar-border);
+  flex-shrink: 0;
+  min-height: 48px;
+}
+
+#topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#back-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  line-height: 1;
+}
+#back-btn:hover { background: var(--hover-bg); }
+
+#topbar-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+#search {
+  padding: 6px 12px;
+  background: var(--search-bg);
+  border: 1px solid var(--search-border);
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  width: 240px;
+  transition: border-color 0.2s;
+}
+#search:focus { border-color: var(--accent); }
+#search::placeholder { color: var(--text-light); }
+
+#topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#page-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+#random-btn {
+  background: none;
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+}
+#random-btn:hover { color: var(--text); }
+#random-btn svg { width: 14px; height: 14px; }
+
+/* ---- Main content area ---- */
+#main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ---- Card Grid View ---- */
+#card-grid {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: box-shadow 0.15s;
+  aspect-ratio: 1;
+}
+.card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.card.pinned::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(225deg, var(--bg) 50%, var(--card-border) 50%, var(--card-border) calc(50% + 1px), var(--text-light) calc(50% + 1px));
+}
+
+.card-header {
+  padding: 8px 10px 4px;
+}
+
+.card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.card-tags {
+  font-size: 9px;
+  color: var(--tag);
+  margin-top: 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.card-thumb {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  object-fit: cover;
+}
+
+.card-preview {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  padding: 4px 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+
+/* ---- Page View ---- */
+#page-view {
+  display: none;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+#page-meta {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+#page-pin-btn {
+  background: none;
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-muted);
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+#page-pin-btn:hover { color: var(--text); }
+#page-pin-btn.pinned { color: var(--text); border-color: var(--text-muted); }
+
+#page-tags {
+  font-size: 12px;
+  color: var(--tag);
+  margin-bottom: 4px;
+}
+
+#page-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Rendered org content */
+#page-content {
+  line-height: 1.8;
+  font-size: 15px;
+}
+#page-content h1 { font-size: 22px; font-weight: 700; margin: 24px 0 8px; }
+#page-content h2 { font-size: 18px; font-weight: 700; margin: 20px 0 6px; }
+#page-content h3 { font-size: 16px; font-weight: 600; margin: 16px 0 4px; }
+#page-content h4 { font-size: 15px; font-weight: 600; margin: 14px 0 4px; }
+#page-content p { margin: 8px 0; }
+#page-content ul { margin: 6px 0 6px 20px; }
+#page-content li { margin: 3px 0; }
+#page-content code {
+  background: var(--code-bg);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Fira Code', monospace;
+  font-size: 13px;
+}
+#page-content a.org-link {
+  color: var(--link);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+}
+#page-content a.org-link:hover { border-bottom-color: var(--link); }
+#page-content a.ext-link {
+  color: var(--link);
+  text-decoration: none;
+}
+#page-content a.ext-link::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 3px;
+  vertical-align: -2px;
+  background-color: currentColor;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'/%3E%3Cpolyline points='15 3 21 3 21 9'/%3E%3Cline x1='10' y1='14' x2='21' y2='3'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'/%3E%3Cpolyline points='15 3 21 3 21 9'/%3E%3Cline x1='10' y1='14' x2='21' y2='3'/%3E%3C/svg%3E");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+#page-content a.ext-link:hover { text-decoration: underline; }
+#page-content blockquote {
+  border-left: 3px solid var(--card-border);
+  margin: 12px 0;
+  padding: 8px 16px;
+  color: var(--text-muted);
+  background: var(--hover-bg);
+  border-radius: 0 4px 4px 0;
+}
+#page-content blockquote p { margin: 4px 0; }
+#page-content pre {
+  background: var(--code-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.5;
+}
+#page-content pre code {
+  background: none;
+  padding: 0;
+  font-size: 13px;
+}
+.empty-content { color: var(--text-light); font-style: italic; padding: 12px 0; }
+
+/* Related links section */
+#related-links {
+  margin-top: 40px;
+  border-top: 1px solid var(--divider);
+  padding-top: 20px;
+}
+
+.related-section { margin-bottom: 20px; }
+.related-section h3 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.related-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.related-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  aspect-ratio: 1;
+  transition: box-shadow 0.15s;
+}
+.related-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+.related-card-header {
+  padding: 8px 10px 4px;
+}
+
+.related-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.related-card-via {
+  font-size: 9px;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+.related-card-thumb {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  object-fit: cover;
+}
+
+.related-card-preview {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  padding: 4px 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.related-empty {
+  font-size: 12px;
+  color: var(--text-light);
+  font-style: italic;
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div id="topbar-left">
+    <button id="back-btn">&larr;</button>
+    <div id="topbar-title" style="cursor:pointer;">Org Zettelkasten</div>
+  </div>
+  <div id="topbar-right">
+    <input type="text" id="search" placeholder="Search...">
+  </div>
+</div>
+
+<div id="main">
+  <div id="card-grid"></div>
+  <div id="page-view">
+    <div id="page-meta">
+      <div id="page-meta-left">
+        <div id="page-tags"></div>
+        <div id="page-date"></div>
+      </div>
+      <div id="page-actions">
+        <button id="page-pin-btn" title="Pin to home"></button>
+        <button id="random-btn" title="Random page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>Shuffle</button>
+      </div>
+    </div>
+    <div id="page-content"></div>
+    <div id="related-links">
+      <div class="related-section" id="rl-backlinks">
+        <h3>Backlinks</h3>
+        <div class="related-cards" id="rl-bl-cards"></div>
+      </div>
+      <div class="related-section" id="rl-outgoing">
+        <h3>Outgoing Links</h3>
+        <div class="related-cards" id="rl-out-cards"></div>
+      </div>
+      <div class="related-section" id="rl-2hop">
+        <h3>2-hop Connections</h3>
+        <div class="related-cards" id="rl-2hop-cards"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GRAPH_DATA = null;
+
+(function() {
+  if (!GRAPH_DATA) {
+    document.getElementById('card-grid').innerHTML =
+      '<p style="padding:40px;color:#888;">No data loaded. Run org-graph.py first.</p>';
+    return;
+  }
+
+  const { nodes, edges } = GRAPH_DATA;
+
+  // Build lookup maps
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
+  const outgoing = new Map();
+  const incoming = new Map();
+
+  nodes.forEach(n => {
+    outgoing.set(n.id, new Set());
+    incoming.set(n.id, new Set());
+  });
+  edges.forEach(e => {
+    if (outgoing.has(e.source) && incoming.has(e.target)) {
+      outgoing.get(e.source).add(e.target);
+      incoming.get(e.target).add(e.source);
+    }
+  });
+
+  // HTML escaping
+  function escHtml(s) {
+    if (!s) return '';
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // Strip org markup for plain text preview
+  function plainText(orgContent) {
+    if (!orgContent) return '';
+    return orgContent
+      .replace(/^\*+\s+/gm, '')
+      .replace(/^\s*[-+]\s+/gm, '')
+      .replace(/\[\[file:[^\]]+\]\[([^\]]+)\]\]/g, '$1')
+      .replace(/\[\[file:[^\]]+\]\]/g, '')
+      .replace(/\[\[https?:\/\/[^\]]+\]\[([^\]]+)\]\]/g, '$1')
+      .replace(/\[\[https?:\/\/[^\]]+\]\]/g, '')
+      .replace(/[*/_=~]/g, '')
+      .replace(/^\s*#\+.*$/gm, '')
+      .replace(/\n{2,}/g, '\n')
+      .trim();
+  }
+
+  // Truncate text to N characters
+  function truncateText(text, maxChars) {
+    if (text.length <= maxChars) return text;
+    return text.slice(0, maxChars) + '...';
+  }
+
+  // Build preview HTML with link text colored
+  function previewHtml(orgContent, maxChars) {
+    if (!orgContent) return '';
+    let text = orgContent;
+    // Replace org links with placeholders FIRST (before stripping markup chars)
+    // [[file:...][desc]] -> \x01desc\x02
+    text = text.replace(/\[\[file:[^\]]+?\]\[([^\]]+?)\]\]/g, '\x01$1\x02');
+    // [[file:...]] -> (remove)
+    text = text.replace(/\[\[file:[^\]]+?\]\]/g, '');
+    // [[https://...][desc]] -> \x01desc\x02
+    text = text.replace(/\[\[https?:\/\/[^\]]+?\]\[([^\]]+?)\]\]/g, '\x01$1\x02');
+    // [[https://...]] -> (remove)
+    text = text.replace(/\[\[https?:\/\/[^\]]+?\]\]/g, '');
+    // Strip bare URLs
+    text = text.replace(/https?:\/\/[^\s\])>]+/g, '');
+    // Now strip headings, list markers, directives, inline markup
+    text = text.replace(/^\*+\s+/gm, '');
+    text = text.replace(/^\s*[-+]\s+/gm, '');
+    text = text.replace(/^\s*#\+.*$/gm, '');
+    text = text.replace(/[*/_=~]/g, '');
+    text = text.replace(/\n{2,}/g, '\n').trim();
+    // Truncate
+    if (text.length > maxChars) text = text.slice(0, maxChars) + '...';
+    // Escape HTML then replace placeholders with colored spans
+    let html = escHtml(text);
+    html = html.replace(/\x01(.*?)\x02/g, '<span style="color:var(--link)">$1</span>');
+    return html;
+  }
+
+  // Extract first image path or YouTube thumbnail from org content
+  function extractThumbnail(orgContent) {
+    if (!orgContent) return null;
+    // Local image file
+    const img = orgContent.match(/\[\[file:([^\]]+?\.(?:png|jpg|jpeg|gif|svg|webp))(?:::.*?)?\](?:\[[^\]]*\])?\]/i);
+    if (img) return img[1].replace(/^\.\//, '');
+    // YouTube link — extract video ID and use thumbnail
+    const yt = orgContent.match(/\[\[(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (yt) return 'https://img.youtube.com/vi/' + yt[1] + '/hqdefault.jpg';
+    return null;
+  }
+
+  // Pin management
+  const PINS_KEY = 'org-graph-pins';
+
+  function loadPins() {
+    try {
+      const raw = localStorage.getItem(PINS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  }
+
+  function savePins(pins) {
+    localStorage.setItem(PINS_KEY, JSON.stringify(pins));
+  }
+
+  function togglePin(id) {
+    const pins = loadPins();
+    const idx = pins.indexOf(id);
+    if (idx >= 0) {
+      pins.splice(idx, 1);
+    } else {
+      pins.push(id);
+    }
+    savePins(pins);
+    renderCardGrid();
+  }
+
+  // Card grid rendering
+  const gridEl = document.getElementById('card-grid');
+  const searchInput = document.getElementById('search');
+
+  function renderCardGrid() {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    const pins = loadPins();
+    const pinSet = new Set(pins);
+
+    let filtered = nodes;
+    if (searchTerm) {
+      filtered = nodes.filter(n => {
+        const title = (n.title || n.id).toLowerCase();
+        const content = (n.content || '').toLowerCase();
+        return title.includes(searchTerm) || content.includes(searchTerm);
+      });
+    }
+
+    const pinned = [];
+    const unpinned = [];
+    filtered.forEach(n => {
+      if (pinSet.has(n.id)) {
+        pinned.push(n);
+      } else {
+        unpinned.push(n);
+      }
+    });
+
+    pinned.sort((a, b) => pins.indexOf(a.id) - pins.indexOf(b.id));
+    unpinned.sort((a, b) => (b.mtime || '').localeCompare(a.mtime || ''));
+
+    const sorted = [...pinned, ...unpinned];
+
+    gridEl.innerHTML = '';
+    sorted.forEach(n => {
+      const card = document.createElement('div');
+      const isPinned = pinSet.has(n.id);
+      card.className = 'card' + (isPinned ? ' pinned' : '');
+      const thumb = extractThumbnail(n.content);
+
+      card.innerHTML =
+        '<div class="card-header">' +
+          '<div class="card-title">' + escHtml(n.title || n.id) + '</div>' +
+          (n.tags && n.tags.length ? '<div class="card-tags">' + escHtml(n.tags.join(', ')) + '</div>' : '') +
+        '</div>' +
+        (thumb
+          ? '<img class="card-thumb" src="' + escHtml(thumb) + '" loading="lazy">'
+          : '<div class="card-preview">' + previewHtml(n.content, 60) + '</div>');
+
+      card.addEventListener('click', () => openPage(n.id));
+
+      gridEl.appendChild(card);
+    });
+  }
+
+  // View state
+  let currentView = 'grid';
+  let navStack = [];
+
+  const pageView = document.getElementById('page-view');
+  const backBtn = document.getElementById('back-btn');
+
+  // Org-to-HTML inline markup renderer
+  function inlineMarkup(text) {
+    let s = escHtml(text);
+
+    // Image links: [[file:image.png]] or [[file:image.jpg][desc]] etc.
+    s = s.replace(/\[\[file:([^\]]+?\.(?:png|jpg|jpeg|gif|svg|webp))(?:::.*?)?\]\[([^\]]+?)\]\]/gi, function(_m, path, desc) {
+      const src = path.replace(/^\.\//, '');
+      return '<img src="' + escHtml(src) + '" alt="' + escHtml(desc) + '" style="max-width:100%;border-radius:4px;margin:8px 0;">';
+    });
+    s = s.replace(/\[\[file:([^\]]+?\.(?:png|jpg|jpeg|gif|svg|webp))(?:::.*?)?\]\]/gi, function(_m, path) {
+      const src = path.replace(/^\.\//, '');
+      return '<img src="' + escHtml(src) + '" alt="" style="max-width:100%;border-radius:4px;margin:8px 0;">';
+    });
+
+    // Org links: [[file:path.org][desc]]
+    s = s.replace(/\[\[file:([^\]]+?)\]\[([^\]]+?)\]\]/g, function(_m, path, desc) {
+      const target = path.replace(/^\.\//, '').replace(/::.*$/, '');
+      return '<a class="org-link" data-target="' + escHtml(target) + '">' + desc + '</a>';
+    });
+    // Org links without desc: [[file:path.org]]
+    s = s.replace(/\[\[file:([^\]]+?)\]\]/g, function(_m, path) {
+      const target = path.replace(/^\.\//, '').replace(/::.*$/, '');
+      const stem = target.replace(/^.*\//, '').replace(/\.org$/, '');
+      return '<a class="org-link" data-target="' + escHtml(target) + '">' + escHtml(stem) + '</a>';
+    });
+
+    // External links: [[https://...][desc]]
+    s = s.replace(/\[\[(https?:\/\/[^\]]+?)\]\[([^\]]+?)\]\]/g, function(_m, url, desc) {
+      return '<a class="ext-link" href="' + url + '" target="_blank">' + desc + '</a>';
+    });
+    s = s.replace(/\[\[(https?:\/\/[^\]]+?)\]\]/g, function(_m, url) {
+      return '<a class="ext-link" href="' + url + '" target="_blank">' + url + '</a>';
+    });
+
+    // Bold: *bold*
+    s = s.replace(/(^|[\s(])\*([^\s*](?:[^*]*[^\s*])?)\*([\s).,;:!?]|$)/g, '$1<strong>$2</strong>$3');
+    // Italic: /italic/
+    s = s.replace(/(^|[\s(])\/([^\s/](?:[^/]*[^\s/])?)\/(?!\/)([\s).,;:!?]|$)/g, '$1<em>$2</em>$3');
+    // Code: =code=
+    s = s.replace(/(^|[\s(])=([^\s=](?:[^=]*[^\s=])?)=([\s).,;:!?]|$)/g, '$1<code>$2</code>$3');
+    // Verbatim: ~verbatim~
+    s = s.replace(/(^|[\s(])~([^\s~](?:[^~]*[^\s~])?)~([\s).,;:!?]|$)/g, '$1<code>$2</code>$3');
+
+    return s;
+  }
+
+  function renderOrg(text) {
+    if (!text || !text.trim()) return '<div class="empty-content">No content</div>';
+
+    const lines = text.split('\n');
+    let html = '';
+    let inList = false;
+
+    let inQuote = false;
+    let inSrc = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      // Quote blocks
+      if (/^#\+begin_quote/i.test(trimmed)) {
+        if (inList) { html += '</ul>'; inList = false; }
+        html += '<blockquote>';
+        inQuote = true;
+        continue;
+      }
+      if (/^#\+end_quote/i.test(trimmed)) {
+        html += '</blockquote>';
+        inQuote = false;
+        continue;
+      }
+
+      // Source blocks
+      if (/^#\+begin_src/i.test(trimmed)) {
+        if (inList) { html += '</ul>'; inList = false; }
+        html += '<pre><code>';
+        inSrc = true;
+        continue;
+      }
+      if (/^#\+end_src/i.test(trimmed)) {
+        html += '</code></pre>';
+        inSrc = false;
+        continue;
+      }
+
+      if (inSrc) {
+        html += escHtml(line) + '\n';
+        continue;
+      }
+
+      if (inQuote) {
+        if (trimmed === '') {
+          html += '<br>';
+        } else {
+          html += '<p>' + inlineMarkup(line) + '</p>';
+        }
+        continue;
+      }
+
+      const headingMatch = line.match(/^(\*{1,4})\s+(.+)/);
+      if (headingMatch) {
+        if (inList) { html += '</ul>'; inList = false; }
+        const level = Math.min(headingMatch[1].length, 4);
+        html += '<h' + level + '>' + inlineMarkup(headingMatch[2]) + '</h' + level + '>';
+        continue;
+      }
+
+      if (trimmed === '') {
+        if (inList) { html += '</ul>'; inList = false; }
+        continue;
+      }
+
+      const listMatch = line.match(/^(\s*)[-+]\s+(.+)/);
+      if (listMatch) {
+        if (!inList) { html += '<ul>'; inList = true; }
+        html += '<li>' + inlineMarkup(listMatch[2]) + '</li>';
+        continue;
+      }
+
+      if (inList) { html += '</ul>'; inList = false; }
+      html += '<p>' + inlineMarkup(line) + '</p>';
+    }
+
+    if (inList) html += '</ul>';
+    if (inQuote) html += '</blockquote>';
+    if (inSrc) html += '</code></pre>';
+    return html;
+  }
+
+  // Path resolution
+  function resolveOrgPath(currentNodeId, targetPath) {
+    targetPath = targetPath.replace(/^\.\//, '');
+    if (nodeMap.has(targetPath)) return targetPath;
+    const currentDir = currentNodeId.includes('/')
+      ? currentNodeId.replace(/\/[^/]+$/, '/')
+      : '';
+    const resolved = new URL(targetPath, 'file:///' + currentDir).pathname.slice(1);
+    if (nodeMap.has(resolved)) return resolved;
+    const lower = resolved.toLowerCase();
+    for (const [id] of nodeMap) {
+      if (id.toLowerCase() === lower) return id;
+    }
+    return null;
+  }
+
+  // 2-hop connection computation
+  function compute2Hop(nodeId) {
+    const directOut = outgoing.get(nodeId) || new Set();
+    const directIn = incoming.get(nodeId) || new Set();
+    const directAll = new Set([...directOut, ...directIn]);
+
+    const twoHop = new Map(); // targetId -> Set of via node IDs
+    for (const mid of directAll) {
+      const midOut = outgoing.get(mid) || new Set();
+      const midIn = incoming.get(mid) || new Set();
+      for (const hop of [...midOut, ...midIn]) {
+        if (hop !== nodeId && !directAll.has(hop) && nodeMap.has(hop)) {
+          if (!twoHop.has(hop)) twoHop.set(hop, new Set());
+          twoHop.get(hop).add(mid);
+        }
+      }
+    }
+    return twoHop;
+  }
+
+  // Page view elements
+  const pageTags = document.getElementById('page-tags');
+  const pageDate = document.getElementById('page-date');
+  const pageContent = document.getElementById('page-content');
+  const rlBlCards = document.getElementById('rl-bl-cards');
+  const rlOutCards = document.getElementById('rl-out-cards');
+  const rl2HopCards = document.getElementById('rl-2hop-cards');
+
+  function openPage(id, skipPush) {
+    const node = nodeMap.get(id);
+    if (!node) return;
+
+    if (!skipPush) {
+      navStack.push(id);
+      history.pushState({ page: id }, '', '#' + encodeURIComponent(id));
+    }
+
+    currentView = 'page';
+    gridEl.style.display = 'none';
+    pageView.style.display = 'block';
+    backBtn.style.display = 'block';
+
+    document.getElementById('main').scrollTop = 0;
+
+    pageTags.textContent = (node.tags || []).join(', ');
+    pageDate.textContent = [node.category, node.date].filter(Boolean).join(' · ');
+
+    // Update pin button
+    const pinBtn = document.getElementById('page-pin-btn');
+    const isPinned = loadPins().includes(id);
+    pinBtn.textContent = isPinned ? 'Pinned' : 'Pin';
+    pinBtn.className = isPinned ? 'pinned' : '';
+    pinBtn.onclick = () => {
+      togglePin(id);
+      const nowPinned = loadPins().includes(id);
+      pinBtn.textContent = nowPinned ? 'Pinned' : 'Pin';
+      pinBtn.className = nowPinned ? 'pinned' : '';
+    };
+
+    pageContent.innerHTML = '<h1>' + escHtml(node.title || node.id) + '</h1>' + renderOrg(node.content || '');
+
+    // Wire up org-link clicks
+    pageContent.querySelectorAll('a.org-link').forEach(a => {
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = a.getAttribute('data-target');
+        const resolvedId = resolveOrgPath(id, target);
+        if (resolvedId) openPage(resolvedId);
+      });
+    });
+
+    // Backlinks
+    const bl = incoming.get(id) || new Set();
+    rlBlCards.innerHTML = '';
+    if (bl.size === 0) {
+      rlBlCards.innerHTML = '<div class="related-empty">None</div>';
+    } else {
+      [...bl].forEach(bid => {
+        const n = nodeMap.get(bid);
+        if (n) rlBlCards.appendChild(makeRelatedCard(n));
+      });
+    }
+
+    // Outgoing links
+    const ol = outgoing.get(id) || new Set();
+    rlOutCards.innerHTML = '';
+    if (ol.size === 0) {
+      rlOutCards.innerHTML = '<div class="related-empty">None</div>';
+    } else {
+      [...ol].forEach(oid => {
+        const n = nodeMap.get(oid);
+        if (n) rlOutCards.appendChild(makeRelatedCard(n));
+      });
+    }
+
+    // 2-hop connections
+    const twoHop = compute2Hop(id);
+    rl2HopCards.innerHTML = '';
+    if (twoHop.size === 0) {
+      rl2HopCards.innerHTML = '<div class="related-empty">None</div>';
+    } else {
+      for (const [hopId, viaSet] of twoHop) {
+        const n = nodeMap.get(hopId);
+        if (n) {
+          const viaNames = [...viaSet].map(v => {
+            const vn = nodeMap.get(v);
+            return vn ? (vn.title || v) : v;
+          });
+          rl2HopCards.appendChild(makeRelatedCard(n, viaNames));
+        }
+      }
+    }
+
+    // Hide empty related sections
+    updateRelatedVisibility();
+  }
+
+  function goBack() {
+    history.back();
+  }
+
+  function showGrid() {
+    currentView = 'grid';
+    navStack = [];
+    gridEl.style.display = 'grid';
+    pageView.style.display = 'none';
+    backBtn.style.display = 'none';
+    renderCardGrid();
+  }
+
+  // Browser back/forward (popstate) — enables swipe gestures
+  window.addEventListener('popstate', (e) => {
+    if (e.state && e.state.page) {
+      const id = e.state.page;
+      // Rebuild navStack from hash
+      navStack.push(id);
+      openPage(id, true);
+    } else {
+      showGrid();
+    }
+  });
+
+  function makeRelatedCard(n, viaNames) {
+    const card = document.createElement('div');
+    card.className = 'related-card';
+    const thumb = extractThumbnail(n.content);
+    card.innerHTML =
+      '<div class="related-card-header">' +
+        '<div class="related-card-title">' + escHtml(n.title || n.id) + '</div>' +
+        (viaNames ? '<div class="related-card-via">via ' + escHtml(viaNames.join(', ')) + '</div>' : '') +
+      '</div>' +
+      (thumb
+        ? '<img class="related-card-thumb" src="' + escHtml(thumb) + '" loading="lazy">'
+        : '<div class="related-card-preview">' + previewHtml(n.content, 60) + '</div>');
+    card.addEventListener('click', () => openPage(n.id));
+    return card;
+  }
+
+  function updateRelatedVisibility() {
+    const sections = [
+      ['rl-backlinks', 'rl-bl-cards'],
+      ['rl-outgoing', 'rl-out-cards'],
+      ['rl-2hop', 'rl-2hop-cards']
+    ];
+    sections.forEach(([sectionId, cardsId]) => {
+      const cards = document.getElementById(cardsId);
+      const section = document.getElementById(sectionId);
+      const hasContent = cards.children.length > 0 &&
+        !cards.querySelector('.related-empty');
+      section.style.display = hasContent ? 'block' : 'none';
+    });
+  }
+
+  // Search handler
+  let searchTimeout;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      if (currentView === 'page' && searchInput.value.trim()) {
+        history.pushState(null, '', location.pathname);
+        showGrid();
+        // showGrid already calls renderCardGrid, but we want to filter
+      }
+      renderCardGrid();
+    }, 150);
+  });
+
+  // Escape key handler
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && currentView === 'page') {
+      goBack();
+    }
+  });
+
+  // Back button handler
+  backBtn.addEventListener('click', goBack);
+
+  // Random button — completely random page
+  document.getElementById('random-btn').addEventListener('click', () => {
+    const randomNode = nodes[Math.floor(Math.random() * nodes.length)];
+    if (randomNode) openPage(randomNode.id);
+  });
+
+  // Title click -> go back to card grid
+  document.getElementById('topbar-title').addEventListener('click', () => {
+    if (currentView === 'page') {
+      history.pushState(null, '', location.pathname);
+      searchInput.value = '';
+      showGrid();
+    } else {
+      document.getElementById('main').scrollTop = 0;
+    }
+  });
+
+  // Initial render — check for hash URL
+  history.replaceState(null, '', location.pathname + location.hash);
+  const initHash = location.hash.slice(1);
+  if (initHash && nodeMap.has(decodeURIComponent(initHash))) {
+    openPage(decodeURIComponent(initHash));
+  } else {
+    renderCardGrid();
+  }
+})();
+</script>
+</body>
+</html>
