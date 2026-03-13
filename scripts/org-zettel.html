@@ -327,6 +327,25 @@ body {
 }
 .empty-content { color: var(--text-light); font-style: italic; padding: 12px 0; }
 
+/* Edit mode */
+#page-content.editable { cursor: text; }
+#page-content.editable:hover { background: var(--hover-bg); border-radius: 4px; }
+#edit-textarea {
+  width: 100%;
+  min-height: 400px;
+  padding: 16px;
+  font-family: 'Consolas', 'Fira Code', 'SF Mono', monospace;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--card-bg);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  resize: vertical;
+  outline: none;
+  tab-size: 4;
+}
+
 /* Related links section */
 #related-links {
   margin-top: 40px;
@@ -465,6 +484,12 @@ const GRAPH_DATA = null;
   }
 
   const { nodes, edges } = GRAPH_DATA;
+
+  // Detect if running in server mode
+  let serverMode = false;
+  fetch('/api/health').then(r => r.json()).then(d => {
+    if (d && d.ok) serverMode = true;
+  }).catch(() => {});
 
   // Build lookup maps
   const nodeMap = new Map(nodes.map(n => [n.id, n]));
@@ -805,6 +830,110 @@ const GRAPH_DATA = null;
     return twoHop;
   }
 
+  // Edit mode state
+  let isEditing = false;
+  let editingNodeId = null;
+
+  async function enterEditMode(nodeId) {
+    if (!serverMode || isEditing) return;
+    isEditing = true;
+    editingNodeId = nodeId;
+    try {
+      const res = await fetch('/api/raw/' + encodeURIComponent(nodeId));
+      if (!res.ok) return;
+      const raw = await res.text();
+      const textarea = document.createElement('textarea');
+      textarea.id = 'edit-textarea';
+      textarea.value = raw;
+      // Replace content
+      pageContent.innerHTML = '';
+      pageContent.appendChild(textarea);
+      pageContent.classList.remove('editable');
+      // Auto-resize
+      textarea.style.height = Math.max(400, textarea.scrollHeight) + 'px';
+      textarea.addEventListener('input', () => {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.max(400, textarea.scrollHeight) + 'px';
+      });
+      textarea.focus();
+      // Ctrl+S / Cmd+S to save without leaving
+      textarea.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+          e.preventDefault();
+          saveAndExitEditMode(nodeId, textarea.value);
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          saveAndExitEditMode(nodeId, textarea.value);
+        }
+      });
+      // Click outside to save
+      function onClickOutside(e) {
+        if (!textarea.contains(e.target)) {
+          document.removeEventListener('click', onClickOutside, true);
+          saveAndExitEditMode(nodeId, textarea.value);
+        }
+      }
+      // Delay attaching to avoid immediate trigger from the click that opened edit mode
+      setTimeout(() => {
+        document.addEventListener('click', onClickOutside, true);
+      }, 0);
+    } catch (err) {
+      console.error('Failed to enter edit mode:', err);
+      isEditing = false;
+      editingNodeId = null;
+    }
+  }
+
+  async function saveAndExitEditMode(nodeId, content) {
+    if (!isEditing) return;
+    isEditing = false;
+    try {
+      const res = await fetch('/api/save/' + encodeURIComponent(nodeId), {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        body: content,
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        // Update in-memory node data
+        const node = nodeMap.get(nodeId);
+        if (node && updated) {
+          node.title = updated.title;
+          node.content = updated.content;
+          node.tags = updated.tags;
+          node.date = updated.date;
+          node.mtime = updated.mtime;
+          // Update edges
+          rebuildEdgesForNode(nodeId, updated.links || []);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to save:', err);
+    }
+    editingNodeId = null;
+    // Re-render the page view with updated data
+    openPage(nodeId, true);
+  }
+
+  function rebuildEdgesForNode(nodeId, newLinks) {
+    // Remove old outgoing edges for this node
+    const oldOut = outgoing.get(nodeId) || new Set();
+    for (const target of oldOut) {
+      const inc = incoming.get(target);
+      if (inc) inc.delete(nodeId);
+    }
+    outgoing.set(nodeId, new Set());
+    // Add new outgoing edges
+    for (const target of newLinks) {
+      if (nodeMap.has(target) && target !== nodeId) {
+        outgoing.get(nodeId).add(target);
+        if (!incoming.has(target)) incoming.set(target, new Set());
+        incoming.get(target).add(nodeId);
+      }
+    }
+  }
+
   // Page view elements
   const pageTags = document.getElementById('page-tags');
   const pageDate = document.getElementById('page-date');
@@ -855,6 +984,17 @@ const GRAPH_DATA = null;
         if (resolvedId) openPage(resolvedId);
       });
     });
+
+    // Enable click-to-edit in server mode
+    if (serverMode) {
+      pageContent.classList.add('editable');
+      pageContent.addEventListener('click', function onContentClick(e) {
+        // Don't enter edit mode when clicking links
+        if (e.target.closest('a')) return;
+        pageContent.removeEventListener('click', onContentClick);
+        enterEditMode(id);
+      });
+    }
 
     // Backlinks
     const bl = incoming.get(id) || new Set();
@@ -974,7 +1114,7 @@ const GRAPH_DATA = null;
 
   // Escape key handler
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && currentView === 'page') {
+    if (e.key === 'Escape' && currentView === 'page' && !isEditing) {
       goBack();
     }
   });
