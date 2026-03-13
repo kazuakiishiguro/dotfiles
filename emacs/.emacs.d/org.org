@@ -10,12 +10,6 @@
 
 #+begin_src emacs-lisp
  (setq org-directory "~/org")
- (setq org-agenda-files '("~/org/todo.org"))
- (setq org-refile-targets '(("~/org/todo.org" :maxlevel . 3)))
- (setq org-archive-location "~/org/archive.org::* From %s")
- (setq org-todo-keywords
-       '((sequence "TODO(t)" "NOTE(n)" "DONE(d)" "CANCEL(c)")))
- (setq org-log-done 'time)
  (setq org-src-fontify-natively t)
  (setq org-src-tab-acts-natively t)
  (setq org-edit-src-content-indentation 1)
@@ -52,7 +46,7 @@
  (add-to-list 'org-structure-template-alist '("tex" . "src latex"))
 #+end_src
 
-** CAPTURE TASK
+** CAPTURE
 
 #+begin_src emacs-lisp
  (defvar my/capture-last-title nil
@@ -82,60 +76,11 @@ Sets `my/capture-last-title'.  Errors if file already exists."
    "Return the title saved by my/capture-file."
    my/capture-last-title)
 
- (defun my/sync-reference-categories ()
-   "Rebuild ~/org/.categories from FILETAGS across all org files."
-   (when (and buffer-file-name
-              (string-suffix-p ".org" buffer-file-name)
-              (string-prefix-p (expand-file-name org-directory)
-                               (expand-file-name buffer-file-name)))
-     (let (tags)
-       (dolist (f (directory-files-recursively org-directory "\\.org$"))
-         (with-temp-buffer
-           (insert-file-contents f nil 0 512)
-           (when (re-search-forward "^#\\+TYPE:[ \t]*category" nil t)
-             (cl-pushnew (file-name-base f) tags :test #'string=))))
-       (with-temp-file (expand-file-name ".categories" org-directory)
-         (insert (mapconcat #'identity (sort tags #'string<) "\n") "\n")))))
-
- (add-hook 'after-save-hook #'my/sync-reference-categories)
-
- (defun my/select-categories (prompt)
-   "Select one or more categories from ~/org/.categories with PROMPT.
-Returns a list of selected category strings."
-   (let* ((file (expand-file-name ".categories" org-directory))
-          (cats (when (file-exists-p file)
-                  (with-temp-buffer
-                    (insert-file-contents file)
-                    (split-string (buffer-string) "\n" t)))))
-     (unless cats
-       (user-error "No categories found. Create one with C-c c K first"))
-     (let ((chosen '())
-           (done nil))
-       (while (not done)
-         (let* ((remaining (cl-remove-if (lambda (c) (member c chosen)) cats))
-                (candidates (if chosen (append '("[done]") remaining) remaining))
-                (pick (completing-read
-                       (if chosen
-                           (format "%s [%s]: " prompt
-                                   (mapconcat #'identity (reverse chosen) ", "))
-                         (format "%s: " prompt))
-                       candidates nil t)))
-           (if (or (string-empty-p pick) (string= pick "[done]"))
-               (setq done t)
-             (push pick chosen))))
-       (unless chosen
-         (user-error "No selection made"))
-       (nreverse chosen))))
-
- (defun my/reference-categories ()
-   "Select categories for a Reference capture template."
-   (mapconcat #'identity (my/select-categories "Category") ":"))
-
  (defvar my/cliplink-last-link nil
    "Org link from the last my/cliplink-capture-file call.")
 
  (defun my/cliplink-capture-file ()
-   "Read URL from clipboard, fetch page title, and return a new Clipping file path.
+   "Read URL from clipboard, fetch page title, and return a new file path.
 Sets `my/capture-last-title' and `my/cliplink-last-link'."
    (let* ((url (string-trim (shell-command-to-string "wl-paste --no-newline 2>/dev/null")))
           (_ (when (string-empty-p url)
@@ -146,36 +91,19 @@ Sets `my/capture-last-title' and `my/cliplink-last-link'."
                            (org-cliplink-escape-html4 title)
                          (user-error "Could not fetch title for %s" url))))
      (setq my/cliplink-last-link link)
-     (my/org-title-to-path (expand-file-name "Clippings" org-directory) clean-title)))
+     (my/org-title-to-path org-directory clean-title)))
 
  (defun my/cliplink-last-link ()
    "Return the link saved by my/cliplink-capture-file."
    my/cliplink-last-link)
 
  (setq org-capture-templates
-       '(("t" "TODO" entry (file+headline "~/org/todo.org" "CURRENT")
-	  "* TODO %?\n %i\n %a")
-
-	 ("n" "Note" plain (file (lambda ()
+       '(("n" "Note" plain (file (lambda ()
 	   (my/capture-file "~/org" "Note title: ")))
-	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+FILETAGS:\n\n[[file:Daily/%(format-time-string \"%Y-%m-%d\").org][%(format-time-string \"%Y-%m-%d\")]]\n\n%?")
-
-	 ("r" "Reference" plain (file (lambda ()
-	   (my/capture-file "~/org/References" "Reference title: ")))
-	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+FILETAGS: :%(my/reference-categories):\n\n%?")
-
-	 ("K" "Category" plain (file (lambda ()
-	   (my/capture-file "~/org" "Category name: ")))
-	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+TYPE: category\n\n%?")
+	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n\n%?")
 
 	 ("c" "Clipping" plain (file (lambda () (my/cliplink-capture-file)))
-	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n#+FILETAGS: :Clippings:\n\nSource: %(my/cliplink-last-link)\n\n%?")
-
-	 ("w" "Weekly review" plain (file (lambda ()
-	   (expand-file-name
-	    (concat "Week" (format-time-string "%U") "_-_" (format-time-string "%b_%Y") ".org")
-	    "~/org")))
-	  "#+TITLE: Week%(format-time-string \"%%U\") - %(format-time-string \"%%b %%Y\")\n#+DATE: %U\n#+FILETAGS: :weekly:\n\n* What happened\n\n%?\n\n* What I learned\n\n* Next week\n")))
+	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n\nSource: %(my/cliplink-last-link)\n\n%?")))
 #+end_src
 
 *** BACKLINK HELPERS
@@ -219,47 +147,13 @@ Sets `my/capture-last-title' and `my/cliplink-last-link'."
          (save-buffer)))))
 #+end_src
 
-*** DAILY BACKLINK ON CAPTURE
-
-#+begin_src emacs-lisp
- (defun my/org-add-daily-backlink (note-file title)
-   "Ensure today's daily file exists and has a backlink to NOTE-FILE with TITLE."
-   (let* ((daily-dir (expand-file-name "Daily" org-directory))
-          (daily-path (expand-file-name (format-time-string "%Y-%m-%d.org") daily-dir)))
-     (unless (file-exists-p daily-dir) (make-directory daily-dir t))
-     (with-current-buffer (find-file-noselect daily-path)
-       (when (= (buffer-size) 0)
-         (insert (format "#+TITLE: %s\n#+DATE: %s\n\n"
-                         (format-time-string "%Y-%m-%d")
-                         (format-time-string "[%Y-%m-%d %a]")))
-         (save-buffer)))
-     (my/org-ensure-backlink daily-path note-file title)))
-
- (defun my/org-capture-add-daily-backlink ()
-   "After capturing a note, add a backlink in today's daily file."
-   (when (and (equal (plist-get org-capture-plist :key) "n")
-              my/capture-last-title)
-     (my/org-add-daily-backlink
-      (expand-file-name
-       (concat (my/org-title-to-filename my/capture-last-title) ".org")
-       org-directory)
-      my/capture-last-title)))
-
- (add-hook 'org-capture-after-finalize-hook #'my/org-capture-add-daily-backlink)
-#+end_src
-
 *** INTERNAL LINK BACKLINKS ON SAVE
 
 #+begin_src emacs-lisp
  (defun my/org-sync-backlinks ()
-   "After saving an org file, ensure backlinks exist in all internally linked files.
- Category files (#+TYPE: category) are skipped so that backlinks accumulated
- in them do not trigger reverse links."
+   "After saving an org file, ensure backlinks exist in all internally linked files."
    (when (and (my/org-sync-scope-p)
-              (not my/org-sync-in-progress)
-              (not (save-excursion
-                     (goto-char (point-min))
-                     (re-search-forward "^#\\+TYPE:[ \t]*category" nil t))))
+              (not my/org-sync-in-progress))
      (let ((my/org-sync-in-progress t)
            (source-file buffer-file-name)
            (source-title (or (my/org-get-title)
@@ -276,65 +170,6 @@ Sets `my/capture-last-title' and `my/cliplink-last-link'."
                (my/org-ensure-backlink target source-file source-title))))))))
 
  (add-hook 'after-save-hook #'my/org-sync-backlinks)
-#+end_src
-
-** TAG BROWSER
-
-#+begin_src emacs-lisp
- (defun my/org-collect-tags ()
-   "Collect all FILETAGS across org files in `org-directory'.
- Returns an alist of (TAG . ((FILE . TITLE) ...)) sorted by count descending."
-   (let ((table (make-hash-table :test #'equal)))
-     (dolist (f (directory-files-recursively org-directory "\\.org$"))
-       (with-temp-buffer
-         (insert-file-contents f nil 0 512)
-         (let ((title (when (re-search-forward "^#\\+TITLE:[ \t]+\\(.+\\)" nil t)
-                        (string-trim (match-string 1))))
-               (tags (progn
-                       (goto-char (point-min))
-                       (when (re-search-forward "^#\\+FILETAGS:[ \t]+\\(.+\\)" nil t)
-                         (split-string (match-string 1) ":" t "[ \t]+")))))
-           (dolist (tag tags)
-             (push (cons f (or title (file-name-base f)))
-                   (gethash tag table))))))
-     (let (result)
-       (maphash (lambda (k v) (push (cons k (nreverse v)) result)) table)
-       (sort result (lambda (a b) (> (length (cdr a)) (length (cdr b))))))))
-
- (defun my/org-list-tags ()
-   "Display all FILETAGS with counts in a buffer."
-   (interactive)
-   (let ((tags (my/org-collect-tags))
-         (buf (get-buffer-create "*Org Tags*")))
-     (with-current-buffer buf
-       (read-only-mode -1)
-       (erase-buffer)
-       (insert (format "%-5s %s\n" "Count" "Tag"))
-       (insert (make-string 40 ?-) "\n")
-       (dolist (entry tags)
-         (insert (format "%-5d %s\n" (length (cdr entry)) (car entry))))
-       (goto-char (point-min))
-       (read-only-mode 1))
-     (pop-to-buffer buf)))
-
- (defun my/org-filter-by-tag ()
-   "Select a tag, then pick a matching file to open."
-   (interactive)
-   (let* ((tags (my/org-collect-tags))
-          (candidates (mapcar (lambda (e)
-                                (format "%s (%d)" (car e) (length (cdr e))))
-                              tags))
-          (pick (completing-read "Tag: " candidates nil t))
-          (tag (replace-regexp-in-string " ([0-9]+)$" "" pick))
-          (files (cdr (assoc tag tags)))
-          (file-candidates (mapcar (lambda (ft) (cons (cdr ft) (car ft))) files))
-          (chosen (completing-read (format "[%s] Open: " tag)
-                                   (mapcar #'car file-candidates) nil t))
-          (path (cdr (assoc chosen file-candidates))))
-     (find-file path)))
-
- (define-key global-map (kbd "C-c T") #'my/org-list-tags)
- (define-key global-map (kbd "C-c F") #'my/org-filter-by-tag)
 #+end_src
 
 ** DEFT
@@ -357,30 +192,14 @@ Sets `my/capture-last-title' and `my/cliplink-last-link'."
      (when (string-empty-p raw)
        (user-error "No search term to create a note from"))
      (let* ((path (my/org-title-to-path org-directory raw))
-            (title my/capture-last-title)
-            (daily (format-time-string "%Y-%m-%d"))
-            (daily-link (format "[[file:Daily/%s.org][%s]]" daily daily)))
+            (title my/capture-last-title))
        (let ((win (selected-window)))
          (kill-buffer (current-buffer))
          (select-window win)
          (switch-to-buffer (find-file-noselect path)))
-       (insert (format "#+TITLE: %s\n#+DATE: %s\n#+FILETAGS:\n\n%s\n\n" title
-                       (format-time-string "[%Y-%m-%d %a %H:%M]")
-                       daily-link))
-       (save-buffer)
-       (my/org-add-daily-backlink path title))))
-#+end_src
-
-*** TASK ARCHIVE
-
-#+begin_src emacs-lisp
-(defun my/mark-done-and-archive ()
-  "Mark the state of an org-mode item as DONE and archive it."
-  (interactive)
-  (org-todo 'done)
-  (org-archive-subtree))
-
-(define-key org-mode-map (kbd "C-c C-x C-s") 'my/mark-done-and-archive)
+       (insert (format "#+TITLE: %s\n#+DATE: %s\n\n" title
+                       (format-time-string "[%Y-%m-%d %a %H:%M]")))
+       (save-buffer))))
 #+end_src
 
 ** KEYBINDINGS
@@ -402,44 +221,9 @@ link with the title inferred from the filename (underscores → spaces)."
           (title (my/org-filename-to-title (file-name-base abs))))
      (insert (format "[[file:%s][%s]]" rel title))))
 
- (define-key global-map "\C-ca" 'org-agenda)
  (define-key global-map "\C-cc" 'org-capture)
  (define-key global-map "\C-cn" (lambda () (interactive) (org-capture nil "n")))
  (define-key org-mode-map (kbd "C-c l") #'my/org-insert-link)
-#+end_src
-
-*** SET FILETAGS
-
-#+begin_src emacs-lisp
- (defun my/set-filetags ()
-   "Set #+FILETAGS: in current buffer, completing from .categories.
- Also creates backlinks in each selected category file."
-   (interactive)
-   (let* ((tags (my/select-categories "Tags"))
-          (value (concat ":" (mapconcat #'identity tags ":") ":")))
-     (save-excursion
-       (goto-char (point-min))
-       (if (re-search-forward "^#\\+FILETAGS:.*$" nil t)
-           (replace-match (concat "#+FILETAGS: " value))
-         (goto-char (point-min))
-         (let ((insert-pos (point)))
-           (while (re-search-forward "^#\\+[A-Z_]+:" nil t)
-             (setq insert-pos (line-end-position)))
-           (goto-char insert-pos)
-           (insert "\n#+FILETAGS: " value))))
-     ;; Create backlinks in category files
-     (when buffer-file-name
-       (let ((source-file buffer-file-name)
-             (source-title (or (my/org-get-title)
-                               (file-name-base buffer-file-name))))
-         (dolist (tag tags)
-           (let ((cat-file (car (directory-files-recursively
-                                 org-directory
-                                 (concat "\\`" (regexp-quote tag) "\\.org\\'")))))
-             (when cat-file
-               (my/org-ensure-backlink cat-file source-file source-title))))))))
-
- (define-key org-mode-map (kbd "C-c t") #'my/set-filetags)
 #+end_src
 
 ** EXPORTING
@@ -542,15 +326,14 @@ link with the title inferred from the filename (underscores → spaces)."
 
  (defun my/org-sync-scope-p (&optional file)
    "Return non-nil if FILE should participate in title/filename sync.
- Excludes daily files, weekly reviews, and files outside the vault."
+ Excludes date-named files and files outside the vault."
    (let ((f (or file buffer-file-name)))
      (and f
           (string-suffix-p ".org" f)
           (string-prefix-p (expand-file-name org-directory)
                            (expand-file-name f))
-          (let ((base (file-name-base f)))
-            (not (or (string-match-p "\\`[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\'" base)
-                     (string-match-p "\\`Week[0-9]" base)))))))
+          (not (string-match-p "\\`[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\'"
+                               (file-name-base f))))))
 
  (defun my/org-update-backlinks (old-base new-base old-title new-title)
    "Rewrite every org link referencing OLD-BASE.org in the vault.
