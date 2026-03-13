@@ -20,6 +20,8 @@ import re
 import sys
 import time
 from pathlib import Path
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from urllib.parse import unquote
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 ORG_DIR = Path.cwd()
@@ -216,6 +218,105 @@ def build_graph(org_dir: Path, include_daily: bool, include_orphans: bool, min_b
     }
 
 
+def make_handler(org_dir, template_path, build_args):
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, format, *args):
+            print(format % args, file=sys.stderr)
+
+        def _cors_headers(self):
+            self.send_header('Access-Control-Allow-Origin', '*')
+
+        def _send_json(self, data, status=200):
+            body = json.dumps(data, ensure_ascii=False).encode('utf-8')
+            self.send_response(status)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self._cors_headers()
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def _send_text(self, text, status=200):
+            body = text.encode('utf-8')
+            self.send_response(status)
+            self.send_header('Content-Type', 'text/plain; charset=utf-8')
+            self._cors_headers()
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def _send_html(self, html, status=200):
+            body = html.encode('utf-8')
+            self.send_response(status)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self._cors_headers()
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def _resolve_id(self, path_prefix):
+            """Extract and validate file ID from URL path."""
+            raw = self.path[len(path_prefix):]
+            file_id = unquote(raw)
+            # Path traversal protection
+            resolved = (org_dir / file_id).resolve()
+            if not str(resolved).startswith(str(org_dir.resolve())):
+                return None, None
+            if not resolved.suffix == '.org':
+                return None, None
+            return file_id, resolved
+
+        def do_GET(self):
+            if self.path == '/' or self.path == '':
+                graph_data = build_graph(org_dir, **build_args)
+                template = template_path.read_text(encoding='utf-8')
+                json_blob = json.dumps(graph_data, ensure_ascii=False)
+                html = template.replace('const GRAPH_DATA = null;',
+                                        f'const GRAPH_DATA = {json_blob};', 1)
+                self._send_html(html)
+
+            elif self.path == '/api/health':
+                self._send_json({'ok': True})
+
+            elif self.path.startswith('/api/raw/'):
+                file_id, filepath = self._resolve_id('/api/raw/')
+                if not file_id or not filepath.exists():
+                    self._send_json({'error': 'not found'}, 404)
+                    return
+                raw = filepath.read_text(encoding='utf-8', errors='replace')
+                self._send_text(raw)
+
+            else:
+                self._send_json({'error': 'not found'}, 404)
+
+        def do_POST(self):
+            if self.path.startswith('/api/save/'):
+                file_id, filepath = self._resolve_id('/api/save/')
+                if not file_id:
+                    self._send_json({'error': 'invalid path'}, 400)
+                    return
+                length = int(self.headers.get('Content-Length', 0))
+                body = self.rfile.read(length).decode('utf-8')
+                filepath.parent.mkdir(parents=True, exist_ok=True)
+                filepath.write_text(body, encoding='utf-8')
+                # Re-parse the single file
+                node = parse_org_file(filepath, org_dir)
+                if node:
+                    self._send_json(node)
+                else:
+                    self._send_json({'error': 'parse failed'}, 500)
+            else:
+                self._send_json({'error': 'not found'}, 404)
+
+        def do_OPTIONS(self):
+            self.send_response(204)
+            self._cors_headers()
+            self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+            self.end_headers()
+
+    return Handler
+
+
 def main():
     parser = argparse.ArgumentParser(description="Build org-mode zettelkasten viewer")
     daily_group = parser.add_mutually_exclusive_group()
@@ -232,8 +333,27 @@ def main():
 
     parser.add_argument("--min-backlinks", type=int, default=0,
                         help="Only show nodes with at least N backlinks")
+    parser.add_argument("--serve", action="store_true",
+                        help="Start a live HTTP server instead of static export")
+    parser.add_argument("--port", type=int, default=8080,
+                        help="Port for the HTTP server (default: 8080)")
 
     args = parser.parse_args()
+
+    if args.serve:
+        build_args = {
+            'include_daily': args.include_daily,
+            'include_orphans': args.include_orphans,
+            'min_backlinks': args.min_backlinks,
+        }
+        handler = make_handler(ORG_DIR, TEMPLATE, build_args)
+        server = HTTPServer(('127.0.0.1', args.port), handler)
+        print(f"Serving on http://127.0.0.1:{args.port}", file=sys.stderr)
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            print("\nStopped.", file=sys.stderr)
+        return
 
     graph_data = build_graph(
         ORG_DIR,
