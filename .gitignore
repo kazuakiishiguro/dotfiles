@@ -26,6 +26,7 @@ config/.config/**
 !config/.config/hypr/input.conf
 !config/.config/hypr/looknfeel.conf
 !config/.config/hypr/monitors.conf
+!config/.config/hypr/envs.conf
 !config/.config/hypr/xdph.conf
 !config/.config/i3/
 !config/.config/i3/config
