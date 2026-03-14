@@ -949,11 +949,15 @@ const GRAPH_DATA = null;
     return 0;
   }
 
-  function editSegment(segEl) {
+  function editSegment(segEl, cursorPos) {
     if (!serverMode || !editingNodeId) return;
     if (segEl === activeSegEl) return;
     if (activeSegEl) {
+      const targetSeg = segEl.getAttribute('data-seg-start');
       closeActiveSegment();
+      // Re-query after re-render since closeActiveSegment destroys DOM
+      segEl = pageContent.querySelector('[data-seg-start="' + targetSeg + '"]');
+      if (!segEl) return;
     }
 
     // Empty content — create inline input to start writing
@@ -1057,6 +1061,12 @@ const GRAPH_DATA = null;
     segEl.parentNode.insertBefore(input, segEl.nextSibling);
     activeInput = input;
     input.focus();
+    if (cursorPos === 'start') {
+      input.setSelectionRange(0, 0);
+    } else if (cursorPos === 'end') {
+      const len = input.value.length;
+      input.setSelectionRange(len, len);
+    }
 
     if (isMultiLine) {
       const autoResize = () => {
@@ -1120,7 +1130,7 @@ const GRAPH_DATA = null;
             editTitle();
           } else {
             const el = pageContent.querySelector('[data-seg-start="' + targetSeg + '"]');
-            if (el) editSegment(el);
+            if (el) editSegment(el, 'end');
           }
         }
         return;
@@ -1133,7 +1143,7 @@ const GRAPH_DATA = null;
           const targetSeg = nextEl.getAttribute('data-seg-start');
           closeActiveSegment();
           const el = pageContent.querySelector('[data-seg-start="' + targetSeg + '"]');
-          if (el) editSegment(el);
+          if (el) editSegment(el, 'start');
         }
         return;
       }
