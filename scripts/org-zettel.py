@@ -293,6 +293,22 @@ def make_handler(org_dir, template_path, build_args):
                 self._send_text(raw)
 
             else:
+                # Serve static files (images, etc.) from org_dir
+                file_path = unquote(self.path.lstrip('/'))
+                resolved = (org_dir / file_path).resolve()
+                org_root = str(org_dir.resolve())
+                if (str(resolved).startswith(org_root + os.sep) and resolved.is_file()):
+                    import mimetypes
+                    ctype, _ = mimetypes.guess_type(str(resolved))
+                    if ctype and ctype.startswith(('image/', 'video/', 'audio/')):
+                        data = resolved.read_bytes()
+                        self.send_response(200)
+                        self.send_header('Content-Type', ctype)
+                        self.send_header('Content-Length', str(len(data)))
+                        self._cors_headers()
+                        self.end_headers()
+                        self.wfile.write(data)
+                        return
                 self._send_json({'error': 'not found'}, 404)
 
         def do_POST(self):
@@ -303,6 +319,16 @@ def make_handler(org_dir, template_path, build_args):
                     return
                 length = int(self.headers.get('Content-Length', 0))
                 body = self.rfile.read(length).decode('utf-8')
+                # Skip write if content unchanged
+                if filepath.exists():
+                    existing = filepath.read_text(encoding='utf-8', errors='replace')
+                    if existing == body:
+                        node = parse_org_file(filepath, org_dir)
+                        if node:
+                            self._send_json(node)
+                        else:
+                            self._send_json({'error': 'parse failed'}, 500)
+                        return
                 filepath.parent.mkdir(parents=True, exist_ok=True)
                 filepath.write_text(body, encoding='utf-8')
                 # Re-parse the single file

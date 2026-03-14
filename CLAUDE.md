@@ -12,7 +12,7 @@ dotfiles/
   emacs/          # Literate Emacs config (.emacs.d/*.org)
   git/            # .gitconfig, .gitconfig_fun, .gitignore_global
   screen/         # .screenrc
-  scripts/        # OS-specific setup scripts + Brewfile
+  scripts/        # OS-specific setup scripts, Brewfile, org-zettel
   shell/          # .shellrc (shared shell config sourced by bash & zsh)
   vim/            # .vimrc
   xinitrc/        # .xinitrc (Arch only)
@@ -52,6 +52,20 @@ Config is split into modular files under `config/.config/hypr/`:
 - `hypridle.conf` — idle/lock timeouts
 - `hyprlock.conf` — lock screen appearance
 - `hyprsunset.conf` — night light
+
+## Org Zettelkasten Viewer (`scripts/org-zettel.*`)
+
+A Scrapbox.io-style card grid viewer for the `~/org/` knowledge base. Symlinked into `~/org/` for use.
+
+- `org-zettel.py` — Python script that scans `.org` files and either exports a static HTML viewer or runs a live HTTP server
+- `org-zettel.html` — Single-file HTML/CSS/JS template (Flexoki color scheme, no frameworks)
+- Static export: `cd ~/org && python3 org-zettel.py` → produces `org-zettel-view.html`
+- Live server with editing: `cd ~/org && python3 org-zettel.py --serve` → serves on `localhost:8080`
+- To run and open: `cd ~/org && python3 org-zettel.py --serve & sleep 1 && xdg-open http://127.0.0.1:8080`
+- Server endpoints: `GET /api/health`, `GET /api/raw/{id}`, `POST /api/save/{id}`, plus static file serving for images
+- Editing is Scrapbox-style: click content to enter raw org source textarea, click outside or Escape to save
+- Data injection: Python replaces `const GRAPH_DATA = null;` in the template with JSON
+- Pins stored in browser localStorage (key: `org-graph-pins`), separate per origin
 
 ## Conventions
 

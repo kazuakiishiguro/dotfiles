@@ -833,6 +833,7 @@ const GRAPH_DATA = null;
   // Edit mode state
   let isEditing = false;
   let editingNodeId = null;
+  let editClickHandler = null;
 
   async function enterEditMode(nodeId) {
     if (!serverMode || isEditing) return;
@@ -987,13 +988,18 @@ const GRAPH_DATA = null;
 
     // Enable click-to-edit in server mode
     if (serverMode) {
+      // Remove previous listener to avoid stale closures
+      if (editClickHandler) {
+        pageContent.removeEventListener('click', editClickHandler);
+      }
       pageContent.classList.add('editable');
-      pageContent.addEventListener('click', function onContentClick(e) {
-        // Don't enter edit mode when clicking links
+      editClickHandler = function(e) {
         if (e.target.closest('a')) return;
-        pageContent.removeEventListener('click', onContentClick);
+        pageContent.removeEventListener('click', editClickHandler);
+        editClickHandler = null;
         enterEditMode(id);
-      });
+      };
+      pageContent.addEventListener('click', editClickHandler);
     }
 
     // Backlinks
