@@ -743,7 +743,7 @@ const GRAPH_DATA = null;
   }
 
   function renderOrg(text) {
-    if (!text || !text.trim()) return '<div class="empty-content">No content</div>';
+    if (!text || !text.trim()) return '<div class="empty-content" data-seg-start="0" data-seg-end="0">No content</div>';
 
     const lines = text.split('\n');
     let html = '';
@@ -954,6 +954,76 @@ const GRAPH_DATA = null;
     if (segEl === activeSegEl) return;
     if (activeSegEl) {
       closeActiveSegment();
+    }
+
+    // Empty content — create inline input to start writing
+    if (segEl.classList.contains('empty-content')) {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'seg-input';
+      input.value = '';
+      segEl.style.display = 'none';
+      segEl.parentNode.insertBefore(input, segEl.nextSibling);
+
+      activeSegEl = segEl;
+      activeInput = input;
+      input._segStart = 0;
+      input._segEnd = 0;
+      input._absStart = bodyOffset;
+      input._absEnd = bodyOffset;
+      input._isNew = true;
+      input.focus();
+
+      input.addEventListener('input', () => {
+        if (input._isNew) {
+          rawLines.splice(bodyOffset, 0, input.value);
+          input._isNew = false;
+        } else {
+          rawLines[bodyOffset] = input.value;
+        }
+        scheduleSave();
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          if (input._isNew) return; // nothing typed, just close
+          closeActiveSegment();
+          return;
+        }
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          if (input._isNew) {
+            rawLines.splice(bodyOffset, 0, input.value);
+            input._isNew = false;
+          } else {
+            rawLines[bodyOffset] = input.value;
+          }
+          rawLines.splice(bodyOffset + 1, 0, '');
+          scheduleSave();
+          activeInput.remove();
+          activeSegEl = null;
+          activeInput = null;
+          rerenderContent();
+          const newEl = pageContent.querySelector('[data-seg-start="1"]');
+          if (newEl) editSegment(newEl);
+          return;
+        }
+        if (e.key === 'ArrowUp' && isAtStart(input)) {
+          e.preventDefault();
+          if (input._isNew) {
+            activeInput.remove();
+            segEl.style.display = '';
+            activeSegEl = null;
+            activeInput = null;
+          } else {
+            closeActiveSegment();
+          }
+          editTitle();
+          return;
+        }
+      });
+      return;
     }
 
     activeSegEl = segEl;
