@@ -887,102 +887,323 @@ const GRAPH_DATA = null;
     return twoHop;
   }
 
-  // Edit mode state
-  let isEditing = false;
+  // Line-level edit state
   let editingNodeId = null;
-  let editClickHandler = null;
+  let rawLines = [];
+  let activeSegEl = null;
+  let activeInput = null;
+  let saveTimer = null;
 
-  async function enterEditMode(nodeId) {
-    if (!serverMode || isEditing) return;
-    isEditing = true;
+  function initLineEditor(nodeId) {
     editingNodeId = nodeId;
-    try {
-      const res = await fetch('/api/raw/' + encodeURIComponent(nodeId));
-      if (!res.ok) return;
-      const raw = await res.text();
-      const textarea = document.createElement('textarea');
-      textarea.id = 'edit-textarea';
-      textarea.value = raw;
-      // Replace content
-      pageContent.innerHTML = '';
-      pageContent.appendChild(textarea);
-      pageContent.classList.remove('editable');
-      // Auto-resize
-      textarea.style.height = Math.max(400, textarea.scrollHeight) + 'px';
-      textarea.addEventListener('input', () => {
-        textarea.style.height = 'auto';
-        textarea.style.height = Math.max(400, textarea.scrollHeight) + 'px';
-      });
-      textarea.focus();
-      // Ctrl+S / Cmd+S to save without leaving
-      textarea.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-          e.preventDefault();
-          saveAndExitEditMode(nodeId, textarea.value);
-        }
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          saveAndExitEditMode(nodeId, textarea.value);
-        }
-      });
-      // Click outside to save
-      function onClickOutside(e) {
-        if (!textarea.contains(e.target)) {
-          document.removeEventListener('click', onClickOutside, true);
-          saveAndExitEditMode(nodeId, textarea.value);
-        }
-      }
-      // Delay attaching to avoid immediate trigger from the click that opened edit mode
-      setTimeout(() => {
-        document.addEventListener('click', onClickOutside, true);
-      }, 0);
-    } catch (err) {
-      console.error('Failed to enter edit mode:', err);
-      isEditing = false;
-      editingNodeId = null;
-    }
+    rawLines = [];
+    activeSegEl = null;
+    activeInput = null;
   }
 
-  async function saveAndExitEditMode(nodeId, content) {
-    if (!isEditing) return;
-    isEditing = false;
+  async function fetchRawLines(nodeId) {
+    const res = await fetch('/api/raw/' + encodeURIComponent(nodeId));
+    if (!res.ok) return null;
+    const raw = await res.text();
+    return raw.split('\n');
+  }
+
+  function findBodyOffset(allLines) {
+    let seenFrontmatter = false;
+    for (let i = 0; i < allLines.length; i++) {
+      const line = allLines[i];
+      if (line.startsWith('#+')) {
+        seenFrontmatter = true;
+        continue;
+      }
+      if (seenFrontmatter && line.trim() !== '') {
+        return i;
+      }
+      if (seenFrontmatter && line.trim() === '') {
+        continue;
+      }
+    }
+    return allLines.length;
+  }
+
+  function editSegment(segEl) {
+    if (!serverMode || !editingNodeId) return;
+    if (segEl === activeSegEl) return;
+    if (activeSegEl) {
+      closeActiveSegment();
+    }
+
+    activeSegEl = segEl;
+    const segStart = parseInt(segEl.getAttribute('data-seg-start'));
+    const segEnd = parseInt(segEl.getAttribute('data-seg-end'));
+    const bodyOffset = findBodyOffset(rawLines);
+    const absStart = bodyOffset + segStart;
+    const absEnd = bodyOffset + segEnd;
+
+    const segLines = rawLines.slice(absStart, absEnd + 1);
+    const isMultiLine = segStart !== segEnd;
+
+    let input;
+    if (isMultiLine) {
+      input = document.createElement('textarea');
+      input.className = 'seg-input';
+      input.value = segLines.join('\n');
+      input.rows = segLines.length;
+    } else {
+      input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'seg-input';
+      input.value = segLines[0] || '';
+    }
+
+    input._segStart = segStart;
+    input._segEnd = segEnd;
+    input._absStart = absStart;
+    input._absEnd = absEnd;
+
+    segEl.style.display = 'none';
+    segEl.parentNode.insertBefore(input, segEl.nextSibling);
+    activeInput = input;
+    input.focus();
+
+    if (isMultiLine) {
+      const autoResize = () => {
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+      };
+      autoResize();
+      input.addEventListener('input', autoResize);
+    }
+
+    input.addEventListener('input', () => {
+      spliceRawLines();
+      scheduleSave();
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeActiveSegment();
+        return;
+      }
+
+      if (e.key === 'Enter' && !isMultiLine && !e.shiftKey) {
+        e.preventDefault();
+        spliceRawLines();
+        const insertAt = input._absEnd + 1;
+        rawLines.splice(insertAt, 0, '');
+        scheduleSave();
+        rerenderContent();
+        const newSegEl = pageContent.querySelector('[data-seg-start="' + (input._segEnd + 1) + '"]');
+        if (newSegEl) editSegment(newSegEl);
+        return;
+      }
+
+      if (e.key === 'Backspace' && !isMultiLine && input.value === '') {
+        e.preventDefault();
+        rawLines.splice(input._absStart, 1);
+        scheduleSave();
+        const prevSeg = input._segStart - 1;
+        rerenderContent();
+        const prevEl = pageContent.querySelector('[data-seg-end="' + prevSeg + '"]') ||
+                       findClosestSegBefore(prevSeg);
+        if (prevEl) editSegment(prevEl);
+        return;
+      }
+
+      if (e.key === 'ArrowUp' && isAtStart(input)) {
+        e.preventDefault();
+        const prevEl = findPrevSeg(activeSegEl);
+        if (prevEl) editSegment(prevEl);
+        return;
+      }
+
+      if (e.key === 'ArrowDown' && isAtEnd(input)) {
+        e.preventDefault();
+        const nextEl = findNextSeg(activeSegEl);
+        if (nextEl) editSegment(nextEl);
+        return;
+      }
+    });
+  }
+
+  function isAtStart(input) {
+    return input.selectionStart === 0;
+  }
+
+  function isAtEnd(input) {
+    return input.selectionStart === input.value.length;
+  }
+
+  function findPrevSeg(segEl) {
+    const allSegs = [...pageContent.querySelectorAll('[data-seg-start]')];
+    const idx = allSegs.indexOf(segEl);
+    return idx > 0 ? allSegs[idx - 1] : null;
+  }
+
+  function findNextSeg(segEl) {
+    const allSegs = [...pageContent.querySelectorAll('[data-seg-start]')];
+    const idx = allSegs.indexOf(segEl);
+    return idx < allSegs.length - 1 ? allSegs[idx + 1] : null;
+  }
+
+  function findClosestSegBefore(lineIdx) {
+    const allSegs = [...pageContent.querySelectorAll('[data-seg-start]')];
+    for (let i = allSegs.length - 1; i >= 0; i--) {
+      if (parseInt(allSegs[i].getAttribute('data-seg-end')) <= lineIdx) return allSegs[i];
+    }
+    return allSegs.length > 0 ? allSegs[0] : null;
+  }
+
+  function spliceRawLines() {
+    if (!activeInput) return;
+    const newLines = activeInput.tagName === 'TEXTAREA'
+      ? activeInput.value.split('\n')
+      : [activeInput.value];
+    const absStart = activeInput._absStart;
+    const absEnd = activeInput._absEnd;
+    rawLines.splice(absStart, absEnd - absStart + 1, ...newLines);
+    activeInput._absEnd = absStart + newLines.length - 1;
+  }
+
+  function scheduleSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => autoSave(), 1000);
+  }
+
+  async function autoSave() {
+    if (!editingNodeId) return;
+    const content = rawLines.join('\n');
     try {
-      const res = await fetch('/api/save/' + encodeURIComponent(nodeId), {
+      const res = await fetch('/api/save/' + encodeURIComponent(editingNodeId), {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain; charset=utf-8' },
         body: content,
       });
       if (res.ok) {
         const updated = await res.json();
-        // Update in-memory node data
-        const node = nodeMap.get(nodeId);
+        const node = nodeMap.get(editingNodeId);
         if (node && updated) {
           node.title = updated.title;
           node.content = updated.content;
           node.tags = updated.tags;
           node.date = updated.date;
           node.mtime = updated.mtime;
-          // Update edges
-          rebuildEdgesForNode(nodeId, updated.links || []);
+          rebuildEdgesForNode(editingNodeId, updated.links || []);
         }
       }
     } catch (err) {
-      console.error('Failed to save:', err);
+      console.error('Auto-save failed:', err);
     }
-    editingNodeId = null;
-    // Re-render the page view with updated data
-    openPage(nodeId, true);
+  }
+
+  function closeActiveSegment() {
+    if (!activeInput || !activeSegEl) return;
+    spliceRawLines();
+    clearTimeout(saveTimer);
+    autoSave();
+    activeInput.remove();
+    activeSegEl.style.display = '';
+    rerenderContent();
+    activeSegEl = null;
+    activeInput = null;
+  }
+
+  function rerenderContent() {
+    const bodyOffset = findBodyOffset(rawLines);
+    const bodyLines = rawLines.slice(bodyOffset);
+    let bodyEnd = bodyLines.length;
+    for (let i = 0; i < bodyLines.length; i++) {
+      if (/^\*\s+Backlinks\s*\(\d+\)/i.test(bodyLines[i])) {
+        bodyEnd = i;
+        break;
+      }
+    }
+    const bodyText = bodyLines.slice(0, bodyEnd).join('\n');
+
+    let title = editingNodeId;
+    for (const line of rawLines) {
+      const m = line.match(/^#\+TITLE:\s*(.+)/i);
+      if (m) { title = m[1].trim(); break; }
+    }
+
+    pageContent.innerHTML = '<h1 data-seg-start="-1" data-seg-end="-1">' + escHtml(title) + '</h1>' + renderOrg(bodyText);
+
+    pageContent.querySelectorAll('a.org-link').forEach(a => {
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = a.getAttribute('data-target');
+        const resolvedId = resolveOrgPath(editingNodeId, target);
+        if (resolvedId) openPage(resolvedId);
+      });
+    });
+
+    const titleEl = pageContent.querySelector('h1[data-seg-start="-1"]');
+    if (titleEl && serverMode) {
+      titleEl.style.cursor = 'text';
+      titleEl.addEventListener('click', (e) => {
+        if (e.target.closest('a')) return;
+        editTitle();
+      });
+    }
+  }
+
+  function editTitle() {
+    const titleEl = pageContent.querySelector('h1[data-seg-start="-1"]');
+    if (!titleEl) return;
+
+    let titleLineIdx = -1;
+    for (let i = 0; i < rawLines.length; i++) {
+      if (/^#\+TITLE:/i.test(rawLines[i])) {
+        titleLineIdx = i;
+        break;
+      }
+    }
+    if (titleLineIdx < 0) return;
+
+    const titleText = rawLines[titleLineIdx].replace(/^#\+TITLE:\s*/i, '');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'seg-input';
+    input.value = titleText;
+    input.style.fontSize = '22px';
+    input.style.fontWeight = '700';
+
+    titleEl.style.display = 'none';
+    titleEl.parentNode.insertBefore(input, titleEl.nextSibling);
+    input.focus();
+
+    const save = () => {
+      rawLines[titleLineIdx] = '#+TITLE: ' + input.value;
+      input.remove();
+      titleEl.style.display = '';
+      titleEl.textContent = input.value;
+      clearTimeout(saveTimer);
+      autoSave();
+    };
+
+    input.addEventListener('input', () => {
+      rawLines[titleLineIdx] = '#+TITLE: ' + input.value;
+      scheduleSave();
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.key === 'Enter') {
+        e.preventDefault();
+        save();
+      }
+    });
+
+    input.addEventListener('blur', save);
   }
 
   function rebuildEdgesForNode(nodeId, newLinks) {
-    // Remove old outgoing edges for this node
     const oldOut = outgoing.get(nodeId) || new Set();
     for (const target of oldOut) {
       const inc = incoming.get(target);
       if (inc) inc.delete(nodeId);
     }
     outgoing.set(nodeId, new Set());
-    // Add new outgoing edges
     for (const target of newLinks) {
       if (nodeMap.has(target) && target !== nodeId) {
         outgoing.get(nodeId).add(target);
@@ -1031,7 +1252,7 @@ const GRAPH_DATA = null;
       pinBtn.className = nowPinned ? 'pinned' : '';
     };
 
-    pageContent.innerHTML = '<h1>' + escHtml(node.title || node.id) + '</h1>' + renderOrg(node.content || '');
+    pageContent.innerHTML = '<h1 data-seg-start="-1" data-seg-end="-1">' + escHtml(node.title || node.id) + '</h1>' + renderOrg(node.content || '');
 
     // Wire up org-link clicks
     pageContent.querySelectorAll('a.org-link').forEach(a => {
@@ -1043,20 +1264,40 @@ const GRAPH_DATA = null;
       });
     });
 
-    // Enable click-to-edit in server mode
+    // Enable line-level editing in server mode
     if (serverMode) {
-      // Remove previous listener to avoid stale closures
-      if (editClickHandler) {
-        pageContent.removeEventListener('click', editClickHandler);
-      }
       pageContent.classList.add('editable');
-      editClickHandler = function(e) {
-        if (e.target.closest('a')) return;
-        pageContent.removeEventListener('click', editClickHandler);
-        editClickHandler = null;
-        enterEditMode(id);
-      };
-      pageContent.addEventListener('click', editClickHandler);
+      fetchRawLines(id).then(lines => {
+        if (!lines) return;
+        initLineEditor(id);
+        rawLines = lines;
+
+        const titleEl = pageContent.querySelector('h1');
+        if (titleEl) {
+          titleEl.setAttribute('data-seg-start', '-1');
+          titleEl.setAttribute('data-seg-end', '-1');
+          titleEl.style.cursor = 'text';
+          titleEl.addEventListener('click', (e) => {
+            if (e.target.closest('a')) return;
+            editTitle();
+          });
+        }
+
+        pageContent.addEventListener('click', function onSegClick(e) {
+          if (e.target.closest('a')) return;
+          if (e.target.closest('.seg-input')) return;
+          const segEl = e.target.closest('[data-seg-start]');
+          if (segEl && segEl.getAttribute('data-seg-start') !== '-1') {
+            editSegment(segEl);
+          }
+        });
+      });
+
+      document.addEventListener('click', function onOutsideClick(e) {
+        if (!pageContent.contains(e.target) && activeInput) {
+          closeActiveSegment();
+        }
+      });
     }
 
     // Backlinks
