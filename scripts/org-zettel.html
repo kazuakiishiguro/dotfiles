@@ -327,23 +327,35 @@ body {
 }
 .empty-content { color: var(--text-light); font-style: italic; padding: 12px 0; }
 
-/* Edit mode */
-#page-content.editable { cursor: text; }
-#page-content.editable:hover { background: var(--hover-bg); border-radius: 4px; }
-#edit-textarea {
+/* Line editing */
+#page-content.editable [data-seg-start] {
+  cursor: text;
+  border-radius: 3px;
+  transition: background 0.1s;
+}
+#page-content.editable [data-seg-start]:hover {
+  background: var(--hover-bg);
+}
+.seg-input {
   width: 100%;
-  min-height: 400px;
-  padding: 16px;
+  padding: 4px 0;
   font-family: 'Consolas', 'Fira Code', 'SF Mono', monospace;
   font-size: 14px;
   line-height: 1.7;
   color: var(--text);
   background: var(--card-bg);
-  border: 1px solid var(--accent);
-  border-radius: 4px;
-  resize: vertical;
+  border: none;
+  border-left: 2px solid var(--accent);
+  padding-left: 8px;
   outline: none;
+}
+textarea.seg-input {
+  resize: none;
   tab-size: 4;
+  min-height: 60px;
+}
+input.seg-input {
+  height: auto;
 }
 
 /* Related links section */
