@@ -20,6 +20,7 @@ Flags:
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -51,6 +52,39 @@ def classify(path: str) -> str:
     if parts[0] == "references":
         return "references"
     return "root"
+
+
+MTIME_CACHE_FILE = None
+_mtime_cache = None
+
+
+def _load_mtime_cache(org_dir: Path):
+    global MTIME_CACHE_FILE, _mtime_cache
+    MTIME_CACHE_FILE = org_dir / ".org-zettel-mtime.json"
+    if _mtime_cache is not None:
+        return
+    try:
+        _mtime_cache = json.loads(MTIME_CACHE_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        _mtime_cache = {}
+
+
+def _save_mtime_cache():
+    if MTIME_CACHE_FILE and _mtime_cache is not None:
+        MTIME_CACHE_FILE.write_text(
+            json.dumps(_mtime_cache, ensure_ascii=False), encoding="utf-8"
+        )
+
+
+def _content_hash(text: str, backlinks_re) -> str:
+    """Hash file content excluding the Backlinks section."""
+    lines = []
+    for line in text.splitlines():
+        if backlinks_re.match(line):
+            break
+        lines.append(line)
+    content = "\n".join(lines)
+    return hashlib.md5(content.encode("utf-8")).hexdigest()
 
 
 def parse_org_file(filepath: Path, org_dir: Path) -> dict:
@@ -131,7 +165,16 @@ def parse_org_file(filepath: Path, org_dir: Path) -> dict:
         body_lines.pop()
     body_lines = body_lines[:50]
 
-    mtime = os.path.getmtime(filepath)
+    # Compute mtime based on content hash (excluding backlinks)
+    content_h = _content_hash(text, BACKLINKS_HEADING_RE)
+    cached = _mtime_cache.get(rel) if _mtime_cache else None
+    fs_mtime = os.path.getmtime(filepath)
+    if cached and cached.get("hash") == content_h:
+        mtime = cached["mtime"]
+    else:
+        mtime = fs_mtime
+        if _mtime_cache is not None:
+            _mtime_cache[rel] = {"hash": content_h, "mtime": mtime}
     mtime_iso = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(mtime))
 
     return {
@@ -149,6 +192,7 @@ def parse_org_file(filepath: Path, org_dir: Path) -> dict:
 
 def build_graph(org_dir: Path, include_daily: bool, include_orphans: bool, min_backlinks: int):
     """Scan all .org files and build the graph data structure."""
+    _load_mtime_cache(org_dir)
     org_files = sorted(org_dir.rglob("*.org"))
     print(f"Scanning {len(org_files)} .org files...", file=sys.stderr)
 
@@ -216,6 +260,8 @@ def build_graph(org_dir: Path, include_daily: bool, include_orphans: bool, min_b
 
     print(f"Nodes: {len(out_nodes)}  Edges: {len(edges)}  Tags: {len(all_tags)}", file=sys.stderr)
 
+    _save_mtime_cache()
+
     return {
         "nodes": out_nodes,
         "edges": edges,
@@ -225,6 +271,8 @@ def build_graph(org_dir: Path, include_daily: bool, include_orphans: bool, min_b
 
 
 def make_handler(org_dir, template_path, build_args):
+    _load_mtime_cache(org_dir)
+
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, format, *args):
             print(format % args, file=sys.stderr)
@@ -333,6 +381,7 @@ def make_handler(org_dir, template_path, build_args):
                 filepath.write_text(body, encoding='utf-8')
                 # Re-parse the single file
                 node = parse_org_file(filepath, org_dir)
+                _save_mtime_cache()
                 if node:
                     self._send_json(node)
                 else:
