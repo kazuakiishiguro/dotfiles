@@ -692,7 +692,6 @@ const GRAPH_DATA = null;
 
   // View state
   let currentView = 'grid';
-  let navStack = [];
 
   const pageView = document.getElementById('page-view');
   const backBtn = document.getElementById('back-btn');
@@ -890,6 +889,7 @@ const GRAPH_DATA = null;
   // Line-level edit state
   let editingNodeId = null;
   let rawLines = [];
+  let bodyOffset = 0;
   let activeSegEl = null;
   let activeInput = null;
   let saveTimer = null;
@@ -897,8 +897,31 @@ const GRAPH_DATA = null;
   function initLineEditor(nodeId) {
     editingNodeId = nodeId;
     rawLines = [];
+    bodyOffset = 0;
     activeSegEl = null;
     activeInput = null;
+  }
+
+  function wireOrgLinks(nodeId) {
+    pageContent.querySelectorAll('a.org-link').forEach(a => {
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = a.getAttribute('data-target');
+        const resolvedId = resolveOrgPath(nodeId, target);
+        if (resolvedId) openPage(resolvedId);
+      });
+    });
+  }
+
+  function wireTitle() {
+    const titleEl = pageContent.querySelector('h1[data-seg-start="-1"]');
+    if (titleEl && serverMode) {
+      titleEl.style.cursor = 'text';
+      titleEl.addEventListener('click', (e) => {
+        if (e.target.closest('a')) return;
+        editTitle();
+      });
+    }
   }
 
   async function fetchRawLines(nodeId) {
@@ -923,7 +946,7 @@ const GRAPH_DATA = null;
         continue;
       }
     }
-    return allLines.length;
+    return 0;
   }
 
   function editSegment(segEl) {
@@ -936,7 +959,6 @@ const GRAPH_DATA = null;
     activeSegEl = segEl;
     const segStart = parseInt(segEl.getAttribute('data-seg-start'));
     const segEnd = parseInt(segEl.getAttribute('data-seg-end'));
-    const bodyOffset = findBodyOffset(rawLines);
     const absStart = bodyOffset + segStart;
     const absEnd = bodyOffset + segEnd;
 
@@ -991,19 +1013,26 @@ const GRAPH_DATA = null;
         e.preventDefault();
         spliceRawLines();
         const insertAt = input._absEnd + 1;
+        const targetSeg = input._segEnd + 1;
         rawLines.splice(insertAt, 0, '');
         scheduleSave();
+        activeInput.remove();
+        activeSegEl = null;
+        activeInput = null;
         rerenderContent();
-        const newSegEl = pageContent.querySelector('[data-seg-start="' + (input._segEnd + 1) + '"]');
+        const newSegEl = pageContent.querySelector('[data-seg-start="' + targetSeg + '"]');
         if (newSegEl) editSegment(newSegEl);
         return;
       }
 
       if (e.key === 'Backspace' && !isMultiLine && input.value === '') {
         e.preventDefault();
+        const prevSeg = input._segStart - 1;
         rawLines.splice(input._absStart, 1);
         scheduleSave();
-        const prevSeg = input._segStart - 1;
+        activeInput.remove();
+        activeSegEl = null;
+        activeInput = null;
         rerenderContent();
         const prevEl = pageContent.querySelector('[data-seg-end="' + prevSeg + '"]') ||
                        findClosestSegBefore(prevSeg);
@@ -1014,14 +1043,28 @@ const GRAPH_DATA = null;
       if (e.key === 'ArrowUp' && isAtStart(input)) {
         e.preventDefault();
         const prevEl = findPrevSeg(activeSegEl);
-        if (prevEl) editSegment(prevEl);
+        if (prevEl) {
+          const targetSeg = prevEl.getAttribute('data-seg-start');
+          closeActiveSegment();
+          if (targetSeg === '-1') {
+            editTitle();
+          } else {
+            const el = pageContent.querySelector('[data-seg-start="' + targetSeg + '"]');
+            if (el) editSegment(el);
+          }
+        }
         return;
       }
 
       if (e.key === 'ArrowDown' && isAtEnd(input)) {
         e.preventDefault();
         const nextEl = findNextSeg(activeSegEl);
-        if (nextEl) editSegment(nextEl);
+        if (nextEl) {
+          const targetSeg = nextEl.getAttribute('data-seg-start');
+          closeActiveSegment();
+          const el = pageContent.querySelector('[data-seg-start="' + targetSeg + '"]');
+          if (el) editSegment(el);
+        }
         return;
       }
     });
@@ -1110,7 +1153,6 @@ const GRAPH_DATA = null;
   }
 
   function rerenderContent() {
-    const bodyOffset = findBodyOffset(rawLines);
     const bodyLines = rawLines.slice(bodyOffset);
     let bodyEnd = bodyLines.length;
     for (let i = 0; i < bodyLines.length; i++) {
@@ -1128,24 +1170,8 @@ const GRAPH_DATA = null;
     }
 
     pageContent.innerHTML = '<h1 data-seg-start="-1" data-seg-end="-1">' + escHtml(title) + '</h1>' + renderOrg(bodyText);
-
-    pageContent.querySelectorAll('a.org-link').forEach(a => {
-      a.addEventListener('click', function(e) {
-        e.preventDefault();
-        const target = a.getAttribute('data-target');
-        const resolvedId = resolveOrgPath(editingNodeId, target);
-        if (resolvedId) openPage(resolvedId);
-      });
-    });
-
-    const titleEl = pageContent.querySelector('h1[data-seg-start="-1"]');
-    if (titleEl && serverMode) {
-      titleEl.style.cursor = 'text';
-      titleEl.addEventListener('click', (e) => {
-        if (e.target.closest('a')) return;
-        editTitle();
-      });
-    }
+    wireOrgLinks(editingNodeId);
+    wireTitle();
   }
 
   function editTitle() {
@@ -1173,7 +1199,10 @@ const GRAPH_DATA = null;
     titleEl.parentNode.insertBefore(input, titleEl.nextSibling);
     input.focus();
 
+    let saved = false;
     const save = () => {
+      if (saved) return;
+      saved = true;
       rawLines[titleLineIdx] = '#+TITLE: ' + input.value;
       input.remove();
       titleEl.style.display = '';
@@ -1191,6 +1220,14 @@ const GRAPH_DATA = null;
       if (e.key === 'Escape' || e.key === 'Enter') {
         e.preventDefault();
         save();
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        save();
+        const firstSeg = pageContent.querySelector('[data-seg-start="0"]');
+        if (firstSeg) editSegment(firstSeg);
+        return;
       }
     });
 
@@ -1226,7 +1263,6 @@ const GRAPH_DATA = null;
     if (!node) return;
 
     if (!skipPush) {
-      navStack.push(id);
       history.pushState({ page: id }, '', '#' + encodeURIComponent(id));
     }
 
@@ -1253,50 +1289,17 @@ const GRAPH_DATA = null;
     };
 
     pageContent.innerHTML = '<h1 data-seg-start="-1" data-seg-end="-1">' + escHtml(node.title || node.id) + '</h1>' + renderOrg(node.content || '');
-
-    // Wire up org-link clicks
-    pageContent.querySelectorAll('a.org-link').forEach(a => {
-      a.addEventListener('click', function(e) {
-        e.preventDefault();
-        const target = a.getAttribute('data-target');
-        const resolvedId = resolveOrgPath(id, target);
-        if (resolvedId) openPage(resolvedId);
-      });
-    });
+    wireOrgLinks(id);
 
     // Enable line-level editing in server mode
     if (serverMode) {
       pageContent.classList.add('editable');
+      wireTitle();
       fetchRawLines(id).then(lines => {
         if (!lines) return;
         initLineEditor(id);
         rawLines = lines;
-
-        const titleEl = pageContent.querySelector('h1');
-        if (titleEl) {
-          titleEl.setAttribute('data-seg-start', '-1');
-          titleEl.setAttribute('data-seg-end', '-1');
-          titleEl.style.cursor = 'text';
-          titleEl.addEventListener('click', (e) => {
-            if (e.target.closest('a')) return;
-            editTitle();
-          });
-        }
-
-        pageContent.addEventListener('click', function onSegClick(e) {
-          if (e.target.closest('a')) return;
-          if (e.target.closest('.seg-input')) return;
-          const segEl = e.target.closest('[data-seg-start]');
-          if (segEl && segEl.getAttribute('data-seg-start') !== '-1') {
-            editSegment(segEl);
-          }
-        });
-      });
-
-      document.addEventListener('click', function onOutsideClick(e) {
-        if (!pageContent.contains(e.target) && activeInput) {
-          closeActiveSegment();
-        }
+        bodyOffset = findBodyOffset(rawLines);
       });
     }
 
@@ -1375,7 +1378,6 @@ const GRAPH_DATA = null;
 
   function showGrid() {
     currentView = 'grid';
-    navStack = [];
     gridEl.style.display = 'grid';
     pageView.style.display = 'none';
     backBtn.style.display = 'none';
@@ -1386,8 +1388,6 @@ const GRAPH_DATA = null;
   window.addEventListener('popstate', (e) => {
     if (e.state && e.state.page) {
       const id = e.state.page;
-      // Rebuild navStack from hash
-      navStack.push(id);
       openPage(id, true);
     } else {
       showGrid();
@@ -1437,6 +1437,23 @@ const GRAPH_DATA = null;
       }
       renderCardGrid();
     }, 150);
+  });
+
+  // Segment click — registered once, guards via editSegment checks
+  pageContent.addEventListener('click', function(e) {
+    if (e.target.closest('a')) return;
+    if (e.target.closest('.seg-input')) return;
+    const segEl = e.target.closest('[data-seg-start]');
+    if (segEl && segEl.getAttribute('data-seg-start') !== '-1') {
+      editSegment(segEl);
+    }
+  });
+
+  // Close active segment on outside click — registered once
+  document.addEventListener('click', function(e) {
+    if (!pageContent.contains(e.target) && activeInput) {
+      closeActiveSegment();
+    }
   });
 
   // Escape key handler
