@@ -737,81 +737,105 @@ const GRAPH_DATA = null;
     const lines = text.split('\n');
     let html = '';
     let inList = false;
+    let listStart = -1;
+    let i = 0;
 
-    let inQuote = false;
-    let inSrc = false;
-
-    for (let i = 0; i < lines.length; i++) {
+    while (i < lines.length) {
       const line = lines[i];
       const trimmed = line.trim();
 
-      // Quote blocks
+      // Quote blocks — find matching end
       if (/^#\+begin_quote/i.test(trimmed)) {
         if (inList) { html += '</ul>'; inList = false; }
-        html += '<blockquote>';
-        inQuote = true;
-        continue;
-      }
-      if (/^#\+end_quote/i.test(trimmed)) {
-        html += '</blockquote>';
-        inQuote = false;
+        const blockStart = i;
+        let blockContent = '';
+        i++;
+        while (i < lines.length && !/^#\+end_quote/i.test(lines[i].trim())) {
+          const bline = lines[i].trim();
+          if (bline === '') {
+            blockContent += '<br>';
+          } else {
+            blockContent += '<p>' + inlineMarkup(lines[i]) + '</p>';
+          }
+          i++;
+        }
+        const blockEnd = i < lines.length ? i : i - 1;
+        html += '<blockquote data-seg-start="' + blockStart + '" data-seg-end="' + blockEnd + '">' + blockContent + '</blockquote>';
+        i++;
         continue;
       }
 
-      // Source blocks
+      // Source blocks — find matching end
       if (/^#\+begin_src/i.test(trimmed)) {
         if (inList) { html += '</ul>'; inList = false; }
-        html += '<pre><code>';
-        inSrc = true;
-        continue;
-      }
-      if (/^#\+end_src/i.test(trimmed)) {
-        html += '</code></pre>';
-        inSrc = false;
-        continue;
-      }
-
-      if (inSrc) {
-        html += escHtml(line) + '\n';
-        continue;
-      }
-
-      if (inQuote) {
-        if (trimmed === '') {
-          html += '<br>';
-        } else {
-          html += '<p>' + inlineMarkup(line) + '</p>';
+        const blockStart = i;
+        let blockContent = '';
+        i++;
+        while (i < lines.length && !/^#\+end_src/i.test(lines[i].trim())) {
+          blockContent += escHtml(lines[i]) + '\n';
+          i++;
         }
+        const blockEnd = i < lines.length ? i : i - 1;
+        html += '<pre data-seg-start="' + blockStart + '" data-seg-end="' + blockEnd + '"><code>' + blockContent + '</code></pre>';
+        i++;
         continue;
       }
 
+      // Headings
       const headingMatch = line.match(/^(\*{1,4})\s+(.+)/);
       if (headingMatch) {
         if (inList) { html += '</ul>'; inList = false; }
         const level = Math.min(headingMatch[1].length, 4);
-        html += '<h' + level + '>' + inlineMarkup(headingMatch[2]) + '</h' + level + '>';
+        html += '<h' + level + ' data-seg-start="' + i + '" data-seg-end="' + i + '">' + inlineMarkup(headingMatch[2]) + '</h' + level + '>';
+        i++;
         continue;
       }
 
+      // Blank lines
       if (trimmed === '') {
         if (inList) { html += '</ul>'; inList = false; }
+        i++;
         continue;
       }
 
+      // List items — group consecutive list items into one <ul> segment
       const listMatch = line.match(/^(\s*)[-+]\s+(.+)/);
       if (listMatch) {
-        if (!inList) { html += '<ul>'; inList = true; }
-        html += '<li>' + inlineMarkup(listMatch[2]) + '</li>';
+        if (!inList) {
+          inList = true;
+          listStart = i;
+          html += '<ul data-seg-start="' + i + '"';
+        }
+        html += '<li data-seg-line="' + i + '">' + inlineMarkup(listMatch[2]) + '</li>';
+        // Peek ahead: if next line is not a list item, close the ul
+        const nextLine = i + 1 < lines.length ? lines[i + 1] : '';
+        const nextIsList = /^\s*[-+]\s+/.test(nextLine);
+        if (!nextIsList) {
+          html += '</ul>';
+          // Patch in the data-seg-end on the opening <ul> tag
+          html = html.replace(
+            '<ul data-seg-start="' + listStart + '"',
+            '<ul data-seg-start="' + listStart + '" data-seg-end="' + i + '"'
+          );
+          inList = false;
+        }
+        i++;
         continue;
       }
 
+      // Regular paragraph
       if (inList) { html += '</ul>'; inList = false; }
-      html += '<p>' + inlineMarkup(line) + '</p>';
+      html += '<p data-seg-start="' + i + '" data-seg-end="' + i + '">' + inlineMarkup(line) + '</p>';
+      i++;
     }
 
-    if (inList) html += '</ul>';
-    if (inQuote) html += '</blockquote>';
-    if (inSrc) html += '</code></pre>';
+    if (inList) {
+      html += '</ul>';
+      html = html.replace(
+        '<ul data-seg-start="' + listStart + '"',
+        '<ul data-seg-start="' + listStart + '" data-seg-end="' + (lines.length - 1) + '"'
+      );
+    }
     return html;
   }
 
