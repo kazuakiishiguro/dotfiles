@@ -1441,7 +1441,7 @@ const GRAPH_DATA = null;
 
   // Escape key handler
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && currentView === 'page' && !isEditing) {
+    if (e.key === 'Escape' && currentView === 'page' && !activeInput) {
       goBack();
     }
   });
