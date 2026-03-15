@@ -298,17 +298,21 @@ def make_handler(org_dir, template_path, build_args):
             except OSError:
                 continue
             original = text
-            # Rewrite file link paths: [[file:...old_base.org]...] -> [[file:...new_base.org]...]
+            # Rewrite full org links: [[file:...old_base.org][desc]] and [[file:...old_base.org]]
             link_re = re.compile(
-                r'\[\[file:([^\]]*?)' + re.escape(old_base + '.org') + r'\]'
+                r'\[\[file:([^\]]*?)' + re.escape(old_base + '.org')
+                + r'\](?:\[([^\]]*?)\])?\]'
             )
-            text = link_re.sub(
-                lambda m: '[[file:' + m.group(1) + new_base + '.org]',
-                text
-            )
-            # If titles differ, rewrite link descriptions
-            if old_title != new_title:
-                text = text.replace(f"][{old_title}]]", f"][{new_title}]]")
+            def _rewrite_link(m):
+                prefix = m.group(1)
+                desc = m.group(2)
+                new_link = '[[file:' + prefix + new_base + '.org']'
+                if desc is not None:
+                    if desc == old_title and old_title != new_title:
+                        desc = new_title
+                    new_link += '[' + desc + ']'
+                return new_link + ']'
+            text = link_re.sub(_rewrite_link, text)
             if text != original:
                 org_file.write_text(text, encoding="utf-8")
                 modified += 1
@@ -440,7 +444,11 @@ def make_handler(org_dir, template_path, build_args):
                     return
                 # Parse JSON body
                 length = int(self.headers.get('Content-Length', 0))
-                body = json.loads(self.rfile.read(length).decode('utf-8'))
+                try:
+                    body = json.loads(self.rfile.read(length).decode('utf-8'))
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    self._send_json({'error': 'invalid JSON body'}, 400)
+                    return
                 new_title = body.get('new_title', '').strip()
                 if not new_title:
                     self._send_json({'error': 'new_title is required'}, 400)
@@ -451,6 +459,10 @@ def make_handler(org_dir, template_path, build_args):
                     self._send_json({'renamed': False, 'new_id': file_id})
                     return
                 new_path = filepath.parent / (new_base + '.org')
+                org_root = str(org_dir.resolve())
+                if not str(new_path.resolve()).startswith(org_root + os.sep):
+                    self._send_json({'error': 'invalid title'}, 400)
+                    return
                 if new_path.exists():
                     self._send_json({'error': 'target file already exists'}, 409)
                     return

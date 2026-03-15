@@ -1259,6 +1259,30 @@ const GRAPH_DATA = null;
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
 
+  function isDateNamed(fileId) {
+    const name = fileId.split('/').pop().replace(/\.org$/, '');
+    return /^\d{4}-\d{2}-\d{2}$/.test(name);
+  }
+
+  async function renameTitle(oldId, newTitle) {
+    try {
+      const res = await fetch('/api/rename/' + encodeURIComponent(oldId), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ new_title: newTitle }),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        alert('Rename failed: ' + errText);
+        return null;
+      }
+      return await res.json();
+    } catch (err) {
+      alert('Rename failed: ' + err.message);
+      return null;
+    }
+  }
+
   function editTitle() {
     const titleEl = pageContent.querySelector('h1[data-seg-start="-1"]');
     if (!titleEl) return;
@@ -1273,6 +1297,7 @@ const GRAPH_DATA = null;
     if (titleLineIdx < 0) return;
 
     const titleText = rawLines[titleLineIdx].replace(/^#\+TITLE:\s*/i, '');
+    const originalTitle = titleText;
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'seg-input';
@@ -1285,15 +1310,72 @@ const GRAPH_DATA = null;
     input.focus();
 
     let saved = false;
-    const save = () => {
+    const save = async () => {
       if (saved) return;
       saved = true;
-      const title = capitalizeFirst(input.value);
-      rawLines[titleLineIdx] = '#+TITLE: ' + title;
+      const newTitle = capitalizeFirst(input.value);
+      rawLines[titleLineIdx] = '#+TITLE: ' + newTitle;
       input.remove();
       titleEl.style.display = '';
-      titleEl.textContent = title;
+      titleEl.textContent = newTitle;
       clearTimeout(saveTimer);
+
+      if (newTitle !== originalTitle && !isDateNamed(editingNodeId)) {
+        if (confirm('Rename file and update all backlinks?')) {
+          const result = await renameTitle(editingNodeId, newTitle);
+          if (result && result.renamed === true) {
+            const oldId = editingNodeId;
+            const newId = result.new_id;
+
+            // Update nodeMap
+            const node = nodeMap.get(oldId);
+            if (node) {
+              node.id = newId;
+              nodeMap.delete(oldId);
+              nodeMap.set(newId, node);
+            }
+
+            // Move outgoing/incoming entries
+            const oldOut = outgoing.get(oldId);
+            if (oldOut) {
+              outgoing.delete(oldId);
+              outgoing.set(newId, oldOut);
+            }
+            const oldIn = incoming.get(oldId);
+            if (oldIn) {
+              incoming.delete(oldId);
+              incoming.set(newId, oldIn);
+            }
+
+            // Update references to old ID in other nodes' edge sets
+            for (const [, targets] of outgoing) {
+              if (targets.has(oldId)) {
+                targets.delete(oldId);
+                targets.add(newId);
+              }
+            }
+            for (const [, sources] of incoming) {
+              if (sources.has(oldId)) {
+                sources.delete(oldId);
+                sources.add(newId);
+              }
+            }
+
+            // Update URL hash
+            history.replaceState(null, '', '#' + newId);
+
+            // Re-fetch raw lines for the new ID
+            const newRaw = await fetchRawLines(newId);
+            if (newRaw) {
+              editingNodeId = newId;
+              rawLines = newRaw;
+              bodyOffset = findBodyOffset(rawLines);
+            }
+            return;
+          }
+        }
+      }
+
       autoSave();
     };
 
