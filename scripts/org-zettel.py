@@ -306,7 +306,7 @@ def make_handler(org_dir, template_path, build_args):
             def _rewrite_link(m):
                 prefix = m.group(1)
                 desc = m.group(2)
-                new_link = '[[file:' + prefix + new_base + '.org']'
+                new_link = '[[file:' + prefix + new_base + '.org]'
                 if desc is not None:
                     if desc == old_title and old_title != new_title:
                         desc = new_title
@@ -466,10 +466,10 @@ def make_handler(org_dir, template_path, build_args):
                 if new_path.exists():
                     self._send_json({'error': 'target file already exists'}, 409)
                     return
-                # Read old title from #+TITLE line
+                # Derive old title from filename (not #+TITLE, which may
+                # have been auto-saved with the new title already)
+                old_title = old_base.replace('_', ' ')
                 text = filepath.read_text(encoding='utf-8', errors='replace')
-                m = TITLE_RE.search(text)
-                old_title = m.group(1).strip() if m else old_base.replace('_', ' ')
                 # Update #+TITLE in the file
                 text = re.sub(
                     r'^#\+TITLE:\s*.+',

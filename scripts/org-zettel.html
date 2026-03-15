@@ -520,7 +520,7 @@ const GRAPH_DATA = null;
 
   // Detect if running in server mode
   let serverMode = false;
-  fetch('/api/health').then(r => r.json()).then(d => {
+  const healthCheck = fetch('/api/health').then(r => r.json()).then(d => {
     if (d && d.ok) serverMode = true;
   }).catch(() => {});
 
@@ -1331,6 +1331,8 @@ const GRAPH_DATA = null;
             const node = nodeMap.get(oldId);
             if (node) {
               node.id = newId;
+              node.title = result.title || newTitle;
+              if (result.content !== undefined) node.content = result.content;
               nodeMap.delete(oldId);
               nodeMap.set(newId, node);
             }
@@ -1364,13 +1366,9 @@ const GRAPH_DATA = null;
             // Update URL hash
             history.replaceState(null, '', '#' + newId);
 
-            // Re-fetch raw lines for the new ID
-            const newRaw = await fetchRawLines(newId);
-            if (newRaw) {
-              editingNodeId = newId;
-              rawLines = newRaw;
-              bodyOffset = findBodyOffset(rawLines);
-            }
+            // Reload page to rebuild graph with fresh data
+            window.location.hash = '#' + encodeURIComponent(newId);
+            window.location.reload();
             return;
           }
         }
@@ -1651,14 +1649,16 @@ const GRAPH_DATA = null;
     }
   });
 
-  // Initial render — check for hash URL
+  // Initial render — wait for server mode detection, then check hash URL
   history.replaceState(null, '', location.pathname + location.hash);
-  const initHash = location.hash.slice(1);
-  if (initHash && nodeMap.has(decodeURIComponent(initHash))) {
-    openPage(decodeURIComponent(initHash));
-  } else {
-    renderCardGrid();
-  }
+  healthCheck.then(() => {
+    const initHash = location.hash.slice(1);
+    if (initHash && nodeMap.has(decodeURIComponent(initHash))) {
+      openPage(decodeURIComponent(initHash));
+    } else {
+      renderCardGrid();
+    }
+  });
 })();
 </script>
 </body>
