@@ -273,6 +273,47 @@ def build_graph(org_dir: Path, include_daily: bool, include_orphans: bool, min_b
 def make_handler(org_dir, template_path, build_args):
     _load_mtime_cache(org_dir)
 
+    _DATE_BASENAME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+    def _in_sync_scope(file_id):
+        """Check if file is in sync scope (not a date-named file)."""
+        basename = Path(file_id).stem
+        return not _DATE_BASENAME_RE.match(basename)
+
+    def _title_to_filename(title):
+        """Convert a title to a filename: capitalize first letter, spaces to underscores."""
+        if not title:
+            return title
+        return title[0].upper() + title[1:].replace(" ", "_")
+
+    def _update_backlinks(org_dir, old_base, new_base, old_title, new_title):
+        """Scan all .org files and rewrite links from old_base to new_base.
+
+        Returns count of modified files.
+        """
+        modified = 0
+        for org_file in org_dir.rglob("*.org"):
+            try:
+                text = org_file.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            original = text
+            # Rewrite file link paths: [[file:...old_base.org]...] -> [[file:...new_base.org]...]
+            link_re = re.compile(
+                r'\[\[file:([^\]]*?)' + re.escape(old_base + '.org') + r'\]'
+            )
+            text = link_re.sub(
+                lambda m: '[[file:' + m.group(1) + new_base + '.org]',
+                text
+            )
+            # If titles differ, rewrite link descriptions
+            if old_title != new_title:
+                text = text.replace(f"][{old_title}]]", f"][{new_title}]]")
+            if text != original:
+                org_file.write_text(text, encoding="utf-8")
+                modified += 1
+        return modified
+
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, format, *args):
             print(format % args, file=sys.stderr)
@@ -386,6 +427,64 @@ def make_handler(org_dir, template_path, build_args):
                     self._send_json(node)
                 else:
                     self._send_json({'error': 'parse failed'}, 500)
+            elif self.path.startswith('/api/rename/'):
+                file_id, filepath = self._resolve_id('/api/rename/')
+                if not file_id:
+                    self._send_json({'error': 'invalid path'}, 400)
+                    return
+                if not filepath.exists():
+                    self._send_json({'error': 'not found'}, 404)
+                    return
+                if not _in_sync_scope(file_id):
+                    self._send_json({'error': 'date-named files cannot be renamed'}, 400)
+                    return
+                # Parse JSON body
+                length = int(self.headers.get('Content-Length', 0))
+                body = json.loads(self.rfile.read(length).decode('utf-8'))
+                new_title = body.get('new_title', '').strip()
+                if not new_title:
+                    self._send_json({'error': 'new_title is required'}, 400)
+                    return
+                old_base = filepath.stem
+                new_base = _title_to_filename(new_title)
+                if old_base == new_base:
+                    self._send_json({'renamed': False, 'new_id': file_id})
+                    return
+                new_path = filepath.parent / (new_base + '.org')
+                if new_path.exists():
+                    self._send_json({'error': 'target file already exists'}, 409)
+                    return
+                # Read old title from #+TITLE line
+                text = filepath.read_text(encoding='utf-8', errors='replace')
+                m = TITLE_RE.search(text)
+                old_title = m.group(1).strip() if m else old_base.replace('_', ' ')
+                # Update #+TITLE in the file
+                text = re.sub(
+                    r'^#\+TITLE:\s*.+',
+                    f'#+TITLE: {new_title}',
+                    text,
+                    count=1,
+                    flags=re.IGNORECASE | re.MULTILINE,
+                )
+                filepath.write_text(text, encoding='utf-8')
+                # Rename file
+                filepath.rename(new_path)
+                # Update backlinks in other files
+                updated_files = _update_backlinks(org_dir, old_base, new_base, old_title, new_title)
+                # Parse renamed file
+                node = parse_org_file(new_path, org_dir)
+                _save_mtime_cache()
+                new_id = new_path.relative_to(org_dir).as_posix()
+                result = {
+                    'renamed': True,
+                    'old_id': file_id,
+                    'new_id': new_id,
+                    'updated_files': updated_files,
+                }
+                if node:
+                    result.update(node)
+                self._send_json(result)
+
             else:
                 self._send_json({'error': 'not found'}, 404)
 
