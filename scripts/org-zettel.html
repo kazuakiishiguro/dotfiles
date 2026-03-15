@@ -1254,6 +1254,11 @@ const GRAPH_DATA = null;
     wireTitle();
   }
 
+  function capitalizeFirst(s) {
+    if (!s) return s;
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
   function editTitle() {
     const titleEl = pageContent.querySelector('h1[data-seg-start="-1"]');
     if (!titleEl) return;
@@ -1283,16 +1288,17 @@ const GRAPH_DATA = null;
     const save = () => {
       if (saved) return;
       saved = true;
-      rawLines[titleLineIdx] = '#+TITLE: ' + input.value;
+      const title = capitalizeFirst(input.value);
+      rawLines[titleLineIdx] = '#+TITLE: ' + title;
       input.remove();
       titleEl.style.display = '';
-      titleEl.textContent = input.value;
+      titleEl.textContent = title;
       clearTimeout(saveTimer);
       autoSave();
     };
 
     input.addEventListener('input', () => {
-      rawLines[titleLineIdx] = '#+TITLE: ' + input.value;
+      rawLines[titleLineIdx] = '#+TITLE: ' + capitalizeFirst(input.value);
       scheduleSave();
     });
 
