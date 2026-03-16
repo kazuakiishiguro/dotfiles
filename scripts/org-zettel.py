@@ -24,6 +24,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -431,6 +432,17 @@ def make_handler(org_dir, template_path, build_args):
                     self._send_json(node)
                 else:
                     self._send_json({'error': 'parse failed'}, 500)
+            elif self.path.startswith('/api/open-emacs/'):
+                file_id, filepath = self._resolve_id('/api/open-emacs/')
+                if not file_id or not filepath.exists():
+                    self._send_json({'error': 'not found'}, 404)
+                    return
+                try:
+                    subprocess.Popen(['alacritty', '--class', 'org-zettel-edit',
+                                       '-e', 'emacsclient', '-t', '-a', '', str(filepath)])
+                    self._send_json({'ok': True})
+                except FileNotFoundError:
+                    self._send_json({'error': 'emacsclient not found'}, 500)
             elif self.path.startswith('/api/rename/'):
                 file_id, filepath = self._resolve_id('/api/rename/')
                 if not file_id:
