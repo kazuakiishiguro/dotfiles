@@ -4,6 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Org Zettelkasten</title>
+<script type="importmap">
+{
+  "imports": {
+    "style-mod": "https://esm.sh/style-mod",
+    "w3c-keyname": "https://esm.sh/w3c-keyname",
+    "crelt": "https://esm.sh/crelt",
+    "@marijn/find-cluster-break": "https://esm.sh/@marijn/find-cluster-break",
+    "@lezer/common": "https://esm.sh/@lezer/common",
+    "@lezer/highlight": "https://esm.sh/@lezer/highlight",
+    "@codemirror/state": "https://esm.sh/@codemirror/state",
+    "@codemirror/view": "https://esm.sh/@codemirror/view",
+    "@codemirror/language": "https://esm.sh/@codemirror/language",
+    "@codemirror/commands": "https://esm.sh/@codemirror/commands",
+    "@codemirror/search": "https://esm.sh/@codemirror/search",
+    "@codemirror/autocomplete": "https://esm.sh/@codemirror/autocomplete",
+    "@codemirror/lint": "https://esm.sh/@codemirror/lint",
+    "codemirror": "https://esm.sh/codemirror",
+    "@replit/codemirror-emacs": "https://esm.sh/@replit/codemirror-emacs"
+  }
+}
+</script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -358,6 +379,23 @@ input.seg-input {
   height: auto;
 }
 
+.cm-editor {
+  border-left: 2px solid var(--accent);
+  padding-left: 6px;
+  background: var(--card-bg);
+}
+.cm-editor .cm-content {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  caret-color: var(--text);
+  padding: 2px 0;
+}
+.cm-editor.cm-focused { outline: none; }
+.cm-editor .cm-cursor { border-left-color: var(--text); }
+.cm-editor .cm-scroller { overflow: visible; }
+
 /* Related links section */
 #related-links {
   margin-top: 40px;
@@ -510,6 +548,25 @@ input.seg-input {
 const GRAPH_DATA = null;
 
 (function() {
+  // CodeMirror lazy loader — modules cached after first import
+  let cmModules = null;
+  async function loadCM() {
+    if (cmModules) return cmModules;
+    const [
+      { EditorView, keymap },
+      { EditorState },
+      { minimalSetup },
+      { emacs }
+    ] = await Promise.all([
+      import('@codemirror/view'),
+      import('@codemirror/state'),
+      import('codemirror'),
+      import('@replit/codemirror-emacs'),
+    ]);
+    cmModules = { EditorView, EditorState, keymap, minimalSetup, emacs };
+    return cmModules;
+  }
+
   if (!GRAPH_DATA) {
     document.getElementById('card-grid').innerHTML =
       '<p style="padding:40px;color:#888;">No data loaded. Run org-graph.py first.</p>';
@@ -949,7 +1006,77 @@ const GRAPH_DATA = null;
     return 0;
   }
 
-  function editSegment(segEl, cursorPos) {
+  let activeEditor = null;
+
+  function createCMEditor(container, text, opts) {
+    const { EditorView, EditorState, keymap, minimalSetup, emacs } = cmModules;
+    const { onDocChange, onEscape, onEnter, onBackspaceEmpty, onUpAtTop, onDownAtBottom } = opts;
+
+    const customKeymap = keymap.of([
+      { key: 'Escape', run: () => { onEscape(); return true; } },
+      ...(onEnter ? [{ key: 'Enter', run: (view) => { onEnter(view); return true; } }] : []),
+    ]);
+
+    const edgeDetector = EditorView.domEventHandlers({
+      keydown(e, view) {
+        if (e.key === 'Backspace' && onBackspaceEmpty) {
+          if (view.state.doc.toString() === '') {
+            e.preventDefault();
+            onBackspaceEmpty();
+            return true;
+          }
+        }
+        if (e.key === 'ArrowUp' || (e.ctrlKey && e.key === 'p')) {
+          if (onUpAtTop && view.state.selection.main.head === 0) {
+            e.preventDefault();
+            onUpAtTop();
+            return true;
+          }
+        }
+        if (e.key === 'ArrowDown' || (e.ctrlKey && e.key === 'n')) {
+          const pos = view.state.selection.main.head;
+          if (onDownAtBottom && pos === view.state.doc.length) {
+            e.preventDefault();
+            onDownAtBottom();
+            return true;
+          }
+        }
+        return false;
+      }
+    });
+
+    const updateListener = EditorView.updateListener.of((update) => {
+      if (update.docChanged && onDocChange) {
+        onDocChange(update.view.state.doc.toString());
+      }
+    });
+
+    const theme = EditorView.theme({
+      '&': { backgroundColor: 'transparent' },
+      '.cm-gutters': { display: 'none' },
+      '.cm-activeLine': { backgroundColor: 'transparent' },
+      '.cm-activeLineGutter': { display: 'none' },
+      '.cm-line': { padding: '0' },
+    });
+
+    const state = EditorState.create({
+      doc: text,
+      extensions: [
+        customKeymap,
+        edgeDetector,
+        emacs(),
+        minimalSetup,
+        updateListener,
+        theme,
+        EditorView.lineWrapping,
+      ],
+    });
+
+    const editor = new EditorView({ state, parent: container });
+    return editor;
+  }
+
+  async function editSegment(segEl, cursorPos) {
     if (!serverMode || !editingNodeId) return;
     if (segEl === activeSegEl) return;
     if (activeSegEl) {
@@ -1030,6 +1157,7 @@ const GRAPH_DATA = null;
       return;
     }
 
+    await loadCM();
     activeSegEl = segEl;
     const segStart = parseInt(segEl.getAttribute('data-seg-start'));
     const segEnd = parseInt(segEl.getAttribute('data-seg-end'));
@@ -1039,115 +1167,94 @@ const GRAPH_DATA = null;
     const segLines = rawLines.slice(absStart, absEnd + 1);
     const isMultiLine = segStart !== segEnd;
 
-    let input;
-    if (isMultiLine) {
-      input = document.createElement('textarea');
-      input.className = 'seg-input';
-      input.value = segLines.join('\n');
-      input.rows = segLines.length;
-    } else {
-      input = document.createElement('input');
-      input.type = 'text';
-      input.className = 'seg-input';
-      input.value = segLines[0] || '';
-    }
-
-    input._segStart = segStart;
-    input._segEnd = segEnd;
-    input._absStart = absStart;
-    input._absEnd = absEnd;
+    const container = document.createElement('div');
+    container.className = 'seg-cm-wrap';
+    container._segStart = segStart;
+    container._segEnd = segEnd;
+    container._absStart = absStart;
+    container._absEnd = absEnd;
 
     segEl.style.display = 'none';
-    segEl.parentNode.insertBefore(input, segEl.nextSibling);
-    activeInput = input;
-    input.focus();
-    if (cursorPos === 'start') {
-      input.setSelectionRange(0, 0);
-    } else if (cursorPos === 'end') {
-      const len = input.value.length;
-      input.setSelectionRange(len, len);
-    }
+    segEl.parentNode.insertBefore(container, segEl.nextSibling);
+    activeInput = container;
 
-    if (isMultiLine) {
-      const autoResize = () => {
-        input.style.height = 'auto';
-        input.style.height = input.scrollHeight + 'px';
-      };
-      autoResize();
-      input.addEventListener('input', autoResize);
-    }
-
-    input.addEventListener('input', () => {
-      spliceRawLines();
+    const onDocChange = (text) => {
+      const newLines = text.split('\n');
+      const aStart = container._absStart;
+      const aEnd = container._absEnd;
+      rawLines.splice(aStart, aEnd - aStart + 1, ...newLines);
+      container._absEnd = aStart + newLines.length - 1;
       scheduleSave();
-    });
+    };
 
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
+    const onEscape = () => {
+      closeActiveSegment();
+    };
+
+    const onEnter = isMultiLine ? null : (view) => {
+      spliceRawLines();
+      const insertAt = container._absEnd + 1;
+      const targetSeg = container._segEnd + 1;
+      rawLines.splice(insertAt, 0, '');
+      scheduleSave();
+      if (activeEditor) { activeEditor.destroy(); activeEditor = null; }
+      activeInput.remove();
+      activeSegEl = null;
+      activeInput = null;
+      rerenderContent();
+      const newSegEl = pageContent.querySelector('[data-seg-start="' + targetSeg + '"]');
+      if (newSegEl) editSegment(newSegEl);
+    };
+
+    const onBackspaceEmpty = isMultiLine ? null : () => {
+      const prevSeg = container._segStart - 1;
+      rawLines.splice(container._absStart, 1);
+      scheduleSave();
+      if (activeEditor) { activeEditor.destroy(); activeEditor = null; }
+      activeInput.remove();
+      activeSegEl = null;
+      activeInput = null;
+      rerenderContent();
+      const prevEl = pageContent.querySelector('[data-seg-end="' + prevSeg + '"]') ||
+                     findClosestSegBefore(prevSeg);
+      if (prevEl) editSegment(prevEl);
+    };
+
+    const onUpAtTop = () => {
+      const prevEl = findPrevSeg(activeSegEl);
+      if (prevEl) {
+        const targetSeg = prevEl.getAttribute('data-seg-start');
         closeActiveSegment();
-        return;
-      }
-
-      if (e.key === 'Enter' && !isMultiLine && !e.shiftKey) {
-        e.preventDefault();
-        spliceRawLines();
-        const insertAt = input._absEnd + 1;
-        const targetSeg = input._segEnd + 1;
-        rawLines.splice(insertAt, 0, '');
-        scheduleSave();
-        activeInput.remove();
-        activeSegEl = null;
-        activeInput = null;
-        rerenderContent();
-        const newSegEl = pageContent.querySelector('[data-seg-start="' + targetSeg + '"]');
-        if (newSegEl) editSegment(newSegEl);
-        return;
-      }
-
-      if (e.key === 'Backspace' && !isMultiLine && input.value === '') {
-        e.preventDefault();
-        const prevSeg = input._segStart - 1;
-        rawLines.splice(input._absStart, 1);
-        scheduleSave();
-        activeInput.remove();
-        activeSegEl = null;
-        activeInput = null;
-        rerenderContent();
-        const prevEl = pageContent.querySelector('[data-seg-end="' + prevSeg + '"]') ||
-                       findClosestSegBefore(prevSeg);
-        if (prevEl) editSegment(prevEl);
-        return;
-      }
-
-      if (e.key === 'ArrowUp' && isAtStart(input)) {
-        e.preventDefault();
-        const prevEl = findPrevSeg(activeSegEl);
-        if (prevEl) {
-          const targetSeg = prevEl.getAttribute('data-seg-start');
-          closeActiveSegment();
-          if (targetSeg === '-1') {
-            editTitle();
-          } else {
-            const el = pageContent.querySelector('[data-seg-start="' + targetSeg + '"]');
-            if (el) editSegment(el, 'end');
-          }
-        }
-        return;
-      }
-
-      if (e.key === 'ArrowDown' && isAtEnd(input)) {
-        e.preventDefault();
-        const nextEl = findNextSeg(activeSegEl);
-        if (nextEl) {
-          const targetSeg = nextEl.getAttribute('data-seg-start');
-          closeActiveSegment();
+        if (targetSeg === '-1') {
+          editTitle();
+        } else {
           const el = pageContent.querySelector('[data-seg-start="' + targetSeg + '"]');
-          if (el) editSegment(el, 'start');
+          if (el) editSegment(el, 'end');
         }
-        return;
       }
+    };
+
+    const onDownAtBottom = () => {
+      const nextEl = findNextSeg(activeSegEl);
+      if (nextEl) {
+        const targetSeg = nextEl.getAttribute('data-seg-start');
+        closeActiveSegment();
+        const el = pageContent.querySelector('[data-seg-start="' + targetSeg + '"]');
+        if (el) editSegment(el, 'start');
+      }
+    };
+
+    activeEditor = createCMEditor(container, segLines.join('\n'), {
+      onDocChange, onEscape, onEnter, onBackspaceEmpty, onUpAtTop, onDownAtBottom,
     });
+
+    // Set cursor position and focus
+    if (cursorPos === 'end') {
+      activeEditor.dispatch({ selection: { anchor: activeEditor.state.doc.length } });
+    } else {
+      activeEditor.dispatch({ selection: { anchor: 0 } });
+    }
+    activeEditor.focus();
   }
 
   function isAtStart(input) {
@@ -1180,9 +1287,14 @@ const GRAPH_DATA = null;
 
   function spliceRawLines() {
     if (!activeInput) return;
-    const newLines = activeInput.tagName === 'TEXTAREA'
-      ? activeInput.value.split('\n')
-      : [activeInput.value];
+    let newLines;
+    if (activeEditor) {
+      newLines = activeEditor.state.doc.toString().split('\n');
+    } else if (activeInput.tagName === 'TEXTAREA') {
+      newLines = activeInput.value.split('\n');
+    } else {
+      newLines = [activeInput.value];
+    }
     const absStart = activeInput._absStart;
     const absEnd = activeInput._absEnd;
     rawLines.splice(absStart, absEnd - absStart + 1, ...newLines);
@@ -1225,6 +1337,7 @@ const GRAPH_DATA = null;
     spliceRawLines();
     clearTimeout(saveTimer);
     autoSave();
+    if (activeEditor) { activeEditor.destroy(); activeEditor = null; }
     activeInput.remove();
     activeSegEl.style.display = '';
     rerenderContent();
@@ -1383,6 +1496,15 @@ const GRAPH_DATA = null;
     });
 
     input.addEventListener('keydown', (e) => {
+      // Emacs keybindings
+      if (e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (e.key === 'a') { e.preventDefault(); input.setSelectionRange(0, 0); return; }
+        if (e.key === 'e') { e.preventDefault(); const len = input.value.length; input.setSelectionRange(len, len); return; }
+        if (e.key === 'f') { e.preventDefault(); const p = Math.min(input.selectionStart + 1, input.value.length); input.setSelectionRange(p, p); return; }
+        if (e.key === 'b') { e.preventDefault(); const p = Math.max(input.selectionStart - 1, 0); input.setSelectionRange(p, p); return; }
+        if (e.key === 'd') { e.preventDefault(); const p = input.selectionStart; if (p < input.value.length) { input.value = input.value.slice(0, p) + input.value.slice(p + 1); input.setSelectionRange(p, p); rawLines[titleLineIdx] = '#+TITLE: ' + capitalizeFirst(input.value); scheduleSave(); } return; }
+        if (e.key === 'k') { e.preventDefault(); const p = input.selectionStart; input.value = input.value.slice(0, p); input.setSelectionRange(p, p); rawLines[titleLineIdx] = '#+TITLE: ' + capitalizeFirst(input.value); scheduleSave(); return; }
+      }
       if (e.key === 'Escape' || e.key === 'Enter') {
         e.preventDefault();
         save();
@@ -1608,7 +1730,7 @@ const GRAPH_DATA = null;
   // Segment click — registered once, guards via editSegment checks
   pageContent.addEventListener('click', function(e) {
     if (e.target.closest('a')) return;
-    if (e.target.closest('.seg-input')) return;
+    if (e.target.closest('.seg-input') || e.target.closest('.cm-editor')) return;
     const segEl = e.target.closest('[data-seg-start]');
     if (segEl && segEl.getAttribute('data-seg-start') !== '-1') {
       editSegment(segEl);
