@@ -283,7 +283,8 @@ body {
 #page-content h3 { font-size: 16px; font-weight: 600; margin: 16px 0 4px; }
 #page-content h4 { font-size: 15px; font-weight: 600; margin: 14px 0 4px; }
 #page-content p { margin: 8px 0; }
-#page-content ul { margin: 6px 0 6px 20px; }
+#page-content ul { margin: 6px 0 6px 0; padding-left: 20px; list-style: disc; }
+#page-content ul ul { margin: 2px 0 2px 0; }
 #page-content li { margin: 3px 0; }
 #page-content code {
   background: var(--code-bg);
@@ -658,6 +659,9 @@ const GRAPH_DATA = null;
     // Local image file
     const img = orgContent.match(/\[\[file:([^\]]+?\.(?:png|jpg|jpeg|gif|svg|webp))(?:::.*?)?\](?:\[[^\]]*\])?\]/i);
     if (img) return img[1].replace(/^\.\//, '');
+    // External image URL (include query params — some hosts require them)
+    const extImg = orgContent.match(/\[\[(https?:\/\/[^\]]+?\.(?:png|jpg|jpeg|gif|svg|webp)(?:\?[^\]]*)?)\]\]/i);
+    if (extImg) return extImg[1];
     // YouTube link — extract video ID and use thumbnail
     const yt = orgContent.match(/\[\[(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
     if (yt) return 'https://img.youtube.com/vi/' + yt[1] + '/hqdefault.jpg';
@@ -777,6 +781,14 @@ const GRAPH_DATA = null;
       return '<a class="org-link" data-target="' + escHtml(target) + '">' + escHtml(stem) + '</a>';
     });
 
+    // External image links: [[https://...image.png]] or [[https://...image.png][desc]]
+    s = s.replace(/\[\[(https?:\/\/[^\]]+?\.(?:png|jpg|jpeg|gif|svg|webp)(?:\?[^\]]*)?)\]\[([^\]]+?)\]\]/gi, function(_m, url, desc) {
+      return '<img src="' + url + '" alt="' + escHtml(desc) + '" style="max-width:100%;border-radius:4px;margin:8px 0;" loading="lazy">';
+    });
+    s = s.replace(/\[\[(https?:\/\/[^\]]+?\.(?:png|jpg|jpeg|gif|svg|webp)(?:\?[^\]]*)?)\]\]/gi, function(_m, url) {
+      return '<img src="' + url + '" alt="" style="max-width:100%;border-radius:4px;margin:8px 0;" loading="lazy">';
+    });
+
     // External links: [[https://...][desc]]
     s = s.replace(/\[\[(https?:\/\/[^\]]+?)\]\[([^\]]+?)\]\]/g, function(_m, url, desc) {
       return '<a class="ext-link" href="' + url + '" target="_blank">' + desc + '</a>';
@@ -793,6 +805,8 @@ const GRAPH_DATA = null;
     s = s.replace(/(^|[\s(])=([^\s=](?:[^=]*[^\s=])?)=([\s).,;:!?]|$)/g, '$1<code>$2</code>$3');
     // Verbatim: ~verbatim~
     s = s.replace(/(^|[\s(])~([^\s~](?:[^~]*[^\s~])?)~([\s).,;:!?]|$)/g, '$1<code>$2</code>$3');
+    // Strikethrough: +text+
+    s = s.replace(/(^|[\s(])\+([^\s+](?:[^+]*[^\s+])?)\+([\s).,;:!?]|$)/g, '$1<del>$2</del>$3');
 
     return s;
   }
@@ -804,6 +818,7 @@ const GRAPH_DATA = null;
     let html = '';
     let inList = false;
     let listStart = -1;
+    let listDepth = 0;
     let i = 0;
 
     while (i < lines.length) {
@@ -812,7 +827,7 @@ const GRAPH_DATA = null;
 
       // Quote blocks — find matching end
       if (/^#\+begin_quote/i.test(trimmed)) {
-        if (inList) { html += '</ul>'; inList = false; }
+        if (inList) { while (listDepth > 0) { html += '</ul>'; listDepth--; } html += '</ul>'; inList = false; }
         const blockStart = i;
         let blockContent = '';
         i++;
@@ -833,7 +848,7 @@ const GRAPH_DATA = null;
 
       // Source blocks — find matching end
       if (/^#\+begin_src/i.test(trimmed)) {
-        if (inList) { html += '</ul>'; inList = false; }
+        if (inList) { while (listDepth > 0) { html += '</ul>'; listDepth--; } html += '</ul>'; inList = false; }
         const blockStart = i;
         let blockContent = '';
         i++;
@@ -850,7 +865,7 @@ const GRAPH_DATA = null;
       // Headings
       const headingMatch = line.match(/^(\*{1,4})\s+(.+)/);
       if (headingMatch) {
-        if (inList) { html += '</ul>'; inList = false; }
+        if (inList) { while (listDepth > 0) { html += '</ul>'; listDepth--; } html += '</ul>'; inList = false; }
         const level = Math.min(headingMatch[1].length, 4);
         html += '<h' + level + ' data-seg-start="' + i + '" data-seg-end="' + i + '">' + inlineMarkup(headingMatch[2]) + '</h' + level + '>';
         i++;
@@ -859,29 +874,44 @@ const GRAPH_DATA = null;
 
       // Blank lines
       if (trimmed === '') {
-        if (inList) { html += '</ul>'; inList = false; }
+        if (inList) { while (listDepth > 0) { html += '</ul>'; listDepth--; } html += '</ul>'; inList = false; }
         i++;
         continue;
       }
 
-      // List items — group consecutive list items into one <ul> segment
+      // List items — group consecutive list items with nesting support
       const listMatch = line.match(/^(\s*)[-+]\s+(.+)/);
       if (listMatch) {
+        const indent = listMatch[1].length;
         if (!inList) {
           inList = true;
           listStart = i;
-          html += '<ul data-seg-start="' + i + '"';
+          listDepth = 0;
+          html += '<ul data-seg-start="' + i + '">';
+        }
+        // Compute nesting depth (2 spaces per level)
+        const depth = Math.floor(indent / 2);
+        // Open deeper <ul> levels
+        while (listDepth < depth) {
+          html += '<ul>';
+          listDepth++;
+        }
+        // Close <ul> levels when going back up
+        while (listDepth > depth) {
+          html += '</ul>';
+          listDepth--;
         }
         html += '<li data-seg-line="' + i + '">' + inlineMarkup(listMatch[2]) + '</li>';
-        // Peek ahead: if next line is not a list item, close the ul
+        // Peek ahead: if next line is not a list item, close all lists
         const nextLine = i + 1 < lines.length ? lines[i + 1] : '';
         const nextIsList = /^\s*[-+]\s+/.test(nextLine);
         if (!nextIsList) {
+          while (listDepth > 0) { html += '</ul>'; listDepth--; }
           html += '</ul>';
           // Patch in the data-seg-end on the opening <ul> tag
           html = html.replace(
-            '<ul data-seg-start="' + listStart + '"',
-            '<ul data-seg-start="' + listStart + '" data-seg-end="' + i + '"'
+            '<ul data-seg-start="' + listStart + '">',
+            '<ul data-seg-start="' + listStart + '" data-seg-end="' + i + '">'
           );
           inList = false;
         }
@@ -890,16 +920,17 @@ const GRAPH_DATA = null;
       }
 
       // Regular paragraph
-      if (inList) { html += '</ul>'; inList = false; }
+      if (inList) { while (listDepth > 0) { html += '</ul>'; listDepth--; } html += '</ul>'; inList = false; }
       html += '<p data-seg-start="' + i + '" data-seg-end="' + i + '">' + inlineMarkup(line) + '</p>';
       i++;
     }
 
     if (inList) {
+      while (listDepth > 0) { html += '</ul>'; listDepth--; }
       html += '</ul>';
       html = html.replace(
-        '<ul data-seg-start="' + listStart + '"',
-        '<ul data-seg-start="' + listStart + '" data-seg-end="' + (lines.length - 1) + '"'
+        '<ul data-seg-start="' + listStart + '">',
+        '<ul data-seg-start="' + listStart + '" data-seg-end="' + (lines.length - 1) + '">'
       );
     }
     return html;
