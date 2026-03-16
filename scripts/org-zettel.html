@@ -4,27 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Org Zettelkasten</title>
-<script type="importmap">
-{
-  "imports": {
-    "style-mod": "https://esm.sh/style-mod",
-    "w3c-keyname": "https://esm.sh/w3c-keyname",
-    "crelt": "https://esm.sh/crelt",
-    "@marijn/find-cluster-break": "https://esm.sh/@marijn/find-cluster-break",
-    "@lezer/common": "https://esm.sh/@lezer/common",
-    "@lezer/highlight": "https://esm.sh/@lezer/highlight",
-    "@codemirror/state": "https://esm.sh/@codemirror/state",
-    "@codemirror/view": "https://esm.sh/@codemirror/view",
-    "@codemirror/language": "https://esm.sh/@codemirror/language",
-    "@codemirror/commands": "https://esm.sh/@codemirror/commands",
-    "@codemirror/search": "https://esm.sh/@codemirror/search",
-    "@codemirror/autocomplete": "https://esm.sh/@codemirror/autocomplete",
-    "@codemirror/lint": "https://esm.sh/@codemirror/lint",
-    "codemirror": "https://esm.sh/codemirror",
-    "@replit/codemirror-emacs": "https://esm.sh/@replit/codemirror-emacs"
-  }
-}
-</script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -552,19 +531,21 @@ const GRAPH_DATA = null;
   let cmModules = null;
   async function loadCM() {
     if (cmModules) return cmModules;
-    const [
-      { EditorView, keymap },
-      { EditorState },
-      { minimalSetup },
-      { emacs }
-    ] = await Promise.all([
-      import('@codemirror/view'),
-      import('@codemirror/state'),
-      import('codemirror'),
-      import('@replit/codemirror-emacs'),
-    ]);
-    cmModules = { EditorView, EditorState, keymap, minimalSetup, emacs };
-    return cmModules;
+    try {
+      const mod = await import('./codemirror-emacs-bundle.js');
+      cmModules = {
+        EditorView: mod.EditorView,
+        EditorState: mod.EditorState,
+        Prec: mod.Prec,
+        keymap: mod.keymap,
+        minimalSetup: mod.minimalSetup,
+        emacsStyleKeymap: mod.emacsStyleKeymap,
+      };
+      return cmModules;
+    } catch (err) {
+      console.error('Failed to load CodeMirror:', err);
+      throw err;
+    }
   }
 
   if (!GRAPH_DATA) {
@@ -1009,7 +990,7 @@ const GRAPH_DATA = null;
   let activeEditor = null;
 
   function createCMEditor(container, text, opts) {
-    const { EditorView, EditorState, keymap, minimalSetup, emacs } = cmModules;
+    const { EditorView, EditorState, Prec, keymap, minimalSetup, emacsStyleKeymap } = cmModules;
     const { onDocChange, onEscape, onEnter, onBackspaceEmpty, onUpAtTop, onDownAtBottom } = opts;
 
     const customKeymap = keymap.of([
@@ -1027,15 +1008,17 @@ const GRAPH_DATA = null;
           }
         }
         if (e.key === 'ArrowUp' || (e.ctrlKey && e.key === 'p')) {
-          if (onUpAtTop && view.state.selection.main.head === 0) {
+          const singleLine = view.state.doc.lines === 1;
+          if (onUpAtTop && (singleLine || view.state.selection.main.head === 0)) {
             e.preventDefault();
             onUpAtTop();
             return true;
           }
         }
         if (e.key === 'ArrowDown' || (e.ctrlKey && e.key === 'n')) {
+          const singleLine = view.state.doc.lines === 1;
           const pos = view.state.selection.main.head;
-          if (onDownAtBottom && pos === view.state.doc.length) {
+          if (onDownAtBottom && (singleLine || pos === view.state.doc.length)) {
             e.preventDefault();
             onDownAtBottom();
             return true;
@@ -1064,7 +1047,7 @@ const GRAPH_DATA = null;
       extensions: [
         customKeymap,
         edgeDetector,
-        emacs(),
+        Prec.highest(keymap.of(emacsStyleKeymap)),
         minimalSetup,
         updateListener,
         theme,
@@ -1504,6 +1487,8 @@ const GRAPH_DATA = null;
         if (e.key === 'b') { e.preventDefault(); const p = Math.max(input.selectionStart - 1, 0); input.setSelectionRange(p, p); return; }
         if (e.key === 'd') { e.preventDefault(); const p = input.selectionStart; if (p < input.value.length) { input.value = input.value.slice(0, p) + input.value.slice(p + 1); input.setSelectionRange(p, p); rawLines[titleLineIdx] = '#+TITLE: ' + capitalizeFirst(input.value); scheduleSave(); } return; }
         if (e.key === 'k') { e.preventDefault(); const p = input.selectionStart; input.value = input.value.slice(0, p); input.setSelectionRange(p, p); rawLines[titleLineIdx] = '#+TITLE: ' + capitalizeFirst(input.value); scheduleSave(); return; }
+        if (e.key === 'n') { e.preventDefault(); save(); const firstSeg = pageContent.querySelector('[data-seg-start="0"]'); if (firstSeg) editSegment(firstSeg); return; }
+        if (e.key === 'p') { e.preventDefault(); return; }
       }
       if (e.key === 'Escape' || e.key === 'Enter') {
         e.preventDefault();
@@ -1733,7 +1718,7 @@ const GRAPH_DATA = null;
     if (e.target.closest('.seg-input') || e.target.closest('.cm-editor')) return;
     const segEl = e.target.closest('[data-seg-start]');
     if (segEl && segEl.getAttribute('data-seg-start') !== '-1') {
-      editSegment(segEl);
+      editSegment(segEl).catch(err => console.error('editSegment failed:', err));
     }
   });
 

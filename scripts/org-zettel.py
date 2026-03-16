@@ -393,7 +393,7 @@ def make_handler(org_dir, template_path, build_args):
                 if (str(resolved).startswith(org_root + os.sep) and resolved.is_file()):
                     import mimetypes
                     ctype, _ = mimetypes.guess_type(str(resolved))
-                    if ctype and ctype.startswith(('image/', 'video/', 'audio/')):
+                    if ctype and ctype.startswith(('image/', 'video/', 'audio/', 'text/html', 'text/javascript', 'application/javascript')):
                         data = resolved.read_bytes()
                         self.send_response(200)
                         self.send_header('Content-Type', ctype)
