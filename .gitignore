@@ -41,3 +41,6 @@ config/.config/**
 !config/.config/omarchy/
 !config/.config/omarchy/hooks/
 !config/.config/omarchy/hooks/post-update
+!config/.config/systemd/
+!config/.config/systemd/user/
+!config/.config/systemd/user/org-zettel.service

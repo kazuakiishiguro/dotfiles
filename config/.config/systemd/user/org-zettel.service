@@ -1,0 +1,13 @@
+[Unit]
+Description=Org Zettelkasten Viewer
+After=graphical-session.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/org
+ExecStart=/usr/bin/python3 %h/org/org-zettel.py --serve
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target
