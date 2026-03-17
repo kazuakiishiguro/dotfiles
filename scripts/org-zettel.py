@@ -31,10 +31,42 @@ from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import unquote
 
-SCRIPT_DIR = Path(__file__).parent.resolve()
+SCRIPT_DIR = Path(__file__).resolve().parent
 ORG_DIR = Path.cwd()
 TEMPLATE = SCRIPT_DIR / "org-zettel.html"
 OUTPUT = ORG_DIR / "org-zettel-view.html"
+
+# Snapshot display env vars at startup so spawned GUI windows work
+# even if the server's env gets stripped (e.g. systemd, autostart)
+def _detect_display_env():
+    wanted = ('WAYLAND_DISPLAY', 'DISPLAY', 'XDG_RUNTIME_DIR')
+    env = {k: os.environ[k] for k in wanted if k in os.environ}
+    if 'WAYLAND_DISPLAY' not in env:
+        # Try to read from a running Wayland client (waybar is always present)
+        for proc_name in ('waybar', 'Hyprland'):
+            try:
+                pid = subprocess.check_output(
+                    ['pgrep', '-x', proc_name], text=True
+                ).strip().split('\n')[0]
+                proc_env = Path(f'/proc/{pid}/environ').read_bytes().split(b'\0')
+                for entry in proc_env:
+                    if b'=' in entry:
+                        k, v = entry.decode('utf-8', errors='replace').split('=', 1)
+                        if k in wanted and k not in env:
+                            env[k] = v
+                if 'WAYLAND_DISPLAY' in env:
+                    break
+            except (subprocess.CalledProcessError, OSError, IndexError):
+                continue
+    return env
+
+_display_env = None
+
+def _get_display_env():
+    global _display_env
+    if _display_env is None:
+        _display_env = _detect_display_env()
+    return _display_env
 
 LINK_RE = re.compile(r"\[\[file:(.*?\.org)(?:::[^\]]*?)?\]")
 TITLE_RE = re.compile(r"^#\+TITLE:\s*(.+)", re.IGNORECASE)
@@ -438,8 +470,15 @@ def make_handler(org_dir, template_path, build_args):
                     self._send_json({'error': 'not found'}, 404)
                     return
                 try:
+                    # Ensure Wayland/X11 display vars are available for GUI windows
+                    env = os.environ.copy()
+                    for var in ('WAYLAND_DISPLAY', 'DISPLAY', 'XDG_RUNTIME_DIR'):
+                        val = _get_display_env().get(var)
+                        if val and var not in env:
+                            env[var] = val
                     subprocess.Popen(['alacritty', '--class', 'org-zettel-edit',
-                                       '-e', 'emacsclient', '-t', '-a', '', str(filepath)])
+                                       '-e', 'emacsclient', '-t', '-a', '', str(filepath)],
+                                     env=env)
                     self._send_json({'ok': True})
                 except FileNotFoundError:
                     self._send_json({'error': 'emacsclient not found'}, 500)
