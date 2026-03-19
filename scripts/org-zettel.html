@@ -36,6 +36,51 @@
   --blue: #205EA6;
   --purple: #5E409D;
   --magenta: #A02F6F;
+  /* Syntax highlight — light */
+  --syn-keyword: #AF3029;
+  --syn-string: #24837B;
+  --syn-comment: #878580;
+  --syn-function: #5E409D;
+  --syn-number: #BC5215;
+  --syn-type: #205EA6;
+  --syn-operator: #6F6E69;
+}
+
+:root.dark {
+  --bg: #1C1B1A;
+  --card-bg: #282726;
+  --card-border: #403E3C;
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --text: #CECDC3;
+  --text-muted: #878580;
+  --text-light: #6F6E69;
+  --accent: #879A39;
+  --accent-hover: #66800B;
+  --link: #4385BE;
+  --tag: #D0A215;
+  --topbar-bg: #282726;
+  --topbar-border: #403E3C;
+  --divider: #343331;
+  --hover-bg: #343331;
+  --pin-color: #D0A215;
+  --search-bg: #343331;
+  --search-border: #403E3C;
+  --code-bg: #343331;
+  --red: #D14D41;
+  --orange: #DA702C;
+  --yellow: #D0A215;
+  --green: #879A39;
+  --cyan: #3AA99F;
+  --blue: #4385BE;
+  --purple: #8B7EC8;
+  --magenta: #CE5D97;
+  --syn-keyword: #D14D41;
+  --syn-string: #3AA99F;
+  --syn-comment: #6F6E69;
+  --syn-function: #8B7EC8;
+  --syn-number: #DA702C;
+  --syn-type: #4385BE;
+  --syn-operator: #878580;
 }
 
 body {
@@ -106,6 +151,18 @@ body {
   align-items: center;
   gap: 8px;
 }
+#theme-toggle {
+  background: none;
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 16px;
+  line-height: 1;
+  transition: background 0.2s;
+}
+#theme-toggle:hover { background: var(--hover-bg); }
 
 #page-actions {
   display: flex;
@@ -291,7 +348,21 @@ body {
   padding: 1px 5px;
   border-radius: 3px;
   font-family: 'Consolas', 'Fira Code', monospace;
-  font-size: 13px;
+  font-size: inherit;
+}
+#page-content table {
+  border-collapse: collapse;
+  margin: 12px 0;
+  width: auto;
+}
+#page-content th, #page-content td {
+  border: 1px solid var(--card-border);
+  padding: 6px 12px;
+  text-align: left;
+}
+#page-content th {
+  background: var(--code-bg);
+  font-weight: 600;
 }
 #page-content a.org-link {
   color: var(--link);
@@ -342,6 +413,13 @@ body {
   padding: 0;
   font-size: 13px;
 }
+#page-content pre code .syn-kw { color: var(--syn-keyword); }
+#page-content pre code .syn-str { color: var(--syn-string); }
+#page-content pre code .syn-cmt { color: var(--syn-comment); font-style: italic; }
+#page-content pre code .syn-fn { color: var(--syn-function); }
+#page-content pre code .syn-num { color: var(--syn-number); }
+#page-content pre code .syn-type { color: var(--syn-type); }
+#page-content pre code .syn-op { color: var(--syn-operator); }
 .empty-content { color: var(--text-light); font-style: italic; padding: 12px 0; }
 
 /* Line editing */
@@ -496,6 +574,13 @@ input.seg-input {
   mask-size: contain;
 }
 </style>
+<script>
+// Apply saved theme before paint to prevent flash
+(function() {
+  var t = localStorage.getItem('zettel-theme');
+  if (t === 'dark') document.documentElement.classList.add('dark');
+})();
+</script>
 </head>
 <body>
 
@@ -506,6 +591,7 @@ input.seg-input {
   </div>
   <div id="topbar-right">
     <input type="text" id="search" placeholder="Search...">
+    <button id="theme-toggle" title="Toggle dark mode"></button>
   </div>
 </div>
 
@@ -811,6 +897,80 @@ const GRAPH_DATA = null;
     return s;
   }
 
+  function highlightSyntax(code, lang) {
+    // Already HTML-escaped input. Wrap tokens in <span> for coloring.
+    // Comment patterns per language family
+    const lineComment = {
+      'python': '#', 'py': '#', 'ruby': '#', 'rb': '#', 'bash': '#', 'sh': '#', 'shell': '#', 'r': '#', 'perl': '#',
+      'javascript': '//', 'js': '//', 'typescript': '//', 'ts': '//', 'rust': '//', 'rs': '//',
+      'go': '//', 'java': '//', 'c': '//', 'cpp': '//', 'c++': '//', 'swift': '//', 'kotlin': '//',
+      'scala': '//', 'zig': '//', 'solidity': '//', 'sol': '//', 'css': null, 'sql': '--',
+      'lua': '--', 'haskell': '--', 'hs': '--', 'ocaml': null, 'lisp': ';', 'elisp': ';',
+      'emacs-lisp': ';', 'clojure': ';', 'scheme': ';',
+    };
+    const cmt = lineComment[lang];
+
+    const keywords = {
+      'python': /\b(def|class|import|from|return|if|elif|else|for|while|try|except|finally|with|as|yield|lambda|pass|break|continue|raise|and|or|not|in|is|None|True|False|async|await|self)\b/g,
+      'javascript': /\b(function|const|let|var|return|if|else|for|while|do|switch|case|break|continue|throw|try|catch|finally|new|delete|typeof|instanceof|class|extends|import|export|from|default|async|await|yield|this|null|undefined|true|false|of|in)\b/g,
+      'rust': /\b(fn|let|mut|const|if|else|match|for|while|loop|return|struct|enum|impl|trait|pub|use|mod|crate|self|super|where|type|as|in|ref|move|async|await|true|false|Some|None|Ok|Err|Self|unsafe|dyn|static|extern)\b/g,
+      'go': /\b(func|var|const|return|if|else|for|range|switch|case|break|continue|type|struct|interface|map|chan|go|defer|select|package|import|nil|true|false|make|append|len|cap)\b/g,
+      'solidity': /\b(pragma|contract|function|returns|return|if|else|for|while|mapping|address|uint|uint256|int|int256|bool|string|bytes|public|private|internal|external|view|pure|payable|memory|storage|calldata|event|emit|modifier|require|msg|block|tx|this|true|false|import|struct|enum|interface|abstract|override|virtual)\b/g,
+    };
+    // Aliases
+    keywords['py'] = keywords['python'];
+    keywords['js'] = keywords['javascript']; keywords['typescript'] = keywords['javascript']; keywords['ts'] = keywords['javascript'];
+    keywords['rs'] = keywords['rust'];
+    keywords['sol'] = keywords['solidity'];
+
+    const lines = code.split('\n');
+    return lines.map(function(line) {
+      // Line comments
+      if (cmt !== undefined && cmt !== null) {
+        const cmtEsc = cmt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const cmtMatch = line.match(new RegExp('^(.*?)(' + cmtEsc + '.*)$'));
+        if (cmtMatch && !isInsideString(cmtMatch[1])) {
+          return tokenize(cmtMatch[1], lang, keywords) + '<span class="syn-cmt">' + cmtMatch[2] + '</span>';
+        }
+      }
+      return tokenize(line, lang, keywords);
+    }).join('\n');
+  }
+
+  function isInsideString(s) {
+    // Rough check: odd number of unescaped quotes means we're inside a string
+    let single = 0, double = 0;
+    for (let i = 0; i < s.length; i++) {
+      if (s[i] === "'" && (i === 0 || s[i-1] !== '\\')) single++;
+      if (s[i] === '&' && s.substr(i, 6) === '&quot;') { double++; i += 5; }
+    }
+    return (single % 2 === 1) || (double % 2 === 1);
+  }
+
+  function tokenize(line, lang, keywords) {
+    // Strings: &quot;...&quot; and &#39;...&#39; (already escaped)
+    line = line.replace(/&quot;((?:[^&]|&(?!quot;))*)&quot;/g, '<span class="syn-str">&quot;$1&quot;</span>');
+    line = line.replace(/&#39;((?:[^&]|&(?!#39;))*)&#39;/g, '<span class="syn-str">&#39;$1&#39;</span>');
+    // Also handle tick strings for JS/Go: `...`
+    line = line.replace(/`([^`]*)`/g, '<span class="syn-str">`$1`</span>');
+
+    // Numbers
+    line = line.replace(/\b(0x[0-9a-fA-F]+|0b[01]+|0o[0-7]+|\d+\.?\d*(?:e[+-]?\d+)?)\b/g, '<span class="syn-num">$1</span>');
+
+    // Keywords
+    var kw = keywords[lang];
+    if (kw) {
+      line = line.replace(kw, function(m) {
+        return '<span class="syn-kw">' + m + '</span>';
+      });
+    }
+
+    // Type-like: capitalized identifiers (not inside tags already)
+    line = line.replace(/\b([A-Z][a-zA-Z0-9_]*)\b(?![^<]*>)/g, '<span class="syn-type">$1</span>');
+
+    return line;
+  }
+
   function renderOrg(text) {
     if (!text || !text.trim()) return '<div class="empty-content" data-seg-start="0" data-seg-end="0">No content</div>';
 
@@ -849,6 +1009,8 @@ const GRAPH_DATA = null;
       // Source blocks — find matching end
       if (/^#\+begin_src/i.test(trimmed)) {
         if (inList) { while (listDepth > 0) { html += '</ul>'; listDepth--; } html += '</ul>'; inList = false; }
+        const langMatch = trimmed.match(/^#\+begin_src\s+(\S+)/i);
+        const lang = langMatch ? langMatch[1].toLowerCase() : '';
         const blockStart = i;
         let blockContent = '';
         i++;
@@ -857,7 +1019,8 @@ const GRAPH_DATA = null;
           i++;
         }
         const blockEnd = i < lines.length ? i : i - 1;
-        html += '<pre data-seg-start="' + blockStart + '" data-seg-end="' + blockEnd + '"><code>' + blockContent + '</code></pre>';
+        const highlighted = highlightSyntax(blockContent, lang);
+        html += '<pre data-seg-start="' + blockStart + '" data-seg-end="' + blockEnd + '"><code class="lang-' + lang + '">' + highlighted + '</code></pre>';
         i++;
         continue;
       }
@@ -916,6 +1079,40 @@ const GRAPH_DATA = null;
           inList = false;
         }
         i++;
+        continue;
+      }
+
+      // Table rows — group consecutive | lines
+      if (/^\s*\|/.test(line)) {
+        if (inList) { while (listDepth > 0) { html += '</ul>'; listDepth--; } html += '</ul>'; inList = false; }
+        const tableStart = i;
+        let headerDone = false;
+        let thead = '';
+        let tbody = '';
+        while (i < lines.length && /^\s*\|/.test(lines[i])) {
+          const row = lines[i].trim();
+          // Separator row like |---+---|
+          if (/^\|[-+]+\|$/.test(row)) {
+            headerDone = true;
+            i++;
+            continue;
+          }
+          const cells = row.replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => inlineMarkup(c.trim()));
+          if (!headerDone) {
+            thead += '<tr>' + cells.map(c => '<th>' + c + '</th>').join('') + '</tr>';
+          } else {
+            tbody += '<tr>' + cells.map(c => '<td>' + c + '</td>').join('') + '</tr>';
+          }
+          i++;
+        }
+        // If no separator was found, treat all rows as body
+        if (!headerDone) {
+          tbody = thead.replace(/<th>/g, '<td>').replace(/<\/th>/g, '</td>');
+          thead = '';
+        }
+        html += '<table data-seg-start="' + tableStart + '" data-seg-end="' + (i - 1) + '">';
+        if (thead) html += '<thead>' + thead + '</thead>';
+        html += '<tbody>' + tbody + '</tbody></table>';
         continue;
       }
 
@@ -1799,6 +1996,18 @@ const GRAPH_DATA = null;
   document.getElementById('random-btn').addEventListener('click', () => {
     const randomNode = nodes[Math.floor(Math.random() * nodes.length)];
     if (randomNode) openPage(randomNode.id);
+  });
+
+  // Theme toggle
+  const themeBtn = document.getElementById('theme-toggle');
+  function updateThemeBtn() {
+    themeBtn.textContent = document.documentElement.classList.contains('dark') ? '\u2600' : '\u263E';
+  }
+  updateThemeBtn();
+  themeBtn.addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
+    localStorage.setItem('zettel-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    updateThemeBtn();
   });
 
   // Title click -> go back to card grid
