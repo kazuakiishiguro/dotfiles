@@ -44,3 +44,5 @@ config/.config/**
 !config/.config/systemd/
 !config/.config/systemd/user/
 !config/.config/systemd/user/org-zettel.service
+
+scripts/__pycache__/
