@@ -5,7 +5,7 @@ After=graphical-session.target
 [Service]
 Type=simple
 WorkingDirectory=%h/org
-ExecStart=/usr/bin/python3 %h/org/org-zettel.py --serve
+ExecStart=/usr/bin/python3 %h/org/org-zettel.py --serve --include-orphans
 Restart=on-failure
 RestartSec=5
 

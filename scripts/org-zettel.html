@@ -1806,18 +1806,29 @@ const GRAPH_DATA = null;
       pinBtn.className = nowPinned ? 'pinned' : '';
     };
 
-    pageContent.innerHTML = '<h1 data-seg-start="-1" data-seg-end="-1">' + escHtml(node.title || node.id) + '</h1>' + renderOrg(node.content || '');
+    // Initial render from node.content (50-line preview)
+    const titleHtml = '<h1 data-seg-start="-1" data-seg-end="-1">' + escHtml(node.title || node.id) + '</h1>';
+    pageContent.innerHTML = titleHtml + renderOrg(node.content || '');
     wireOrgLinks(id);
 
-    // Enable line-level editing in server mode
+    // In server mode, fetch full content and re-render
     if (serverMode) {
       pageContent.classList.add('editable');
       wireTitle();
       fetchRawLines(id).then(lines => {
         if (!lines) return;
-        initLineEditor(id);
         rawLines = lines;
         bodyOffset = findBodyOffset(rawLines);
+        // Extract body lines (after frontmatter) excluding Backlinks section
+        const bodyLines = [];
+        for (let i = bodyOffset; i < rawLines.length; i++) {
+          if (/^\*\s+Backlinks\s*\(\d+\)/i.test(rawLines[i])) break;
+          bodyLines.push(rawLines[i]);
+        }
+        const fullContent = bodyLines.join('\n');
+        pageContent.innerHTML = titleHtml + renderOrg(fullContent);
+        wireOrgLinks(id);
+        initLineEditor(id);
       });
     }
 

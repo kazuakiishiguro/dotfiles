@@ -548,6 +548,26 @@ def make_handler(org_dir, template_path, build_args):
                     result.update(node)
                 self._send_json(result)
 
+            elif self.path.startswith('/api/upload/'):
+                # Binary file upload (for images from clipper)
+                raw = self.path[len('/api/upload/'):]
+                file_id = unquote(raw)
+                resolved = (org_dir / file_id).resolve()
+                org_root = str(org_dir.resolve())
+                if not str(resolved).startswith(org_root + os.sep):
+                    self._send_json({'error': 'invalid path'}, 400)
+                    return
+                # Only allow image extensions
+                allowed = {'.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'}
+                if resolved.suffix.lower() not in allowed:
+                    self._send_json({'error': 'unsupported file type'}, 400)
+                    return
+                length = int(self.headers.get('Content-Length', 0))
+                data = self.rfile.read(length)
+                resolved.parent.mkdir(parents=True, exist_ok=True)
+                resolved.write_bytes(data)
+                self._send_json({'ok': True, 'path': file_id})
+
             else:
                 self._send_json({'error': 'not found'}, 404)
 
