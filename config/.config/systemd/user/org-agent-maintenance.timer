@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Agent Vault Maintenance twice daily
+
+[Timer]
+OnCalendar=*-*-* 03,15:30:00
+Persistent=true
+RandomizedDelaySec=5m
+Unit=org-agent-maintenance.service
+
+[Install]
+WantedBy=timers.target

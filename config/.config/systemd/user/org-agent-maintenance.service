@@ -1,0 +1,11 @@
+[Unit]
+Description=Agent Vault Maintenance Pipeline
+After=graphical-session.target org-zettel-agent.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/org
+ExecStart=/usr/bin/python3 %h/org/agent-vault-tools/kb_run.py --vault-dir %h/org-agent --primary-vault-dir %h/org
+
+[Install]
+WantedBy=default.target
