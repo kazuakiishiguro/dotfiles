@@ -1,0 +1,13 @@
+[Unit]
+Description=Org Zettelkasten Viewer (Agent)
+After=graphical-session.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/org-agent
+ExecStart=/usr/bin/python3 %h/fun/dotfiles/scripts/org-zettel.py --serve --include-orphans --port 8081
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target
