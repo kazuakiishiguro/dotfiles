@@ -171,7 +171,9 @@ body {
   flex-shrink: 0;
 }
 
-#random-btn {
+#random-btn,
+#open-emacs-btn,
+#attach-btn {
   background: none;
   border: 1px solid var(--card-border);
   border-radius: 4px;
@@ -184,24 +186,18 @@ body {
   gap: 4px;
   font-size: 13px;
 }
-#random-btn:hover { color: var(--text); }
-#random-btn svg { width: 14px; height: 14px; }
-
-#open-emacs-btn {
-  background: none;
-  border: 1px solid var(--card-border);
-  border-radius: 4px;
-  padding: 4px 8px;
-  cursor: pointer;
-  color: var(--text-muted);
-  transition: color 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
+#random-btn:hover,
+#open-emacs-btn:hover,
+#attach-btn:hover { color: var(--text); }
+#random-btn svg,
+#open-emacs-btn svg,
+#attach-btn svg { width: 14px; height: 14px; }
+#random-btn:disabled,
+#open-emacs-btn:disabled,
+#attach-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
-#open-emacs-btn:hover { color: var(--text); }
-#open-emacs-btn svg { width: 14px; height: 14px; }
 
 /* ---- Main content area ---- */
 #main {
@@ -330,10 +326,25 @@ body {
   color: var(--text-muted);
 }
 
+#page-upload-status {
+  min-height: 18px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+#page-upload-status.success { color: var(--green); }
+#page-upload-status.error { color: var(--red); }
+
 /* Rendered org content */
 #page-content {
   line-height: 1.8;
   font-size: 15px;
+  position: relative;
+}
+#page-content.upload-dragging {
+  background: var(--hover-bg);
+  outline: 1px dashed var(--accent);
+  outline-offset: 6px;
 }
 #page-content h1 { font-size: 22px; font-weight: 700; margin: 24px 0 8px; }
 #page-content h2 { font-size: 18px; font-weight: 700; margin: 20px 0 6px; }
@@ -470,6 +481,33 @@ input.seg-input {
 .cm-editor .cm-cursor { border-left-color: var(--text); }
 .cm-editor .cm-scroller { overflow: visible; }
 
+#page-drop-indicator {
+  position: relative;
+  height: 18px;
+  margin: 6px 0;
+  pointer-events: none;
+}
+#page-drop-indicator::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 8px;
+  border-top: 2px solid var(--accent);
+}
+#page-drop-indicator span {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0 6px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--accent);
+  background: var(--card-bg);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+}
+
 /* Related links section */
 #related-links {
   margin-top: 40px;
@@ -605,10 +643,13 @@ input.seg-input {
       </div>
       <div id="page-actions">
         <button id="page-pin-btn" title="Pin to home"></button>
+        <button id="attach-btn" title="Attach image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05 12.25 20.24a6 6 0 0 1-8.49-8.49l9.19-9.2a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 1 1-2.82-2.82l8.49-8.48"/></svg>Attach</button>
         <button id="open-emacs-btn" title="Open in Emacs"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Emacs</button>
         <button id="random-btn" title="Random page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>Shuffle</button>
       </div>
     </div>
+    <input type="file" id="attach-input" accept="image/*" multiple hidden>
+    <div id="page-upload-status" aria-live="polite"></div>
     <div id="page-content"></div>
     <div id="related-links">
       <div class="related-section" id="rl-backlinks">
@@ -1134,13 +1175,39 @@ const GRAPH_DATA = null;
   }
 
   // Path resolution
+  function normalizeOrgTargetPath(currentNodeId, targetPath) {
+    const cleaned = targetPath.replace(/^\.\//, '').replace(/::.*$/, '');
+    const currentDir = currentNodeId && currentNodeId.includes('/')
+      ? currentNodeId.replace(/\/[^/]+$/, '/')
+      : '';
+    return new URL(cleaned, 'file:///' + currentDir).pathname.slice(1);
+  }
+
+  function extractOutgoingOrgLinks(currentNodeId, orgText) {
+    const links = [];
+    const seen = new Set();
+    const re = /\[\[file:([^\]]+?\.org)(?:::[^\]]*?)?\](?:\[[^\]]*?\])?\]/g;
+
+    for (const line of orgText.split('\n')) {
+      if (/^\*\s+Backlinks\s*\(\d+\)/i.test(line)) break;
+      re.lastIndex = 0;
+      let match;
+      while ((match = re.exec(line)) !== null) {
+        const resolved = normalizeOrgTargetPath(currentNodeId, match[1]);
+        if (!seen.has(resolved)) {
+          seen.add(resolved);
+          links.push(resolved);
+        }
+      }
+    }
+
+    return links;
+  }
+
   function resolveOrgPath(currentNodeId, targetPath) {
     targetPath = targetPath.replace(/^\.\//, '');
     if (nodeMap.has(targetPath)) return targetPath;
-    const currentDir = currentNodeId.includes('/')
-      ? currentNodeId.replace(/\/[^/]+$/, '/')
-      : '';
-    const resolved = new URL(targetPath, 'file:///' + currentDir).pathname.slice(1);
+    const resolved = normalizeOrgTargetPath(currentNodeId, targetPath);
     if (nodeMap.has(resolved)) return resolved;
     const lower = resolved.toLowerCase();
     for (const [id] of nodeMap) {
@@ -1170,17 +1237,47 @@ const GRAPH_DATA = null;
   }
 
   // Line-level edit state
+  let currentNodeId = null;
   let editingNodeId = null;
   let rawLines = [];
   let bodyOffset = 0;
+  let rawLoaded = false;
   let activeSegEl = null;
   let activeInput = null;
   let saveTimer = null;
+  let uploadBusy = false;
+  let uploadStatusTimer = null;
+  let dragDepth = 0;
+  let pendingDropLine = null;
+  const dropIndicator = document.createElement('div');
+  dropIndicator.id = 'page-drop-indicator';
+  dropIndicator.innerHTML = '<span>Drop image here</span>';
 
   function initLineEditor(nodeId) {
     editingNodeId = nodeId;
+    activeSegEl = null;
+    activeInput = null;
+  }
+
+  function resetEditorState() {
+    clearTimeout(saveTimer);
+    hideDropIndicator();
+    dragDepth = 0;
+    pendingDropLine = null;
+    if (activeEditor) {
+      activeEditor.destroy();
+      activeEditor = null;
+    }
+    if (activeInput && activeInput.parentNode) {
+      activeInput.remove();
+    }
+    if (activeSegEl) {
+      activeSegEl.style.display = '';
+    }
+    editingNodeId = null;
     rawLines = [];
     bodyOffset = 0;
+    rawLoaded = false;
     activeSegEl = null;
     activeInput = null;
   }
@@ -1230,6 +1327,202 @@ const GRAPH_DATA = null;
       }
     }
     return 0;
+  }
+
+  function findBodyEnd(allLines) {
+    for (let i = bodyOffset; i < allLines.length; i++) {
+      if (/^\*\s+Backlinks\s*\(\d+\)/i.test(allLines[i])) {
+        return i;
+      }
+    }
+    return allLines.length;
+  }
+
+  function getBodyEndLine() {
+    return findBodyEnd(rawLines);
+  }
+
+  function setUploadStatus(message, kind) {
+    clearTimeout(uploadStatusTimer);
+    pageUploadStatus.textContent = message || '';
+    pageUploadStatus.className = kind || '';
+    if (message && kind !== 'error') {
+      uploadStatusTimer = setTimeout(() => {
+        pageUploadStatus.textContent = '';
+        pageUploadStatus.className = '';
+      }, 2500);
+    }
+  }
+
+  function canUploadImages() {
+    return serverMode && currentView === 'page' && !!currentNodeId && rawLoaded && !uploadBusy;
+  }
+
+  function updateAttachButton() {
+    if (!attachBtn) return;
+    attachBtn.disabled = !canUploadImages();
+    if (!serverMode) {
+      attachBtn.title = 'Attach is available only in server mode';
+    } else if (!rawLoaded) {
+      attachBtn.title = 'Loading note...';
+    } else if (uploadBusy) {
+      attachBtn.title = 'Uploading image...';
+    } else {
+      attachBtn.title = 'Attach image';
+    }
+  }
+
+  function hideDropIndicator() {
+    pendingDropLine = null;
+    if (dropIndicator.parentNode) {
+      dropIndicator.remove();
+    }
+    pageContent.classList.remove('upload-dragging');
+  }
+
+  function getDropSegments() {
+    return [...pageContent.querySelectorAll('[data-seg-start]')]
+      .filter(el => el.getAttribute('data-seg-start') !== '-1');
+  }
+
+  function showDropIndicator(lineIndex) {
+    if (!rawLoaded) return;
+    pendingDropLine = lineIndex;
+    pageContent.classList.add('upload-dragging');
+    const segs = getDropSegments();
+    const target = segs.find(el => bodyOffset + parseInt(el.getAttribute('data-seg-start'), 10) >= lineIndex);
+    if (target) {
+      pageContent.insertBefore(dropIndicator, target);
+    } else {
+      pageContent.appendChild(dropIndicator);
+    }
+  }
+
+  function computeDropLine(clientY) {
+    if (!rawLoaded) return null;
+    const segs = getDropSegments();
+    if (segs.length === 0) return bodyOffset;
+
+    for (const seg of segs) {
+      const rect = seg.getBoundingClientRect();
+      const segStart = bodyOffset + parseInt(seg.getAttribute('data-seg-start'), 10);
+      if (clientY < rect.top + rect.height / 2) {
+        return segStart;
+      }
+    }
+
+    return getBodyEndLine();
+  }
+
+  function simpleHash(text) {
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
+    }
+    return (hash >>> 0).toString(16).slice(0, 8);
+  }
+
+  function sanitizeAttachmentStem(text) {
+    const normalized = (text || '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^A-Za-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .replace(/_+/g, '_');
+    return normalized.slice(0, 48);
+  }
+
+  function attachmentNoteStem(nodeId) {
+    const base = (nodeId || '').split('/').pop().replace(/\.org$/i, '');
+    return sanitizeAttachmentStem(base) || ('note_' + simpleHash(nodeId || 'note'));
+  }
+
+  function attachmentFileStem(file) {
+    const base = (file && file.name ? file.name : 'image').replace(/\.[^.]+$/, '');
+    const stem = sanitizeAttachmentStem(base);
+    return stem ? '_' + stem.slice(0, 24) : '';
+  }
+
+  function attachmentTimestamp() {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mi = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    const ms = String(now.getMilliseconds()).padStart(3, '0');
+    return '' + yyyy + mm + dd + '_' + hh + mi + ss + '_' + ms;
+  }
+
+  function imageExtensionForFile(file) {
+    const byMime = {
+      'image/png': '.png',
+      'image/jpeg': '.jpg',
+      'image/jpg': '.jpg',
+      'image/gif': '.gif',
+      'image/svg+xml': '.svg',
+      'image/webp': '.webp',
+    };
+    if (file.type && byMime[file.type]) {
+      return byMime[file.type];
+    }
+    const lowerName = (file.name || '').toLowerCase();
+    const extMatch = lowerName.match(/\.(png|jpe?g|gif|svg|webp)$/);
+    if (!extMatch) return null;
+    if (extMatch[1] === 'jpeg') return '.jpg';
+    return '.' + extMatch[1];
+  }
+
+  function isSupportedImageFile(file) {
+    return !!imageExtensionForFile(file);
+  }
+
+  function buildAttachmentPath(nodeId, file, index) {
+    const ext = imageExtensionForFile(file);
+    if (!ext) {
+      throw new Error('Unsupported image type: ' + (file.type || file.name || 'unknown'));
+    }
+    const serial = index > 0 ? '_' + String(index + 1).padStart(2, '0') : '';
+    return 'Attachments/' + attachmentNoteStem(nodeId) + '_' + attachmentTimestamp() + attachmentFileStem(file) + serial + ext;
+  }
+
+  function buildAttachmentInsertLines(insertLine, links) {
+    const lines = [];
+    const prevLine = insertLine > bodyOffset ? rawLines[insertLine - 1] : '';
+    const nextLine = insertLine < rawLines.length ? rawLines[insertLine] : '';
+
+    if (insertLine > bodyOffset && prevLine && prevLine.trim() !== '') {
+      lines.push('');
+    }
+
+    links.forEach((link, idx) => {
+      lines.push(link);
+      if (idx < links.length - 1) {
+        lines.push('');
+      }
+    });
+
+    if (nextLine && nextLine.trim() !== '') {
+      lines.push('');
+    }
+
+    return lines;
+  }
+
+  async function ensureRawLinesLoaded(nodeId) {
+    if (rawLoaded && editingNodeId === nodeId) {
+      return true;
+    }
+    const lines = await fetchRawLines(nodeId);
+    if (!lines) {
+      return false;
+    }
+    rawLines = lines;
+    bodyOffset = findBodyOffset(rawLines);
+    rawLoaded = true;
+    initLineEditor(nodeId);
+    return true;
   }
 
   let activeEditor = null;
@@ -1534,7 +1827,7 @@ const GRAPH_DATA = null;
     saveTimer = setTimeout(() => autoSave(), 1000);
   }
 
-  async function autoSave() {
+  async function saveCurrentNote() {
     if (!editingNodeId) return;
     const content = rawLines.join('\n');
     try {
@@ -1552,12 +1845,18 @@ const GRAPH_DATA = null;
           node.tags = updated.tags;
           node.date = updated.date;
           node.mtime = updated.mtime;
-          rebuildEdgesForNode(editingNodeId, updated.links || []);
+          rebuildEdgesForNode(editingNodeId, extractOutgoingOrgLinks(editingNodeId, content));
         }
+        return updated;
       }
     } catch (err) {
       console.error('Auto-save failed:', err);
     }
+    return null;
+  }
+
+  async function autoSave() {
+    await saveCurrentNote();
   }
 
   function closeActiveSegment() {
@@ -1574,14 +1873,9 @@ const GRAPH_DATA = null;
   }
 
   function rerenderContent() {
+    hideDropIndicator();
     const bodyLines = rawLines.slice(bodyOffset);
-    let bodyEnd = bodyLines.length;
-    for (let i = 0; i < bodyLines.length; i++) {
-      if (/^\*\s+Backlinks\s*\(\d+\)/i.test(bodyLines[i])) {
-        bodyEnd = i;
-        break;
-      }
-    }
+    const bodyEnd = findBodyEnd(rawLines) - bodyOffset;
     const bodyText = bodyLines.slice(0, bodyEnd).join('\n');
 
     let title = editingNodeId;
@@ -1772,9 +2066,91 @@ const GRAPH_DATA = null;
   const pageTags = document.getElementById('page-tags');
   const pageDate = document.getElementById('page-date');
   const pageContent = document.getElementById('page-content');
+  const pageUploadStatus = document.getElementById('page-upload-status');
+  const attachBtn = document.getElementById('attach-btn');
+  const attachInput = document.getElementById('attach-input');
   const rlBlCards = document.getElementById('rl-bl-cards');
   const rlOutCards = document.getElementById('rl-out-cards');
   const rl2HopCards = document.getElementById('rl-2hop-cards');
+
+  function collectImageFiles(dataTransfer) {
+    if (!dataTransfer || !dataTransfer.files) return [];
+    return [...dataTransfer.files].filter(isSupportedImageFile);
+  }
+
+  function isImageTransfer(dataTransfer) {
+    if (!dataTransfer) return false;
+    if (dataTransfer.items && dataTransfer.items.length > 0) {
+      return [...dataTransfer.items].some(item =>
+        item.kind === 'file' && (item.type || '').startsWith('image/')
+      );
+    }
+    return collectImageFiles(dataTransfer).length > 0;
+  }
+
+  async function uploadImages(files, insertLine) {
+    const imageFiles = [...files].filter(isSupportedImageFile);
+    if (imageFiles.length === 0) {
+      setUploadStatus('Supported image files only.', 'error');
+      return;
+    }
+    if (!serverMode) {
+      setUploadStatus('Image upload is available only in server mode.', 'error');
+      return;
+    }
+    const nodeId = currentNodeId;
+    if (!nodeId) {
+      setUploadStatus('No note is open.', 'error');
+      return;
+    }
+    const loaded = await ensureRawLinesLoaded(nodeId);
+    if (!loaded) {
+      setUploadStatus('Could not load the current note.', 'error');
+      return;
+    }
+    if (activeInput) {
+      closeActiveSegment();
+    }
+
+    uploadBusy = true;
+    updateAttachButton();
+    hideDropIndicator();
+    setUploadStatus(imageFiles.length === 1 ? 'Uploading image...' : 'Uploading images...', '');
+
+    try {
+      const clampedInsert = Math.max(bodyOffset, Math.min(insertLine == null ? getBodyEndLine() : insertLine, getBodyEndLine()));
+      const links = [];
+      for (let i = 0; i < imageFiles.length; i++) {
+        const file = imageFiles[i];
+        const path = buildAttachmentPath(nodeId, file, i);
+        const headers = file.type ? { 'Content-Type': file.type } : {};
+        const res = await fetch('/api/upload/' + encodeURIComponent(path), {
+          method: 'POST',
+          body: file,
+          headers,
+        });
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error('Upload failed: ' + (errorText || ('HTTP ' + res.status)));
+        }
+        links.push('[[file:' + path + ']]');
+      }
+
+      rawLines.splice(clampedInsert, 0, ...buildAttachmentInsertLines(clampedInsert, links));
+      await saveCurrentNote();
+      if (currentView === 'page' && currentNodeId === nodeId) {
+        rerenderContent();
+      }
+      setUploadStatus(imageFiles.length === 1 ? 'Image attached.' : (imageFiles.length + ' images attached.'), 'success');
+    } catch (err) {
+      console.error('Image upload failed:', err);
+      setUploadStatus(err.message || 'Image upload failed.', 'error');
+    } finally {
+      uploadBusy = false;
+      attachInput.value = '';
+      updateAttachButton();
+    }
+  }
 
   function openPage(id, skipPush) {
     const node = nodeMap.get(id);
@@ -1785,6 +2161,9 @@ const GRAPH_DATA = null;
     }
 
     currentView = 'page';
+    currentNodeId = id;
+    resetEditorState();
+    setUploadStatus('', '');
     gridEl.style.display = 'none';
     pageView.style.display = 'block';
     backBtn.style.display = 'block';
@@ -1810,18 +2189,17 @@ const GRAPH_DATA = null;
     const titleHtml = '<h1 data-seg-start="-1" data-seg-end="-1">' + escHtml(node.title || node.id) + '</h1>';
     pageContent.innerHTML = titleHtml + renderOrg(node.content || '');
     wireOrgLinks(id);
+    updateAttachButton();
 
     // In server mode, fetch full content and re-render
     if (serverMode) {
       pageContent.classList.add('editable');
       wireTitle();
-      fetchRawLines(id).then(lines => {
-        if (!lines) return;
-        rawLines = lines;
-        bodyOffset = findBodyOffset(rawLines);
+      ensureRawLinesLoaded(id).then(loaded => {
+        if (!loaded || currentNodeId !== id) return;
         // Extract body lines (after frontmatter) excluding Backlinks section
         const bodyLines = [];
-        for (let i = bodyOffset; i < rawLines.length; i++) {
+        for (let i = bodyOffset; i < findBodyEnd(rawLines); i++) {
           if (/^\*\s+Backlinks\s*\(\d+\)/i.test(rawLines[i])) break;
           bodyLines.push(rawLines[i]);
         }
@@ -1829,6 +2207,7 @@ const GRAPH_DATA = null;
         pageContent.innerHTML = titleHtml + renderOrg(fullContent);
         wireOrgLinks(id);
         initLineEditor(id);
+        updateAttachButton();
       });
     }
 
@@ -1907,6 +2286,10 @@ const GRAPH_DATA = null;
 
   function showGrid() {
     currentView = 'grid';
+    currentNodeId = null;
+    resetEditorState();
+    setUploadStatus('', '');
+    updateAttachButton();
     gridEl.style.display = 'grid';
     pageView.style.display = 'none';
     backBtn.style.display = 'none';
@@ -1994,6 +2377,70 @@ const GRAPH_DATA = null;
 
   // Back button handler
   backBtn.addEventListener('click', goBack);
+
+  attachBtn.addEventListener('click', () => {
+    if (!canUploadImages()) return;
+    attachInput.click();
+  });
+
+  attachInput.addEventListener('change', () => {
+    if (!attachInput.files || attachInput.files.length === 0) return;
+    uploadImages(attachInput.files, getBodyEndLine());
+  });
+
+  pageContent.addEventListener('dragenter', (e) => {
+    if (!isImageTransfer(e.dataTransfer) || currentView !== 'page') return;
+    e.preventDefault();
+    if (!canUploadImages()) return;
+    dragDepth++;
+    pageContent.classList.add('upload-dragging');
+  });
+
+  pageContent.addEventListener('dragover', (e) => {
+    if (!isImageTransfer(e.dataTransfer) || currentView !== 'page') return;
+    e.preventDefault();
+    if (!canUploadImages()) return;
+    e.dataTransfer.dropEffect = 'copy';
+    const line = computeDropLine(e.clientY);
+    if (line != null) {
+      showDropIndicator(line);
+    }
+  });
+
+  pageContent.addEventListener('dragleave', (e) => {
+    if (!isImageTransfer(e.dataTransfer) || currentView !== 'page') return;
+    e.preventDefault();
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) {
+      hideDropIndicator();
+    }
+  });
+
+  pageContent.addEventListener('drop', (e) => {
+    if (!isImageTransfer(e.dataTransfer) || currentView !== 'page') return;
+    e.preventDefault();
+    const files = collectImageFiles(e.dataTransfer);
+    const line = pendingDropLine != null ? pendingDropLine : computeDropLine(e.clientY);
+    dragDepth = 0;
+    hideDropIndicator();
+    if (files.length > 0) {
+      uploadImages(files, line);
+    }
+  });
+
+  document.addEventListener('dragover', (e) => {
+    if (currentView === 'page' && isImageTransfer(e.dataTransfer)) {
+      e.preventDefault();
+    }
+  });
+
+  document.addEventListener('drop', (e) => {
+    if (currentView === 'page' && isImageTransfer(e.dataTransfer) && !pageContent.contains(e.target)) {
+      e.preventDefault();
+      dragDepth = 0;
+      hideDropIndicator();
+    }
+  });
 
   // Open in Emacs button
   document.getElementById('open-emacs-btn').addEventListener('click', () => {
