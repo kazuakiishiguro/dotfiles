@@ -113,3 +113,8 @@
    #+begin_src emacs-lisp
     (global-set-key (kbd "C-x t") 'eshell)
    #+end_src
+** Compile
+#+begin_src emacs-lisp
+ (global-set-key (kbd "C-c b") #'compile)
+ (global-set-key (kbd "C-c r") #'recompile)
+#+end_src
