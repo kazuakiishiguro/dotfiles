@@ -41,17 +41,29 @@ Shared config (aliases, PATH, history, locale, GPG) lives in `shell/.shellrc`. B
 
 ## Hyprland (Arch)
 
-Config is split into modular files under `config/.config/hypr/`:
-- `hyprland.conf` — main entry, sources other files
-- `bindings.conf` — keybindings
-- `monitors.conf` — display layout
-- `looknfeel.conf` — gaps, borders, animations
-- `input.conf` — keyboard/mouse settings
-- `autostart.conf` — startup applications
-- `clamshell.conf` — laptop lid behavior
+Omarchy migrated Hyprland to a **Lua-based config**. Hyprland runs with
+`configProvider: lua`; the entry point is `hyprland.lua`, which `require()`s the
+other modules. The old `.conf` files are gone — edit the `.lua` files. Apply
+changes with `hyprctl reload` and check `hyprctl configerrors`.
+
+Modular files under `config/.config/hypr/`:
+- `hyprland.lua` — entry point; requires the modules below, holds personal rules
+- `bindings.lua` — keybindings (`o.bind(...)`)
+- `monitors.lua` — display layout / scale (`hl.monitor`, `hl.env`)
+- `looknfeel.lua` — gaps, borders, animations (`hl.config`, `hl.animation`)
+- `input.lua` — keyboard/touchpad (`kb_options = "ctrl:nocaps"`, `natural_scroll`)
+- `autostart.lua` — startup apps (`o.launch_on_start`, `o.exec_on_start`)
+- `.luarc.json` — Lua LSP hints for editing the above
+
+Companion daemons keep their own `.conf` (not part of the Lua migration):
 - `hypridle.conf` — idle/lock timeouts
 - `hyprlock.conf` — lock screen appearance
 - `hyprsunset.conf` — night light
+- `xdph.conf` — xdg-desktop-portal-hyprland
+
+Laptop lid (clamshell) is now handled by `omarchy-hyprland-monitor-watch`
+(launched from `autostart.lua`), not a `clamshell.conf`. Input-method (fcitx)
+env vars live in `config/.config/environment.d/fcitx.conf`, not `envs.conf`.
 
 ## Org Zettelkasten Viewer (`scripts/org-zettel.*`)
 

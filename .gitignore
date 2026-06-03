@@ -16,18 +16,22 @@ config/.config/**
 !config/.config/github-copilot/
 !config/.config/github-copilot/versions.json
 !config/.config/hypr/
-!config/.config/hypr/autostart.conf
-!config/.config/hypr/bindings.conf
-!config/.config/hypr/clamshell.conf
+# Hyprland: Lua-based config (post-migration). The Hyprland .conf files are gone.
+!config/.config/hypr/hyprland.lua
+!config/.config/hypr/monitors.lua
+!config/.config/hypr/input.lua
+!config/.config/hypr/bindings.lua
+!config/.config/hypr/looknfeel.lua
+!config/.config/hypr/autostart.lua
+!config/.config/hypr/.luarc.json
+# Companion daemons keep their own .conf (not affected by the Lua migration).
 !config/.config/hypr/hypridle.conf
-!config/.config/hypr/hyprland.conf
 !config/.config/hypr/hyprlock.conf
 !config/.config/hypr/hyprsunset.conf
-!config/.config/hypr/input.conf
-!config/.config/hypr/looknfeel.conf
-!config/.config/hypr/monitors.conf
-!config/.config/hypr/envs.conf
 !config/.config/hypr/xdph.conf
+# Input-method (fcitx) env vars, formerly in hypr/envs.conf.
+!config/.config/environment.d/
+!config/.config/environment.d/fcitx.conf
 !config/.config/i3/
 !config/.config/i3/config
 !config/.config/kitty/
