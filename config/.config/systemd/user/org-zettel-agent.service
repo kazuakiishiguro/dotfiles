@@ -5,7 +5,7 @@ After=graphical-session.target
 [Service]
 Type=simple
 WorkingDirectory=%h/org-agent
-ExecStart=/usr/bin/python3 %h/fun/dotfiles/scripts/org-zettel.py --serve --include-orphans --port 8081
+ExecStart=/usr/bin/python3 %h/fun/dotfiles/scripts/org-zettel.py --serve --include-orphans --include-prefix raw --include-prefix compiled --exclude-prefix compiled/log.org --port 8081
 Restart=on-failure
 RestartSec=5
 

@@ -53,25 +53,54 @@
  (defvar my/capture-last-title nil
    "Title from the last my/capture-file call, reused in template body.")
 
+ (defvar my/capture-next-title nil
+   "Title injected into the next note capture, used for region-based capture.")
+
+ (defun my/capture-normalize-title (title)
+   "Normalize TITLE for capture usage."
+   (let ((trimmed (string-trim (replace-regexp-in-string "[\n\r\t]+" " " title))))
+     (when (string-empty-p trimmed)
+       (user-error "Title cannot be empty"))
+     (concat (upcase (substring trimmed 0 1))
+             (substring trimmed 1))))
+
+ (defun my/org-title-to-filepath (dir title)
+   "Return .org file path in DIR derived from TITLE."
+   (expand-file-name
+    (concat (my/org-title-to-filename title) ".org")
+    dir))
+
  (defun my/org-title-to-path (dir title)
    "Return a new .org file path in DIR for TITLE.
-Capitalizes first letter, replaces spaces with underscores.
 Sets `my/capture-last-title'.  Errors if file already exists."
-   (let* ((capitalized (concat (upcase (substring title 0 1))
-                               (substring title 1)))
-          (filename (concat (replace-regexp-in-string " " "_" capitalized) ".org"))
-          (path (expand-file-name filename dir)))
+   (let* ((normalized (my/capture-normalize-title title))
+          (path (my/org-title-to-filepath dir normalized)))
      (when (file-exists-p path)
        (user-error "File already exists: %s" path))
-     (setq my/capture-last-title capitalized)
+     (setq my/capture-last-title normalized)
      path))
 
  (defun my/capture-file (dir prompt)
    "Prompt for a title and return a new .org file path in DIR."
-   (let ((trimmed (string-trim (read-string prompt))))
-     (when (string-empty-p trimmed)
-       (user-error "Title cannot be empty"))
-     (my/org-title-to-path dir trimmed)))
+   (let ((title (or my/capture-next-title
+                    (read-string prompt))))
+     (setq my/capture-next-title nil)
+     (my/org-title-to-path dir title)))
+
+ (defun my/org-capture-note-dwim ()
+   "Capture a note.
+If region is active, use it as title; otherwise prompt for title.
+When the note already exists, open it instead of creating a duplicate."
+   (interactive)
+   (let* ((raw (if (use-region-p)
+                   (buffer-substring-no-properties (region-beginning) (region-end))
+                 (read-string "Note title: ")))
+          (title (my/capture-normalize-title raw))
+          (path (my/org-title-to-filepath org-directory title)))
+     (if (file-exists-p path)
+         (find-file path)
+       (setq my/capture-next-title title)
+       (org-capture nil "n"))))
 
  (defun my/capture-title ()
    "Return the title saved by my/capture-file."
@@ -223,7 +252,7 @@ link with the title inferred from the filename (underscores → spaces)."
      (insert (format "[[file:%s][%s]]" rel title))))
 
  (define-key global-map "\C-cc" 'org-capture)
- (define-key global-map "\C-cn" (lambda () (interactive) (org-capture nil "n")))
+ (define-key global-map "\C-cn" #'my/org-capture-note-dwim)
  (define-key org-mode-map (kbd "C-c l") #'my/org-insert-link)
 #+end_src
 
@@ -270,10 +299,10 @@ link with the title inferred from the filename (underscores → spaces)."
  #+end_src
 
 ** HOOKS
-*** AUTO FILL MODE
+*** VISUAL LINE MODE
 
 #+begin_src emacs-lisp
- (add-hook 'org-mode-hook 'auto-fill-mode)
+ (add-hook 'org-mode-hook #'visual-line-mode)
 #+end_src
 
 *** INLINE IMAGES

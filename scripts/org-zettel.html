@@ -707,6 +707,15 @@ const GRAPH_DATA = null;
     if (d && d.ok) serverMode = true;
   }).catch(() => {});
 
+  // Safety default: disable inline editing from Web UI.
+  // Clipper APIs (/api/save, /api/upload) remain available.
+  const INLINE_EDITING_ENABLED = false;
+  const DEFAULT_AGENT_LANDING_PAGE_ID = 'compiled/topics/_index.org';
+  const AUTO_OPEN_AGENT_LANDING = location.port === '8081';
+  function canInlineEdit() {
+    return serverMode && INLINE_EDITING_ENABLED;
+  }
+
   // Build lookup maps
   const nodeMap = new Map(nodes.map(n => [n.id, n]));
   const outgoing = new Map();
@@ -1295,7 +1304,7 @@ const GRAPH_DATA = null;
 
   function wireTitle() {
     const titleEl = pageContent.querySelector('h1[data-seg-start="-1"]');
-    if (titleEl && serverMode) {
+    if (titleEl && canInlineEdit()) {
       titleEl.style.cursor = 'text';
       titleEl.addEventListener('click', (e) => {
         if (e.target.closest('a')) return;
@@ -1315,7 +1324,10 @@ const GRAPH_DATA = null;
     let seenFrontmatter = false;
     for (let i = 0; i < allLines.length; i++) {
       const line = allLines[i];
-      if (line.startsWith('#+')) {
+      const isDirective = line.startsWith('#+');
+      const isBlockDirective = /^#\+(?:begin_|end_)/i.test(line);
+      const isFrontmatter = isDirective && !isBlockDirective;
+      if (isFrontmatter) {
         seenFrontmatter = true;
         continue;
       }
@@ -1598,7 +1610,7 @@ const GRAPH_DATA = null;
   }
 
   async function editSegment(segEl, cursorPos) {
-    if (!serverMode || !editingNodeId) return;
+    if (!canInlineEdit() || !editingNodeId) return;
     if (segEl === activeSegEl) return;
     if (activeSegEl) {
       const targetSeg = segEl.getAttribute('data-seg-start');
@@ -2193,8 +2205,12 @@ const GRAPH_DATA = null;
 
     // In server mode, fetch full content and re-render
     if (serverMode) {
-      pageContent.classList.add('editable');
-      wireTitle();
+      if (canInlineEdit()) {
+        pageContent.classList.add('editable');
+        wireTitle();
+      } else {
+        pageContent.classList.remove('editable');
+      }
       ensureRawLinesLoaded(id).then(loaded => {
         if (!loaded || currentNodeId !== id) return;
         // Extract body lines (after frontmatter) excluding Backlinks section
@@ -2207,6 +2223,9 @@ const GRAPH_DATA = null;
         pageContent.innerHTML = titleHtml + renderOrg(fullContent);
         wireOrgLinks(id);
         initLineEditor(id);
+        if (canInlineEdit()) {
+          wireTitle();
+        }
         updateAttachButton();
       });
     }
@@ -2353,6 +2372,7 @@ const GRAPH_DATA = null;
 
   // Segment click — registered once, guards via editSegment checks
   pageContent.addEventListener('click', function(e) {
+    if (!canInlineEdit()) return;
     if (e.target.closest('a')) return;
     if (e.target.closest('.seg-input') || e.target.closest('.cm-editor')) return;
     const segEl = e.target.closest('[data-seg-start]');
@@ -2363,6 +2383,7 @@ const GRAPH_DATA = null;
 
   // Close active segment on outside click — registered once
   document.addEventListener('click', function(e) {
+    if (!canInlineEdit()) return;
     if (!pageContent.contains(e.target) && activeInput) {
       closeActiveSegment();
     }
@@ -2483,8 +2504,12 @@ const GRAPH_DATA = null;
   history.replaceState(null, '', location.pathname + location.hash);
   healthCheck.then(() => {
     const initHash = location.hash.slice(1);
-    if (initHash && nodeMap.has(decodeURIComponent(initHash))) {
-      openPage(decodeURIComponent(initHash));
+    const requestedId = initHash ? decodeURIComponent(initHash) : '';
+    if (requestedId && nodeMap.has(requestedId)) {
+      openPage(requestedId);
+    } else if (AUTO_OPEN_AGENT_LANDING && nodeMap.has(DEFAULT_AGENT_LANDING_PAGE_ID)) {
+      history.replaceState({ page: DEFAULT_AGENT_LANDING_PAGE_ID }, '', '#' + encodeURIComponent(DEFAULT_AGENT_LANDING_PAGE_ID));
+      openPage(DEFAULT_AGENT_LANDING_PAGE_ID, true);
     } else {
       renderCardGrid();
     }

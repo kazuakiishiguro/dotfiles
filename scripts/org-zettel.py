@@ -73,17 +73,27 @@ TITLE_RE = re.compile(r"^#\+TITLE:\s*(.+)", re.IGNORECASE)
 DATE_RE = re.compile(r"^#\+DATE:\s*(.+)", re.IGNORECASE)
 FILETAGS_RE = re.compile(r"^#\+FILETAGS:\s*(.+)", re.IGNORECASE)
 BACKLINKS_HEADING_RE = re.compile(r"^\*\s+Backlinks\s*\((\d+)\)", re.IGNORECASE)
+BLOCK_DIRECTIVE_RE = re.compile(r"^#\+(?:begin_|end_)", re.IGNORECASE)
 
 
 def classify(path: str) -> str:
     """Classify an org file by its relative path."""
     parts = Path(path).parts
-    if parts[0] == "daily":
-        return "daily"
-    if parts[0] == "clippings":
-        return "clippings"
-    if parts[0] == "references":
-        return "references"
+    if not parts:
+        return "root"
+    head = parts[0]
+    if head in (
+        "daily",
+        "clippings",
+        "references",
+        "raw",
+        "compiled",
+        "qa",
+        "reports",
+        "inbox",
+        "templates",
+    ):
+        return head
     return "root"
 
 
@@ -120,6 +130,33 @@ def _content_hash(text: str, backlinks_re) -> str:
     return hashlib.md5(content.encode("utf-8")).hexdigest()
 
 
+def normalize_prefixes(values):
+    prefixes = []
+    seen = set()
+    for raw in values or []:
+        normalized = (raw or "").strip().replace("\\", "/")
+        if not normalized:
+            continue
+        normalized = normalized.lstrip("./").strip("/")
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        prefixes.append(normalized)
+    return prefixes
+
+
+def _path_matches_prefix(path: str, prefix: str) -> bool:
+    return path == prefix or path.startswith(prefix + "/")
+
+
+def _include_path(path: str, include_prefixes, exclude_prefixes) -> bool:
+    if include_prefixes and not any(_path_matches_prefix(path, p) for p in include_prefixes):
+        return False
+    if exclude_prefixes and any(_path_matches_prefix(path, p) for p in exclude_prefixes):
+        return False
+    return True
+
+
 def parse_org_file(filepath: Path, org_dir: Path) -> dict:
     """Extract metadata and outgoing links from a single .org file."""
     rel = filepath.relative_to(org_dir).as_posix()
@@ -149,7 +186,9 @@ def parse_org_file(filepath: Path, org_dir: Path) -> dict:
 
         # Parse front-matter
         if not in_backlinks:
-            is_frontmatter = line.startswith("#+")
+            is_directive = line.startswith("#+")
+            is_block_directive = is_directive and bool(BLOCK_DIRECTIVE_RE.match(line))
+            is_frontmatter = is_directive and not is_block_directive
             if is_frontmatter:
                 seen_frontmatter = True
 
@@ -223,16 +262,22 @@ def parse_org_file(filepath: Path, org_dir: Path) -> dict:
     }
 
 
-def build_graph(org_dir: Path, include_daily: bool, include_orphans: bool, min_backlinks: int):
+def build_graph(org_dir: Path, include_daily: bool, include_orphans: bool, min_backlinks: int, include_prefixes=None, exclude_prefixes=None):
     """Scan all .org files and build the graph data structure."""
     _load_mtime_cache(org_dir)
+    include_prefixes = normalize_prefixes(include_prefixes)
+    exclude_prefixes = normalize_prefixes(exclude_prefixes)
     org_files = sorted(org_dir.rglob("*.org"))
     print(f"Scanning {len(org_files)} .org files...", file=sys.stderr)
+    if include_prefixes:
+        print(f"Include prefixes: {', '.join(include_prefixes)}", file=sys.stderr)
+    if exclude_prefixes:
+        print(f"Exclude prefixes: {', '.join(exclude_prefixes)}", file=sys.stderr)
 
     raw_nodes = {}
     for f in org_files:
         node = parse_org_file(f, org_dir)
-        if node:
+        if node and _include_path(node["id"], include_prefixes, exclude_prefixes):
             raw_nodes[node["id"]] = node
 
     # Filter by category
@@ -601,14 +646,22 @@ def main():
                         help="Start a live HTTP server instead of static export")
     parser.add_argument("--port", type=int, default=8080,
                         help="Port for the HTTP server (default: 8080)")
+    parser.add_argument("--include-prefix", action="append", default=[],
+                        help="Include only files under this relative path prefix (repeatable)")
+    parser.add_argument("--exclude-prefix", action="append", default=[],
+                        help="Exclude files under this relative path prefix (repeatable)")
 
     args = parser.parse_args()
+    include_prefixes = normalize_prefixes(args.include_prefix)
+    exclude_prefixes = normalize_prefixes(args.exclude_prefix)
 
     if args.serve:
         build_args = {
             'include_daily': args.include_daily,
             'include_orphans': args.include_orphans,
             'min_backlinks': args.min_backlinks,
+            'include_prefixes': include_prefixes,
+            'exclude_prefixes': exclude_prefixes,
         }
         handler = make_handler(ORG_DIR, TEMPLATE, build_args)
         server = HTTPServer(('127.0.0.1', args.port), handler)
@@ -624,6 +677,8 @@ def main():
         include_daily=args.include_daily,
         include_orphans=args.include_orphans,
         min_backlinks=args.min_backlinks,
+        include_prefixes=include_prefixes,
+        exclude_prefixes=exclude_prefixes,
     )
 
     # Read template and inject data

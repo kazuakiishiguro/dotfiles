@@ -18,7 +18,9 @@
 		 sage-shell-mode smartparens solidity-mode tide
 		 typescript-mode web-mode ws-butler zig-mode))
  '(package-vc-selected-packages
-   '((claude-code-ide :url
+   '((tramp-rpc :url "https://github.com/ArthurHeymans/emacs-tramp-rpc"
+		:lisp-dir "lisp")
+     (claude-code-ide :url
 		      "https://github.com/manzaltu/claude-code-ide.el"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
