@@ -1,6 +1,7 @@
 * Claude Code IDE
 
 #+begin_src emacs-lisp
+   ;; -*- lexical-binding: t; -*-
    (use-package eat
      :ensure t)
 

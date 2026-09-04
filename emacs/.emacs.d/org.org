@@ -2,6 +2,7 @@
 #+STARTUP: overview
 
 #+begin_src emacs-lisp
+;; -*- lexical-binding: t; -*-
 (require 'org)
 (require 'org-tempo)
 #+end_src

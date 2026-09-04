@@ -1,3 +1,5 @@
+;;; custom.el --- Custom settings -*- lexical-binding: t; -*-
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -5,12 +7,16 @@
  ;; If there is more than one, they won't work right.
  '(org-agenda-files nil)
  '(package-selected-packages
-   '(cargo claude-code-ide cmake-mode counsel deft docker-compose-mode
-	   dockerfile-mode eat elpy git-gutter gnu-elpa-keyring-update
-	   google-c-style htmlize lsp-treemacs lsp-ui magit
-	   markdown-preview-mode minions modus-themes multiple-cursors
-	   ob-rust org-bullets org-cliplink ox-gfm py-autopep8
-	   python-mode rustic smartparens ws-butler))
+   '(agent-shell cargo chatgpt-shell claude-code-ide claude-shell
+		 cmake-mode counsel deft docker-compose-mode
+		 dockerfile-mode eat elpy exec-path-from-shell
+		 find-file-in-project fringe-helper gist git-gutter
+		 google-c-style htmlize lsp-treemacs lsp-ui magit
+		 markdown-preview-mode minions modus-themes
+		 multiple-cursors ob-rust org-bullets org-cliplink
+		 ox-gfm py-autopep8 python-mode rjsx-mode rustic
+		 sage-shell-mode smartparens solidity-mode tide
+		 typescript-mode web-mode ws-butler zig-mode))
  '(package-vc-selected-packages
    '((claude-code-ide :url
 		      "https://github.com/manzaltu/claude-code-ide.el"))))

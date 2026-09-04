@@ -2,6 +2,7 @@
 Massively inspired by https://github.com/rksm/emacs-rust-config.
 
 #+begin_src emacs-lisp
+ ;; -*- lexical-binding: t; -*-
  (use-package rustic
    :ensure
    :bind (:map rustic-mode-map

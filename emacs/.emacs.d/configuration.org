@@ -7,6 +7,7 @@
 
 ** ALWAYS =:ensure t=
 #+begin_src emacs-lisp
+;; -*- lexical-binding: t; -*-
 (require 'use-package-ensure)
 (setq use-package-always-ensure t)
 #+end_src

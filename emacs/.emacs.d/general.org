@@ -1,5 +1,6 @@
 * Magit
 #+begin_src emacs-lisp
+;; -*- lexical-binding: t; -*-
 (use-package magit
   :if (executable-find "git")
   :bind ("C-x g" . magit-status))

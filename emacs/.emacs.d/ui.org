@@ -1,6 +1,7 @@
 * UI settings
 ** Font
 #+begin_src emacs-lisp
+;; -*- lexical-binding: t; -*-
 (set-face-attribute 'default nil :family "JetBrainsMono Nerd Font" :height 180)
 #+end_src
 
@@ -99,4 +100,3 @@
   (add-hook 'magit-post-refresh-hook 'git-gutter:update-all-windows)
   (global-git-gutter-mode t))
 #+end_src
-
