@@ -628,7 +628,7 @@ input.seg-input {
     <div id="topbar-title" style="cursor:pointer;">Org Zettelkasten</div>
   </div>
   <div id="topbar-right">
-    <input type="text" id="search" placeholder="Search...">
+    <input type="text" id="search" placeholder="Search... (/)" aria-label="Search notes" aria-keyshortcuts="/">
     <button id="theme-toggle" title="Toggle dark mode"></button>
   </div>
 </div>
@@ -2387,6 +2387,17 @@ const GRAPH_DATA = null;
     if (!pageContent.contains(e.target) && activeInput) {
       closeActiveSegment();
     }
+  });
+
+  // Focus search with / without interrupting typing or IME composition.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== '/' || e.defaultPrevented || e.isComposing || e.keyCode === 229 ||
+        e.ctrlKey || e.metaKey || e.altKey) return;
+    const target = e.target;
+    if (target instanceof HTMLElement &&
+        (target.isContentEditable || target.closest('input, textarea, select'))) return;
+    e.preventDefault();
+    searchInput.focus();
   });
 
   // Escape key handler

@@ -5,6 +5,8 @@
 ;; -*- lexical-binding: t; -*-
 (require 'org)
 (require 'org-tempo)
+(require 'org-element)
+(require 'seq)
 #+end_src
 
 ** BASE SETTINGS
@@ -130,75 +132,195 @@ Sets `my/capture-last-title' and `my/cliplink-last-link'."
  (setq org-capture-templates
        '(("n" "Note" plain (file (lambda ()
 	   (my/capture-file "~/org" "Note title: ")))
-	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n\n%?")
+	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n\n* 概要\n%?")
 
 	 ("c" "Clipping" plain (file (lambda () (my/cliplink-capture-file)))
-	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n\nSource: %(my/cliplink-last-link)\n\n%?")))
+	  "#+TITLE: %(my/capture-title)\n#+DATE: %U\n\nSource: %(my/cliplink-last-link)\n\n* 概要\n%?")))
 #+end_src
 
 *** BACKLINK HELPERS
 
 #+begin_src emacs-lisp
+ (defvar-local my/org-prev-links nil
+   "Outgoing note paths on disk before the current save.")
+
+ (defun my/org-backlink-headline-p (element)
+   "Return non-nil when ELEMENT is the generated Backlinks heading."
+   (and (eq (org-element-type element) 'headline)
+        (= (org-element-property :level element) 1)
+        (string-match-p "\\`Backlinks ([0-9]+)\\'"
+                        (org-element-property :raw-value element))))
+
+ (defun my/org-backlinks-headline ()
+   "Return the fully parsed generated Backlinks subtree, or nil."
+   (org-element-map (org-element-parse-buffer) 'headline
+     (lambda (element)
+       (when (my/org-backlink-headline-p element) element))
+     nil t))
+
+ (defun my/org-outgoing-files (&optional source-file)
+   "Return actual outgoing note paths in the current buffer.
+Ignore generated Backlinks, example/source blocks, and paths outside the vault.
+Resolve relative links against SOURCE-FILE or the current buffer's file."
+   (let* ((source (my/org-canonical-file (or source-file buffer-file-name)))
+          (directory (file-name-directory source))
+          paths)
+     (save-restriction
+       (widen)
+       (org-element-map (org-element-parse-buffer) 'link
+         (lambda (link)
+           (when (and (equal (org-element-property :type link) "file")
+                      (not (seq-some #'my/org-backlink-headline-p
+                                     (org-element-lineage link))))
+             (let ((target (my/org-canonical-file
+                            (org-element-property :path link) directory)))
+               (when (and (string-suffix-p ".org" target)
+                          (file-in-directory-p target org-directory)
+                          (not (equal target source)))
+                 (push target paths)))))))
+     (delete-dups (nreverse paths))))
+
+ (defun my/org-record-links-before-save ()
+   "Read the saved outgoing links before writing this note.
+Reading into a temporary buffer avoids opening notes or running file hooks."
+   (when (and (my/org-sync-scope-p)
+              (not my/org-sync-in-progress))
+     (let ((source buffer-file-name))
+       ;; Keep pending removals when the previous after-save sync failed.
+       (setq my/org-prev-links
+             (delete-dups
+              (append my/org-prev-links
+                      (when (file-exists-p source)
+                        (with-temp-buffer
+                          (insert-file-contents source)
+                          (delay-mode-hooks (org-mode))
+                          (my/org-outgoing-files source)))))))))
+
+ (defun my/org-backlink-entries (headline)
+   "Return the generated single-link list entries under HEADLINE.
+Each entry is (TARGET LINK BEGIN END).  Preserve other user-written content."
+   (org-element-map headline 'link
+     (lambda (link)
+       (when (and (equal (org-element-property :type link) "file")
+                  (eq (org-element-lineage link 'headline) headline))
+         (let* ((begin (org-element-property :begin link))
+                (end (- (org-element-property :end link)
+                        (org-element-property :post-blank link)))
+                (text (buffer-substring-no-properties begin end)))
+           (save-excursion
+             (goto-char begin)
+             (when (equal (string-trim
+                           (buffer-substring-no-properties
+                            (line-beginning-position) (line-end-position)))
+                          (concat "- " text))
+               (list (my/org-canonical-file
+                      (org-element-property :path link)
+                      (file-name-directory buffer-file-name))
+                     text (line-beginning-position)
+                     (progn (forward-line 1) (point))))))))))
+
+ (defun my/org-set-backlink (target-file source-file source-title present)
+   "Set or remove the generated SOURCE-FILE backlink in TARGET-FILE.
+PRESENT means ensure one entry with SOURCE-TITLE; nil means remove it.
+Do not save pre-existing unsaved edits in a visited target buffer."
+   (when (and (file-exists-p target-file)
+              (file-in-directory-p target-file org-directory)
+              (not (equal (my/org-canonical-file target-file)
+                          (my/org-canonical-file source-file))))
+     (let* ((my/org-sync-in-progress t)
+            (buffer (or (find-buffer-visiting target-file)
+                        (find-file-noselect target-file))))
+       (with-current-buffer buffer
+         (unless (verify-visited-file-modtime buffer)
+           (user-error "Backlink target changed on disk; revert it first: %s"
+                       target-file))
+         (let ((was-modified (buffer-modified-p))
+               (tick (buffer-chars-modified-tick))
+               (source (my/org-canonical-file source-file))
+               (desired (when present
+                          (org-link-make-string
+                           (concat "file:"
+                                   (org-link-escape
+                                    (file-relative-name source-file
+                                                        (file-name-directory target-file))))
+                           source-title))))
+           (save-excursion
+             (save-restriction
+               (widen)
+               (let* ((headline (my/org-backlinks-headline))
+                      (entries (when headline (my/org-backlink-entries headline)))
+                      (matching (seq-filter (lambda (entry)
+                                              (equal (car entry) source))
+                                            entries))
+                      (unchanged (and present (= (length matching) 1)
+                                      (equal (cadar matching) desired))))
+                 (when (and present (not headline))
+                   (goto-char (point-max))
+                   (unless (bolp) (insert "\n"))
+                   (let ((start (point)))
+                     (insert "* Backlinks (0)\n\n")
+                     (goto-char start)
+                     (setq headline (my/org-backlinks-headline))))
+                 (when headline
+                   (let ((start (org-element-property :begin headline)))
+                     (unless unchanged
+                       (dolist (entry (reverse matching))
+                         (delete-region (nth 2 entry) (nth 3 entry)))
+                       (when present
+                         ;; Generated entries belong to the direct section,
+                         ;; before any user-written child headings.
+                         (let ((child (seq-find
+                                       (lambda (element)
+                                         (eq (org-element-type element) 'headline))
+                                       (org-element-contents
+                                        (my/org-backlinks-headline)))))
+                           (if child
+                               (goto-char (org-element-property :begin child))
+                             (goto-char start)
+                             (org-end-of-subtree t t)))
+                         (unless (bolp) (insert "\n"))
+                         (insert "- " desired "\n")))
+                     (goto-char start)
+                     (let ((count (length (my/org-backlink-entries
+                                           (my/org-backlinks-headline)))))
+                       (when (and (re-search-forward
+                                   "(\\([0-9]+\\))" (line-end-position) t)
+                                  (not (equal (match-string 1)
+                                              (number-to-string count))))
+                         (replace-match (number-to-string count) t t nil 1))))))))
+           (when (and (/= tick (buffer-chars-modified-tick))
+                      (not was-modified))
+             (save-buffer)))))))
+
  (defun my/org-ensure-backlink (target-file source-file source-title)
-   "Ensure TARGET-FILE contains a backlink to SOURCE-FILE with SOURCE-TITLE.
- Opens TARGET-FILE, inserts the link under a `* Backlinks (N)' heading
- (created if absent), and updates the count."
-   (when (file-exists-p target-file)
-     (let* ((rel-path (file-relative-name source-file (file-name-directory target-file)))
-            (link (format "[[file:%s][%s]]" rel-path source-title)))
-       (with-current-buffer (find-file-noselect target-file)
-         ;; Check for duplicate anywhere in the buffer
-         (goto-char (point-min))
-         (unless (search-forward link nil t)
-           ;; Find or create the Backlinks heading
-           (goto-char (point-min))
-           (if (re-search-forward "^\\* Backlinks ([0-9]+)" nil t)
-               ;; Heading exists — go to end of its subtree
-               (let ((start (point)))
-                 (org-end-of-subtree t)
-                 (unless (bolp) (insert "\n"))
-                 (insert (format "- %s\n" link))
-                 ;; Update count
-                 (goto-char start)
-                 (beginning-of-line)
-                 (let ((count 0))
-                   (save-excursion
-                     (org-end-of-subtree t)
-                     (let ((end (point)))
-                       (goto-char start)
-                       (while (re-search-forward "^- \\[\\[file:" end t)
-                         (cl-incf count))))
-                   (when (re-search-forward "(\\([0-9]+\\))" (line-end-position) t)
-                     (replace-match (number-to-string count) t t nil 1))))
-             ;; No heading yet — create at end of file
-             (goto-char (point-max))
-             (unless (bolp) (insert "\n"))
-             (insert (format "* Backlinks (1)\n\n- %s\n" link))))
-         (save-buffer)))))
+   "Ensure one generated backlink from TARGET-FILE to SOURCE-FILE."
+   (my/org-set-backlink target-file source-file source-title t))
+
+ (defun my/org-remove-backlink (target-file source-file)
+   "Remove the generated backlink from TARGET-FILE to SOURCE-FILE."
+   (my/org-set-backlink target-file source-file nil nil))
 #+end_src
 
 *** INTERNAL LINK BACKLINKS ON SAVE
 
 #+begin_src emacs-lisp
  (defun my/org-sync-backlinks ()
-   "After saving an org file, ensure backlinks exist in all internally linked files."
+   "After saving, synchronize generated backlinks with actual outgoing links."
    (when (and (my/org-sync-scope-p)
               (not my/org-sync-in-progress))
-     (let ((my/org-sync-in-progress t)
-           (source-file buffer-file-name)
-           (source-title (or (my/org-get-title)
-                             (file-name-base buffer-file-name)))
-           (source-dir (file-name-directory buffer-file-name)))
-       (save-excursion
-         (goto-char (point-min))
-         (while (re-search-forward "\\[\\[file:\\([^]]+\\.org\\)\\]" nil t)
-           (let* ((rel (match-string-no-properties 1))
-                  (target (expand-file-name rel source-dir)))
-             (when (and (file-exists-p target)
-                        (not (equal (file-truename target)
-                                    (file-truename source-file))))
-               (my/org-ensure-backlink target source-file source-title))))))))
+     (let* ((my/org-sync-in-progress t)
+            (source-file buffer-file-name)
+            (source-title (or (my/org-get-title)
+                              (file-name-base source-file)))
+            (current (my/org-outgoing-files)))
+       (dolist (target my/org-prev-links)
+         (unless (member target current)
+           (my/org-remove-backlink target source-file)))
+       (dolist (target current)
+         (my/org-ensure-backlink target source-file source-title))
+       (setq my/org-prev-links current))))
 
+ (add-hook 'before-save-hook #'my/org-record-links-before-save)
  (add-hook 'after-save-hook #'my/org-sync-backlinks)
 #+end_src
 
@@ -354,61 +476,119 @@ link with the title inferred from the filename (underscores → spaces)."
    "Convert filename BASE to title (underscores → spaces)."
    (replace-regexp-in-string "_" " " base))
 
+ (defun my/org-canonical-file (file &optional directory)
+   "Return the absolute, symlink-resolved name of FILE within DIRECTORY."
+   (file-truename (expand-file-name file directory)))
+
  (defun my/org-sync-scope-p (&optional file)
    "Return non-nil if FILE should participate in title/filename sync.
  Excludes date-named files and files outside the vault."
    (let ((f (or file buffer-file-name)))
      (and f
           (string-suffix-p ".org" f)
-          (string-prefix-p (expand-file-name org-directory)
-                           (expand-file-name f))
+          (file-in-directory-p (my/org-canonical-file f)
+                               (my/org-canonical-file org-directory))
           (not (string-match-p "\\`[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\'"
                                (file-name-base f))))))
 
- (defun my/org-update-backlinks (old-base new-base old-title new-title)
-   "Rewrite every org link referencing OLD-BASE.org in the vault.
- Updates the file path and, when the description matches OLD-TITLE,
- the description text.  Returns the number of files modified."
+ (defun my/org-rewrite-file-links (source-file old-file new-file old-title new-title)
+   "Update links in this buffer whose resolved destination is OLD-FILE.
+ SOURCE-FILE supplies the directory for relative paths.  Preserve search
+ options and custom descriptions; update only descriptions equal to OLD-TITLE.
+ Return non-nil when this buffer changed."
+   (save-excursion
+     (save-restriction
+       (widen)
+       (let ((changed nil)
+             (source-dir (file-name-directory source-file))
+             (old-target (my/org-canonical-file old-file))
+             (new-target (my/org-canonical-file new-file)))
+         ;; Work backwards so earlier element positions remain valid.
+         (dolist (link (reverse (org-element-map (org-element-parse-buffer) 'link
+                                 #'identity)))
+           (when (and (equal (org-element-property :type link) "file")
+                      (equal (my/org-canonical-file
+                              (org-element-property :path link) source-dir)
+                             old-target))
+             (let* ((format (org-element-property :format link))
+                    (description-start (org-element-property :contents-begin link))
+                    (description-end (org-element-property :contents-end link))
+                    (target-start (+ (org-element-property :begin link)
+                                     (pcase format ('bracket 2) ('angle 1) (_ 0))))
+                    (target-end (if description-start
+                                    (- description-start 2)
+                                  (- (org-element-property :end link)
+                                     (org-element-property :post-blank link)
+                                     (pcase format ('bracket 2) ('angle 1) (_ 0)))))
+                    (raw-target (buffer-substring-no-properties target-start target-end))
+                    (search-start (string-match "::" raw-target))
+                    (new-path (if (file-name-absolute-p (org-element-property :path link))
+                                  new-target
+                                (file-relative-name new-target source-dir)))
+                    (replacement (concat "file:" (org-link-escape new-path)
+                                         (when search-start
+                                           (substring raw-target search-start)))))
+               (when (and description-start old-title new-title
+                          (not (equal old-title new-title))
+                          (equal (buffer-substring-no-properties
+                                  description-start description-end)
+                                 old-title))
+                 (goto-char description-start)
+                 (delete-region description-start description-end)
+                 (insert new-title)
+                 (setq changed t))
+               (unless (equal raw-target replacement)
+                 (goto-char target-start)
+                 (delete-region target-start target-end)
+                 (insert replacement)
+                 (setq changed t)))))
+         changed))))
+
+ (defun my/org-check-link-buffers ()
+   "Reject link updates if a clean visiting vault buffer is stale on disk.
+ Check before renaming or saving so a conflict leaves filenames and links
+ unchanged.  Include daily notes because link rewriting also visits them."
+   (dolist (buf (buffer-list))
+     (with-current-buffer buf
+       (when (and buffer-file-name
+                  (string-suffix-p ".org" buffer-file-name)
+                  (file-in-directory-p (my/org-canonical-file buffer-file-name)
+                                       (my/org-canonical-file org-directory))
+                  (not (buffer-modified-p))
+                  (not (verify-visited-file-modtime buf)))
+         (user-error "Note changed on disk; reload it before renaming: %s"
+                     buffer-file-name)))))
+
+ (defun my/org-update-backlinks (old-file new-file old-title new-title)
+   "Rewrite links to absolute OLD-FILE so they refer to NEW-FILE.
+ Return the number of changed files.  Already modified visiting buffers
+ receive link changes in memory, but their unrelated edits are not saved."
+   (my/org-check-link-buffers)
    (let ((files (directory-files-recursively org-directory "\\.org$"))
+         (my/org-sync-in-progress t)
          (count 0)
-         (link-re (concat "\\[\\[file:\\([^]]*?\\)"
-                          (regexp-quote (concat old-base ".org"))
-                          "\\]"))
-         (desc-old (concat "][" old-title "]]"))
-         (desc-new (concat "][" new-title "]]")))
+         (pending 0))
      (dolist (f files)
        (let ((buf (find-buffer-visiting f)))
          (if buf
-             ;; File is open in a buffer — edit the buffer
              (with-current-buffer buf
-               (save-excursion
-                 (let ((mod nil))
-                   (goto-char (point-min))
-                   (while (re-search-forward link-re nil t)
-                     (replace-match (concat "[[file:\\1" new-base ".org]") t)
-                     (setq mod t))
-                   (unless (string= old-title new-title)
-                     (goto-char (point-min))
-                     (while (search-forward desc-old nil t)
-                       (replace-match desc-new t t)
-                       (setq mod t)))
-                   (when mod (save-buffer) (cl-incf count)))))
-           ;; File not open — use temp buffer for speed
+               (let ((was-modified (buffer-modified-p)))
+                 (unless (or was-modified (verify-visited-file-modtime buf))
+                   (user-error "Note changed on disk; reload it before renaming: %s" f))
+                 (when (my/org-rewrite-file-links f old-file new-file old-title new-title)
+                   (if was-modified
+                       (cl-incf pending)
+                     (save-buffer))
+                   (cl-incf count))))
            (with-temp-buffer
              (insert-file-contents f)
-             (let ((mod nil))
-               (goto-char (point-min))
-               (while (re-search-forward link-re nil t)
-                 (replace-match (concat "[[file:\\1" new-base ".org]") t)
-                 (setq mod t))
-               (unless (string= old-title new-title)
-                 (goto-char (point-min))
-                 (while (search-forward desc-old nil t)
-                   (replace-match desc-new t t)
-                   (setq mod t)))
-               (when mod
-                 (write-region (point-min) (point-max) f)
-                 (cl-incf count)))))))
+             (delay-mode-hooks (org-mode))
+             (when (my/org-rewrite-file-links f old-file new-file old-title new-title)
+               (write-region (point-min) (point-max) f nil 'silent)
+               (cl-incf count))))))
+     (when (> pending 0)
+       (message "Link changes remain unsaved in %d previously modified buffer%s"
+                pending (if (= pending 1) "" "s")))
      count))
 
  ;; Record title on open for change detection
@@ -432,24 +612,32 @@ link with the title inferred from the filename (underscores → spaces)."
                   my/org-prev-title
                   (not (string= title my/org-prev-title)))
          (let* ((dir (file-name-directory buffer-file-name))
+                (old-path (my/org-canonical-file buffer-file-name))
                 (new-path (expand-file-name (concat expected ".org") dir))
                 (my/org-sync-in-progress t))
+           (unless (and (equal expected (file-name-nondirectory expected))
+                        (my/org-sync-scope-p new-path))
+             (user-error "Title does not produce a valid note filename: %s" title))
            (when (file-exists-p new-path)
              (user-error "Cannot rename: %s already exists" new-path))
+           (my/org-check-link-buffers)
            (rename-file buffer-file-name new-path)
            (set-visited-file-name new-path t t)
            (set-buffer-modified-p nil)
-           (let ((n (my/org-update-backlinks fname expected
+           (let ((n (my/org-update-backlinks old-path new-path
                                              my/org-prev-title title)))
              (message "Renamed → %s.org  (%d backlink file%s updated)"
-                      expected n (if (= n 1) "" "s")))
-           (setq my/org-prev-title title))))))
+                      expected n (if (= n 1) "" "s")))))
+       (setq my/org-prev-title title))))
 
  (add-hook 'after-save-hook #'my/org-sync-title-to-filename)
 
- ;; File renamed externally → update title + backlinks
+ ;; File renamed externally → explicitly adopt filename as title.
  (defun my/org-sync-filename-to-title ()
-   "On open: if filename doesn't match #+TITLE, sync title and backlinks."
+   "Explicitly save the filename as this note's title and update links.
+ The old path is inferred from the current title.  Refuse to redirect its
+ links if that path still exists as a separate note."
+   (interactive)
    (when (and (my/org-sync-scope-p)
               (not my/org-sync-in-progress))
      (let* ((title (my/org-get-title))
@@ -457,18 +645,26 @@ link with the title inferred from the filename (underscores → spaces)."
             (expected (when title (my/org-title-to-filename title))))
        (when (and title expected
                   (not (string= expected fname)))
-         (let ((new-title (my/org-filename-to-title fname))
-               (old-base expected)
-               (my/org-sync-in-progress t))
+         (let* ((new-title (my/org-filename-to-title fname))
+                (new-path (my/org-canonical-file buffer-file-name))
+                (old-path (expand-file-name (concat expected ".org")
+                                            (file-name-directory new-path)))
+                (my/org-sync-in-progress t))
+           (unless (equal expected (file-name-nondirectory expected))
+             (user-error "Cannot infer the old filename from title: %s" title))
+           (when (file-exists-p old-path)
+             (user-error "Cannot redirect links: %s still exists" old-path))
+           (my/org-check-link-buffers)
            (save-excursion
              (goto-char (point-min))
              (when (re-search-forward "^#\\+TITLE:[ \t]+.*$" nil t)
-               (replace-match (concat "#+TITLE: " new-title))))
+               (replace-match (concat "#+TITLE: " new-title) t t)))
            (save-buffer)
-           (let ((n (my/org-update-backlinks old-base fname title new-title)))
+           (let ((n (my/org-update-backlinks old-path new-path title new-title)))
              (message "Title synced → %s  (%d backlink file%s updated)"
                       new-title n (if (= n 1) "" "s")))
            (setq my/org-prev-title new-title))))))
 
- (add-hook 'find-file-hook #'my/org-sync-filename-to-title)
+ ;; Also remove the old automatic behavior when this config is reloaded.
+ (remove-hook 'find-file-hook #'my/org-sync-filename-to-title)
 #+end_src

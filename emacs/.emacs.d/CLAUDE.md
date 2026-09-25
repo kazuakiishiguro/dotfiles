@@ -44,6 +44,8 @@ Personal knowledge base managed via Emacs org-mode. Data lives in `~/org/`, conf
 | n   | Note     | `~/org/` | Prompts for title, creates file via `my/capture-file`                 |
 | c   | Clipping | `~/org/` | Reads URL from clipboard via wl-paste, auto-derives title and link via org-cliplink |
 
+Both templates create `* 概要` and place the cursor at the start of its body.
+
 ### Shared helpers
 
 - **`my/org-title-to-path`** — core title-to-path logic: capitalizes first letter, replaces spaces with underscores, rejects duplicates, sets `my/capture-last-title`. Used by `my/capture-file` and `my/deft-new-note`
@@ -69,20 +71,29 @@ Personal knowledge base managed via Emacs org-mode. Data lives in `~/org/`, conf
 ### Conventions
 
 - Filenames use underscores for spaces, first letter capitalized (e.g. `Binary_Hacks.org`)
-- `#+TITLE:` always matches the filename (enforced automatically — see Title/Filename sync below)
+- Changing `#+TITLE:` on save renames the file; existing mismatches are left alone on open.
 
 ### Title / Filename sync
 
-Title and filename are kept in sync automatically.
+Title edits synchronize on save; opening a note does not modify it.
 
-- **Title changed on save** — file renames to match, all `[[file:...]]` links and descriptions across the vault are updated
-- **File renamed externally** (dired, shell, etc.) — on next open, `#+TITLE:` updates to match filename, backlinks are updated
+- **Title changed on save** — file renames to match. Only links resolving to that exact file are rewritten; search suffixes and custom descriptions are preserved.
+- **File renamed externally** (dired, shell, etc.) — run `M-x my/org-sync-filename-to-title` explicitly to adopt its filename and update links. It refuses ambiguous cases where the inferred old path still exists.
+- Link changes to already modified buffers stay unsaved. Stale clean buffers must be reloaded before renaming, so their disk changes are not overwritten.
 - Guard variable `my/org-sync-in-progress` prevents recursive triggering
 
 ### Backlinks
 
-Backlinks are the sole linking mechanism. Managed via `my/org-ensure-backlink`, which inserts links under a `* Backlinks (N)` heading (created if absent) and keeps the count updated. Duplicates are skipped.
+On saving a note, `my/org-sync-backlinks` compares outgoing links with the previous disk contents. It adds missing generated backlinks and removes entries for links deleted from that source. Generated Backlinks sections and example/source blocks do not count as outgoing links.
 
-One trigger creates backlinks automatically:
+`my/org-ensure-backlink` and `my/org-remove-backlink` maintain the generated list and its count. They preserve user-written child sections and leave previously modified target buffers unsaved. Failed removals remain pending for a later save in the same buffer. Existing stale backlinks are not migrated in bulk.
 
-- **Saving any org file** — all `[[file:...]]` links in the buffer are scanned; backlinks are created in each linked file
+### Regression tests
+
+From the dotfiles repository root:
+
+```sh
+emacs --batch -Q -l emacs/tests/org-zettel-sync-tests.el -f ert-run-tests-batch-and-exit
+```
+
+The tests load only the relevant configuration forms, use disposable notes under `/tmp`, and reject note writes outside those fixtures.
