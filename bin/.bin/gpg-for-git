@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Let Magit read the passphrase instead of pinentry drawing over terminal Emacs.
+case "${INSIDE_EMACS-}" in
+    *,magit)
+        if [ -n "${SSH_CONNECTION-}" ] || [ -n "${SSH_TTY-}" ]; then
+            # Magit's password prompt matching expects the English GPG prompt.
+            export LC_ALL=C
+            exec gpg --pinentry-mode loopback "$@"
+        fi
+        ;;
+esac
+
+exec gpg "$@"

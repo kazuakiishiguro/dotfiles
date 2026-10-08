@@ -17,4 +17,4 @@
 	editor = emacs -nw
 	
 [gpg]
-	program = gpg
+	program = gpg-for-git
