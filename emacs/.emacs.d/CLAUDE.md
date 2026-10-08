@@ -65,13 +65,30 @@ Both templates create `* 概要` and place the cursor at the start of its body.
 | C-c C-n  | (in Deft) Create note from search term                              |
 | C-c c    | org-capture                                                         |
 | C-c n    | Start Note capture (prompts for title)                              |
-| C-c l    | Insert org file link (completing-read from vault, description from filename) |
+| C-c l    | Insert a link to an existing file or new title, without creating the target |
+| C-c C-o  | Follow the link; a missing note opens with an unsaved summary template |
 | C-x p i  | org-cliplink — insert org link from clipboard URL (fetches page title) |
 
 ### Conventions
 
 - Filenames use underscores for spaces, first letter capitalized (e.g. `Binary_Hacks.org`)
 - Changing `#+TITLE:` on save renames the file; existing mismatches are left alone on open.
+
+### Links to future notes
+
+`C-c l` accepts an existing filename or a new title (optional `.org` suffix).
+For example, entering `new concept` inserts `[[file:New_concept.org][New concept]]`
+when the source is in the vault root. Relative paths entered in the prompt are
+relative to the vault root; the inserted link is relative to the current note.
+Inserting the link never creates a file or directory.
+
+Follow the link with `C-c C-o`, or click its red link in the live Web viewer to
+open Emacs. `my/org-initialize-new-note` initializes only a nonexistent, empty
+vault `.org` buffer with `#+TITLE:`, `#+DATE:`, and `* 概要`, leaving point ready
+to write. The new file is created only when the user saves (`C-x C-s`). Existing
+files, including empty files, and unsaved content are preserved. Capture opens
+its targets with this initializer inhibited so its own template appears once.
+Deft's new-note command reuses the initializer and keeps its existing save behavior.
 
 ### Title / Filename sync
 

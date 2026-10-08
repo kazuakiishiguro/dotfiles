@@ -343,14 +343,12 @@ Do not save pre-existing unsaved edits in a visited target buffer."
    (let* ((raw (string-trim (deft-whole-filter-regexp))))
      (when (string-empty-p raw)
        (user-error "No search term to create a note from"))
-     (let* ((path (my/org-title-to-path org-directory raw))
-            (title my/capture-last-title))
+     (let ((path (my/org-title-to-path org-directory raw)))
        (let ((win (selected-window)))
          (kill-buffer (current-buffer))
          (select-window win)
          (switch-to-buffer (find-file-noselect path)))
-       (insert (format "#+TITLE: %s\n#+DATE: %s\n\n" title
-                       (format-time-string "[%Y-%m-%d %a %H:%M]")))
+       ;; The new-note find-file hook supplies the title and summary.
        (save-buffer))))
 #+end_src
 
@@ -358,20 +356,51 @@ Do not save pre-existing unsaved edits in a visited target buffer."
 
 #+begin_src emacs-lisp
  (defun my/org-insert-link ()
-   "Insert an org file link with description derived from filename.
-Prompts for an .org file under `org-directory' and inserts a relative
-link with the title inferred from the filename (underscores → spaces)."
+   "Insert a link to an existing or future note, without creating a file.
+Complete a filename relative to `org-directory', or enter a new title or
+relative filename (the .org suffix is optional).  New titles follow the
+capture filename convention.  The description comes from the filename."
    (interactive)
    (let* ((files (directory-files-recursively org-directory "\\.org$"))
           (names (mapcar (lambda (f) (file-relative-name f org-directory)) files))
-          (pick (completing-read "Link to: " names nil t))
-          (abs (expand-file-name pick org-directory))
+          (pick (string-trim
+                 (completing-read "Link to (existing file or new title): " names nil nil)))
+          (abs (if (member pick names)
+                   (expand-file-name pick org-directory)
+                 (my/org-new-link-file pick)))
           (base-dir (if buffer-file-name
                         (file-name-directory buffer-file-name)
                       (expand-file-name org-directory)))
           (rel (file-relative-name abs base-dir))
           (title (my/org-filename-to-title (file-name-base abs))))
-     (insert (format "[[file:%s][%s]]" rel title))))
+     (unless (file-in-directory-p (my/org-canonical-file abs)
+                                  (my/org-canonical-file org-directory))
+       (user-error "Note links must stay inside org-directory"))
+     ;; `org-link-make-string' escapes the path and description itself.
+     (insert (org-link-make-string (concat "file:" rel) title))))
+
+ (defun my/org-new-link-file (input)
+   "Return a future note path for INPUT, relative to `org-directory'.
+Do not create files or directories.  Refuse paths outside the vault and
+names containing Org's file-search separator."
+   (when (or (file-name-absolute-p input)
+             (file-remote-p input)
+             (string-match-p "::\\|\0" input))
+     (user-error "Enter a title or a relative .org filename inside org-directory"))
+   (let* ((directory (or (file-name-directory input) ""))
+          (base (file-name-nondirectory input))
+          (base (if (string-suffix-p ".org" base t)
+                    (substring base 0 -4)
+                  base)))
+     (when (member base '("" "." ".."))
+       (user-error "Note title cannot be empty"))
+     (let ((path (my/org-title-to-filepath
+                  (expand-file-name directory org-directory)
+                  (my/capture-normalize-title base))))
+       (unless (file-in-directory-p (my/org-canonical-file path)
+                                    (my/org-canonical-file org-directory))
+         (user-error "Note links must stay inside org-directory"))
+       path)))
 
  (define-key global-map "\C-cc" 'org-capture)
  (define-key global-map "\C-cn" #'my/org-capture-note-dwim)
@@ -667,4 +696,44 @@ link with the title inferred from the filename (underscores → spaces)."
 
  ;; Also remove the old automatic behavior when this config is reloaded.
  (remove-hook 'find-file-hook #'my/org-sync-filename-to-title)
+#+end_src
+
+*** NEW NOTES FROM FILE LINKS
+
+#+begin_src emacs-lisp
+ (defvar my/org-inhibit-new-note-template nil
+   "Non-nil while capture opens its target and supplies its own template.")
+
+ (defun my/org-capture-target-without-new-note-template (function &rest args)
+   "Call capture target FUNCTION with ARGS, without initializing its file."
+   (let ((my/org-inhibit-new-note-template t))
+     (apply function args)))
+
+ ;; Capture's target is opened before `org-capture-mode' becomes active.
+ ;; Bind only during that call; its global plist can outlive a capture.
+ (advice-add 'org-capture-target-buffer :around
+             #'my/org-capture-target-without-new-note-template)
+
+ (defun my/org-initialize-new-note ()
+   "Prepare an unsaved new vault note for writing under its summary.
+Existing files (including empty files) and buffers with content are left
+alone.  Following a missing .org link already opens it in Emacs with
+Org's default `org-file-apps'; no global missing-file setting is needed."
+   (when (and (not my/org-inhibit-new-note-template)
+              (derived-mode-p 'org-mode)
+              buffer-file-name
+              (not (file-remote-p buffer-file-name))
+              (string-suffix-p ".org" buffer-file-name)
+              (file-in-directory-p (my/org-canonical-file buffer-file-name)
+                                   (my/org-canonical-file org-directory))
+              (not (file-exists-p buffer-file-name))
+              (not (file-symlink-p buffer-file-name))
+              (= (buffer-size) 0)
+              (not (buffer-modified-p)))
+     (let ((title (my/org-filename-to-title (file-name-base buffer-file-name))))
+       (insert (format "#+TITLE: %s\n#+DATE: %s\n\n* 概要\n"
+                       title (format-time-string "[%Y-%m-%d %a %H:%M]")))
+       (setq my/org-prev-title title))))
+
+ (add-hook 'find-file-hook #'my/org-initialize-new-note)
 #+end_src

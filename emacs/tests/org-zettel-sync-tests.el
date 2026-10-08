@@ -21,7 +21,9 @@
 
 (defun org-zettel-test--sync-symbol-p (symbol)
   (and (symbolp symbol)
-       (string-prefix-p "my/org-" (symbol-name symbol))))
+       (or (string-prefix-p "my/org-" (symbol-name symbol))
+           (string-prefix-p "my/capture-" (symbol-name symbol))
+           (eq symbol 'my/deft-new-note))))
 
 (defun org-zettel-test--load-config ()
   "Read relevant definitions and hook registrations, without running init."
@@ -49,6 +51,9 @@
                                             my/cliplink-last-link))))
                            (and (eq (car-safe form) 'setq)
                                 (eq (cadr form) 'org-capture-templates))
+                           (and (eq (car-safe form) 'advice-add)
+                                (eq (cadr (nth 1 form)) 'org-capture-target-buffer)
+                                (org-zettel-test--sync-symbol-p (cadr (nth 3 form))))
                            (and (memq (car-safe form) '(add-hook remove-hook))
                                 (memq (cadr (nth 1 form))
                                       '(find-file-hook before-save-hook after-save-hook))
@@ -78,6 +83,8 @@
           (after-save-hook (copy-sequence org-zettel-test--after-hooks))
           (org-mode-hook nil)
           (org-element-cache-persistent nil)
+          ;; Mocking a native subr must not write compiler cache fixtures.
+          (native-comp-enable-subr-trampolines nil)
           (my/org-sync-in-progress nil)
           (create-lockfiles nil)
           (make-backup-files nil)
@@ -173,6 +180,147 @@
               (when (buffer-live-p capture-buffer)
                 (with-current-buffer capture-buffer
                   (org-capture-kill))))))))))
+
+(ert-deftest org-zettel-link-insertion-accepts-new-title-without-creating-file ()
+  (org-zettel-test--with-vault
+    (let* ((text "#+TITLE: Source\n\n* 概要\n")
+           (source (org-zettel-test--write "nested/Source.org" text))
+           (before (file-attributes source)))
+      (with-current-buffer (org-zettel-test--visit "nested/Source.org")
+        (goto-char (point-max))
+        (cl-letf (((symbol-function 'completing-read)
+                   (lambda (_prompt _collection &optional _predicate require-match
+                                    &rest _rest)
+                     (should-not require-match)
+                     "  new concept.org  ")))
+          (my/org-insert-link))
+        (should (string-suffix-p "[[file:../New_concept.org][New concept]]"
+                                 (buffer-string))))
+      (should-not (file-exists-p (org-zettel-test--file "New_concept.org")))
+      (should-not (find-buffer-visiting (org-zettel-test--file "New_concept.org")))
+      (should (equal (org-zettel-test--read "nested/Source.org") text))
+      (should (equal (file-attribute-modification-time before)
+                     (file-attribute-modification-time (file-attributes source)))))))
+
+(ert-deftest org-zettel-link-insertion-preserves-existing-path-and-escapes-brackets ()
+  (org-zettel-test--with-vault
+    (let ((existing (org-zettel-test--write "nested/[lower_case].org" "Saved.\n")))
+      (with-temp-buffer
+        (setq buffer-file-name (org-zettel-test--file "Source.org"))
+        (org-mode)
+        (cl-letf (((symbol-function 'completing-read)
+                   (lambda (&rest _args) "nested/[lower_case].org")))
+          (my/org-insert-link))
+        (let ((link (org-element-map (org-element-parse-buffer) 'link #'identity nil t)))
+          (should (equal (org-element-property :type link) "file"))
+          (should (equal (org-element-property :path link) "nested/[lower_case].org"))
+          (should (equal (my/org-outgoing-files) (list existing)))))
+      (should (equal (org-zettel-test--read "nested/[lower_case].org") "Saved.\n")))))
+
+(ert-deftest org-zettel-new-link-normalizes-title-and-keeps-vault-relative-directory ()
+  (org-zettel-test--with-vault
+    (should (equal (my/org-new-link-file "nested/new concept")
+                   (org-zettel-test--file "nested/New_concept.org")))
+    (should (equal (my/org-new-link-file "new_concept.org")
+                   (org-zettel-test--file "New_concept.org")))
+    (should (equal (my/org-new-link-file "日本語 のノート")
+                   (org-zettel-test--file "日本語_のノート.org")))
+    (should-not (file-exists-p (org-zettel-test--file "nested")))
+    (dolist (bad '("" ".org" "nested/" "../escape" "nested/../../escape"
+                   "/tmp/Outside.org" "Note.org::heading"))
+      (should-error (my/org-new-link-file bad) :type 'user-error))))
+
+(ert-deftest org-zettel-opening-missing-note-prepares-unsaved-summary ()
+  (org-zettel-test--with-vault
+    (with-current-buffer (org-zettel-test--visit "Future_note.org")
+      (should (equal (my/org-get-title) "Future note"))
+      (should (string-match-p "^#\\+DATE: \\[" (buffer-string)))
+      (should (string-suffix-p "\n\n* 概要\n" (buffer-string)))
+      (should (= (point) (point-max)))
+      (should (buffer-modified-p))
+      (should-not (file-exists-p buffer-file-name))
+      (let ((text (buffer-string)))
+        (my/org-initialize-new-note)
+        (should (equal text (buffer-string))))
+      (insert "Written now.\n")
+      (save-buffer)
+      (should (file-exists-p buffer-file-name))
+      (should (string-suffix-p "* 概要\nWritten now.\n"
+                               (org-zettel-test--read "Future_note.org"))))))
+
+(ert-deftest org-zettel-following-missing-org-link-opens-unsaved-note-in-emacs ()
+  (org-zettel-test--with-vault
+    (let ((text "#+TITLE: Source\n\n[[file:Future_note.org][Future note]]\n"))
+      (org-zettel-test--write "Source.org" text)
+      (save-window-excursion
+        (switch-to-buffer (org-zettel-test--visit "Source.org"))
+        (goto-char (point-min))
+        (search-forward "[[file:")
+        (let ((org-open-non-existing-files nil))
+          (org-open-at-point))
+        (let ((target (find-buffer-visiting (org-zettel-test--file "Future_note.org"))))
+          (should target)
+          (with-current-buffer target
+            (should (equal (my/org-get-title) "Future note"))
+            (should (string-suffix-p "* 概要\n" (buffer-string)))
+            (should (buffer-modified-p))
+            (should-not (file-exists-p buffer-file-name)))))
+      (should (equal text (org-zettel-test--read "Source.org"))))))
+
+(ert-deftest org-zettel-new-note-template-leaves-existing-empty-file-unchanged ()
+  (org-zettel-test--with-vault
+    (let* ((file (org-zettel-test--write "Empty.org" ""))
+           (before (file-attributes file)))
+      (with-current-buffer (org-zettel-test--visit "Empty.org")
+        (should (= 0 (buffer-size)))
+        (should-not (buffer-modified-p)))
+      (should (equal (org-zettel-test--read "Empty.org") ""))
+      (should (equal (file-attribute-modification-time before)
+                     (file-attribute-modification-time (file-attributes file)))))))
+
+(ert-deftest org-zettel-new-note-template-preserves-unsaved-content-and-scope ()
+  (org-zettel-test--with-vault
+    (with-temp-buffer
+      (org-mode)
+      (setq buffer-file-name (org-zettel-test--file "Unsaved.org"))
+      (insert "User text.\n")
+      (my/org-initialize-new-note)
+      (should (equal (buffer-string) "User text.\n"))
+      (should-not (file-exists-p buffer-file-name)))
+    (dolist (name '("../Outside.org" "Plain.txt"))
+      (with-temp-buffer
+        (org-mode)
+        (setq buffer-file-name (org-zettel-test--file name))
+        (my/org-initialize-new-note)
+        (should (= 0 (buffer-size)))))))
+
+(ert-deftest org-zettel-file-capture-uses-only-its-own-template ()
+  (org-zettel-test--with-vault
+    (let ((org-capture-templates (copy-tree org-capture-templates))
+          (org-capture-plist nil)
+          (my/capture-last-title "Capture title")
+          (my/cliplink-last-link "[[https://example.invalid/][Source]]"))
+      (dolist (key '("n" "c"))
+        (let* ((entry (assoc key org-capture-templates))
+               (path (org-zettel-test--file (concat "Capture_" key ".org")))
+               capture-buffer)
+          (setf (nth 3 entry) (list 'file path))
+          (setcdr (nthcdr 4 entry) '(:no-save t))
+          (unwind-protect
+              (progn
+                (org-capture nil key)
+                (setq capture-buffer (current-buffer))
+                (should (= 1 (org-zettel-test--occurrences "#+TITLE:" (buffer-string))))
+                (should (= 1 (org-zettel-test--occurrences "* 概要" (buffer-string))))
+                (should (equal (my/org-get-title) "Capture title"))
+                (should (bolp))
+                (should-not (file-exists-p path)))
+            (when (buffer-live-p capture-buffer)
+              (with-current-buffer capture-buffer (org-capture-kill))))))
+      ;; Capture retains its global plist; it must not suppress later links.
+      (with-current-buffer (org-zettel-test--visit "After_capture.org")
+        (should (equal (my/org-get-title) "After capture"))
+        (should (string-suffix-p "* 概要\n" (buffer-string)))))))
 
 (ert-deftest org-zettel-rename-matches-resolved-path-and-preserves-link-details ()
   (org-zettel-test--with-vault
