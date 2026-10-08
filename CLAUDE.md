@@ -74,10 +74,16 @@ A Scrapbox.io-style card grid viewer for the `~/org/` knowledge base. Symlinked 
 - Static export: `cd ~/org && python3 org-zettel.py` → produces `org-zettel-view.html`
 - Live server with editing: `cd ~/org && python3 org-zettel.py --serve` → serves on `localhost:8080`
 - To run and open: `cd ~/org && python3 org-zettel.py --serve & sleep 1 && xdg-open http://127.0.0.1:8080`
-- Server endpoints: `GET /api/health`, `GET /api/raw/{id}`, `POST /api/save/{id}`, plus static file serving for images
-- Editing is Scrapbox-style: click content to enter raw org source textarea, click outside or Escape to save
+- Server endpoints: `GET /api/health`, `GET /api/raw/{id}`, `POST /api/save/{id}`, `POST /api/open-emacs/{id}`, plus static file serving for images
+- Inline editing is disabled by default; use the Emacs button to edit notes.
+- Missing note links are red. Clicking one in the live viewer opens an unsaved Emacs buffer with the new-note template; the server does not create the file. Save in Emacs, then reload the viewer to refresh its graph and link colors.
+- Graph data includes `file_ids` for all existing notes before display filters and `org_root` for absolute link resolution. Links use exact paths relative to their source note.
+- Static exports show red links but cannot launch Emacs; that action requires the live server.
 - Data injection: Python replaces `const GRAPH_DATA = null;` in the template with JSON
 - Pins stored in browser localStorage (key: `org-graph-pins`), separate per origin
+
+Backend regression tests use temporary vaults and mocked GUI launches:
+`python3 -B -m unittest discover -s scripts/tests -p 'test_org_zettel.py'`
 
 ## Conventions
 

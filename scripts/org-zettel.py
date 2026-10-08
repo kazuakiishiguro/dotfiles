@@ -267,7 +267,10 @@ def build_graph(org_dir: Path, include_daily: bool, include_orphans: bool, min_b
     _load_mtime_cache(org_dir)
     include_prefixes = normalize_prefixes(include_prefixes)
     exclude_prefixes = normalize_prefixes(exclude_prefixes)
-    org_files = sorted(org_dir.rglob("*.org"))
+    org_files = sorted(f for f in org_dir.rglob("*.org") if f.is_file())
+    # Existence is independent of which notes the graph displays.  In particular,
+    # daily notes, orphans and excluded categories must not appear as red links.
+    file_ids = [f.relative_to(org_dir).as_posix() for f in org_files]
     print(f"Scanning {len(org_files)} .org files...", file=sys.stderr)
     if include_prefixes:
         print(f"Include prefixes: {', '.join(include_prefixes)}", file=sys.stderr)
@@ -345,6 +348,8 @@ def build_graph(org_dir: Path, include_daily: bool, include_orphans: bool, min_b
         "edges": edges,
         "categories": categories,
         "tags": all_tags,
+        "file_ids": file_ids,
+        "org_root": str(org_dir.resolve()),
     }
 
 
@@ -434,10 +439,16 @@ def make_handler(org_dir, template_path, build_args):
             """Extract and validate file ID from URL path."""
             raw = self.path[len(path_prefix):]
             file_id = unquote(raw)
-            # Path traversal protection
-            resolved = (org_dir / file_id).resolve()
-            org_root = str(org_dir.resolve())
-            if not (str(resolved) == org_root or str(resolved).startswith(org_root + os.sep)):
+            # Only vault-relative paths are accepted, including for new notes.
+            if not file_id or '\0' in file_id:
+                return None, None
+            relative = Path(file_id)
+            if relative.is_absolute() or '..' in relative.parts:
+                return None, None
+            try:
+                resolved = (org_dir / relative).resolve()
+                resolved.relative_to(org_dir.resolve())
+            except (OSError, RuntimeError, ValueError):
                 return None, None
             if not resolved.suffix == '.org':
                 return None, None
@@ -511,10 +522,12 @@ def make_handler(org_dir, template_path, build_args):
                     self._send_json({'error': 'parse failed'}, 500)
             elif self.path.startswith('/api/open-emacs/'):
                 file_id, filepath = self._resolve_id('/api/open-emacs/')
-                if not file_id or not filepath.exists():
-                    self._send_json({'error': 'not found'}, 404)
+                if not file_id or (filepath.exists() and not filepath.is_file()):
+                    self._send_json({'error': 'invalid path'}, 400)
                     return
                 try:
+                    # A missing note is opened as an unsaved Emacs buffer.  The
+                    # server must not create a file merely because a link is used.
                     # Ensure Wayland/X11 display vars are available for GUI windows
                     env = os.environ.copy()
                     for var in ('WAYLAND_DISPLAY', 'DISPLAY', 'XDG_RUNTIME_DIR'):
@@ -525,8 +538,10 @@ def make_handler(org_dir, template_path, build_args):
                                        '-e', 'emacsclient', '-t', '-a', '', str(filepath)],
                                      env=env)
                     self._send_json({'ok': True})
-                except FileNotFoundError:
-                    self._send_json({'error': 'emacsclient not found'}, 500)
+                except FileNotFoundError as exc:
+                    self._send_json({'error': f'{exc.filename or "alacritty"} not found'}, 500)
+                except OSError as exc:
+                    self._send_json({'error': f'could not launch Emacs: {exc}'}, 500)
             elif self.path.startswith('/api/rename/'):
                 file_id, filepath = self._resolve_id('/api/rename/')
                 if not file_id:

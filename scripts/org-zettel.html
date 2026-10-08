@@ -382,6 +382,8 @@ body {
   cursor: pointer;
 }
 #page-content a.org-link:hover { border-bottom-color: var(--link); }
+#page-content a.org-link.missing { color: var(--red); }
+#page-content a.org-link.missing:hover { border-bottom-color: var(--red); }
 #page-content a.ext-link {
   color: var(--link);
   text-decoration: none;
@@ -718,6 +720,8 @@ const GRAPH_DATA = null;
 
   // Build lookup maps
   const nodeMap = new Map(nodes.map(n => [n.id, n]));
+  // Existence is independent of the graph's filters and orphan settings.
+  const existingFileIds = new Set([...nodeMap.keys(), ...(GRAPH_DATA.file_ids || [])]);
   const outgoing = new Map();
   const incoming = new Map();
 
@@ -894,6 +898,9 @@ const GRAPH_DATA = null;
   // Org-to-HTML inline markup renderer
   function inlineMarkup(text) {
     let s = escHtml(text);
+    const noteLinks = [];
+    const unescapeHtml = value => value.replace(/&(amp|lt|gt|quot);/g,
+      (_match, name) => ({ amp: '&', lt: '<', gt: '>', quot: '"' })[name]);
 
     // Image links: [[file:image.png]] or [[file:image.jpg][desc]] etc.
     s = s.replace(/\[\[file:([^\]]+?\.(?:png|jpg|jpeg|gif|svg|webp))(?:::.*?)?\]\[([^\]]+?)\]\]/gi, function(_m, path, desc) {
@@ -905,17 +912,16 @@ const GRAPH_DATA = null;
       return '<img src="' + escHtml(src) + '" alt="" style="max-width:100%;border-radius:4px;margin:8px 0;">';
     });
 
-    // Org links: [[file:path.org][desc]]
-    s = s.replace(/\[\[file:([^\]]+?)\]\[([^\]]+?)\]\]/g, function(_m, path, desc) {
-      const target = path.replace(/^\.\//, '').replace(/::.*$/, '');
-      return '<a class="org-link" data-target="' + escHtml(target) + '">' + desc + '</a>';
-    });
-    // Org links without desc: [[file:path.org]]
-    s = s.replace(/\[\[file:([^\]]+?)\]\]/g, function(_m, path) {
-      const target = path.replace(/^\.\//, '').replace(/::.*$/, '');
-      const stem = target.replace(/^.*\//, '').replace(/\.org$/, '');
-      return '<a class="org-link" data-target="' + escHtml(target) + '">' + escHtml(stem) + '</a>';
-    });
+    // Keep note-link attributes out of the later inline-formatting passes.
+    // Paths are HTML-escaped once; Org's escaped brackets remain parseable.
+    s = s.replace(/\[\[file:((?:\\.|[^\]\\])+?)\](?:\[([^\]]*?)\])?\]/g,
+      function(_match, path, desc) {
+        const target = unescapeHtml(path).replace(/\\([\[\]\\])/g, '$1').replace(/::.*$/, '');
+        const label = desc !== undefined ? desc : escHtml(
+          target.replace(/^.*\//, '').replace(/\.org$/, '').replace(/_/g, ' '));
+        const html = '<a class="org-link" data-target="' + escHtml(target) + '">' + label + '</a>';
+        return '\x01NOTE' + (noteLinks.push(html) - 1) + '\x02';
+      });
 
     // External image links: [[https://...image.png]] or [[https://...image.png][desc]]
     s = s.replace(/\[\[(https?:\/\/[^\]]+?\.(?:png|jpg|jpeg|gif|svg|webp)(?:\?[^\]]*)?)\]\[([^\]]+?)\]\]/gi, function(_m, url, desc) {
@@ -944,7 +950,7 @@ const GRAPH_DATA = null;
     // Strikethrough: +text+
     s = s.replace(/(^|[\s(])\+([^\s+](?:[^+]*[^\s+])?)\+([\s).,;:!?]|$)/g, '$1<del>$2</del>$3');
 
-    return s;
+    return s.replace(/\x01NOTE(\d+)\x02/g, (_match, index) => noteLinks[Number(index)]);
   }
 
   function highlightSyntax(code, lang) {
@@ -1185,11 +1191,29 @@ const GRAPH_DATA = null;
 
   // Path resolution
   function normalizeOrgTargetPath(currentNodeId, targetPath) {
-    const cleaned = targetPath.replace(/^\.\//, '').replace(/::.*$/, '');
-    const currentDir = currentNodeId && currentNodeId.includes('/')
-      ? currentNodeId.replace(/\/[^/]+$/, '/')
-      : '';
-    return new URL(cleaned, 'file:///' + currentDir).pathname.slice(1);
+    if (typeof targetPath !== 'string' || targetPath.includes('\0')) return null;
+    let path = targetPath.replace(/::.*$/, '');
+    let parts = (currentNodeId || '').split('/').slice(0, -1);
+    if (path.startsWith('/')) {
+      const root = (GRAPH_DATA.org_root || '').replace(/\/+$/, '');
+      if (!root || !path.startsWith(root + '/')) return null;
+      path = path.slice(root.length + 1);
+      parts = [];
+    } else if (path.startsWith('~')) {
+      return null;
+    }
+    // Use file paths, not URLs: #, ?, %, spaces and Unicode are literal names.
+    for (const part of path.split('/')) {
+      if (!part || part === '.') continue;
+      if (part === '..') {
+        if (!parts.length) return null;
+        parts.pop();
+      } else {
+        parts.push(part);
+      }
+    }
+    const id = parts.join('/');
+    return id.endsWith('.org') ? id : null;
   }
 
   function extractOutgoingOrgLinks(currentNodeId, orgText) {
@@ -1203,7 +1227,7 @@ const GRAPH_DATA = null;
       let match;
       while ((match = re.exec(line)) !== null) {
         const resolved = normalizeOrgTargetPath(currentNodeId, match[1]);
-        if (!seen.has(resolved)) {
+        if (resolved && !seen.has(resolved)) {
           seen.add(resolved);
           links.push(resolved);
         }
@@ -1214,15 +1238,8 @@ const GRAPH_DATA = null;
   }
 
   function resolveOrgPath(currentNodeId, targetPath) {
-    targetPath = targetPath.replace(/^\.\//, '');
-    if (nodeMap.has(targetPath)) return targetPath;
     const resolved = normalizeOrgTargetPath(currentNodeId, targetPath);
-    if (nodeMap.has(resolved)) return resolved;
-    const lower = resolved.toLowerCase();
-    for (const [id] of nodeMap) {
-      if (id.toLowerCase() === lower) return id;
-    }
-    return null;
+    return resolved && nodeMap.has(resolved) ? resolved : null;
   }
 
   // 2-hop connection computation
@@ -1291,13 +1308,50 @@ const GRAPH_DATA = null;
     activeInput = null;
   }
 
+  async function openInEmacs(fileId, missing = false) {
+    if (!serverMode) {
+      setUploadStatus('Open the live viewer to edit this note in Emacs.', 'error');
+      return;
+    }
+    setUploadStatus('Opening in Emacs...', '');
+    try {
+      const response = await fetch('/api/open-emacs/' + encodeURIComponent(fileId), {
+        method: 'POST',
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || ('HTTP ' + response.status));
+      }
+      setUploadStatus(missing
+        ? 'Opened in Emacs. Save the new note, then reload this page.'
+        : 'Opened in Emacs.', 'success');
+    } catch (error) {
+      setUploadStatus('Could not open in Emacs: ' + error.message, 'error');
+    }
+  }
+
   function wireOrgLinks(nodeId) {
     pageContent.querySelectorAll('a.org-link').forEach(a => {
+      const target = normalizeOrgTargetPath(nodeId, a.getAttribute('data-target'));
+      const missing = target !== null && !existingFileIds.has(target);
+      a.classList.toggle('missing', missing);
+      if (target) {
+        a.href = '#' + encodeURIComponent(target);
+        a.title = missing ? 'Create this note in Emacs'
+          : nodeMap.has(target) ? 'Open note' : 'Open this note in Emacs';
+      } else {
+        a.title = 'Only .org notes inside this vault can be opened here';
+        a.setAttribute('aria-disabled', 'true');
+      }
       a.addEventListener('click', function(e) {
         e.preventDefault();
-        const target = a.getAttribute('data-target');
-        const resolvedId = resolveOrgPath(nodeId, target);
-        if (resolvedId) openPage(resolvedId);
+        if (!target) {
+          setUploadStatus('This link is not an .org note inside this vault.', 'error');
+        } else if (nodeMap.has(target)) {
+          openPage(target);
+        } else {
+          openInEmacs(target, missing);
+        }
       });
     });
   }
@@ -2478,8 +2532,7 @@ const GRAPH_DATA = null;
   document.getElementById('open-emacs-btn').addEventListener('click', () => {
     const nodeId = editingNodeId || decodeURIComponent(location.hash.slice(1));
     if (!nodeId) return;
-    fetch('/api/open-emacs/' + encodeURIComponent(nodeId), { method: 'POST' })
-      .then(r => r.json()).then(d => { if (d.error) console.error('open-emacs:', d.error); });
+    openInEmacs(nodeId);
   });
 
   // Random button — completely random page
