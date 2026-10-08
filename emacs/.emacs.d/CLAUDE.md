@@ -77,6 +77,10 @@ Both templates create `* 概要` and place the cursor at the start of its body.
 ### Links to future notes
 
 `C-c l` accepts an existing filename or a new title (optional `.org` suffix).
+With Ivy, `RET` accepts the typed name even when it partially matches an existing
+note. Select a candidate explicitly with `down` / `C-n`, then `RET`, or complete
+it with `TAB`, to link to that existing note. This selection policy is local to
+`C-c l`; other completion commands are unchanged.
 For example, entering `new concept` inserts `[[file:New_concept.org][New concept]]`
 when the source is in the vault root. Relative paths entered in the prompt are
 relative to the vault root; the inserted link is relative to the current note.

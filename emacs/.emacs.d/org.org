@@ -355,6 +355,24 @@ Do not save pre-existing unsaved edits in a visited target buffer."
 ** KEYBINDINGS
 
 #+begin_src emacs-lisp
+ (defvar ivy-use-selectable-prompt)
+ (defvar ivy-index-functions-alist)
+
+ (defun my/org-read-link-target (names)
+   "Read an existing note from NAMES or a literal new title.
+With Ivy, select the typed input by default, even when candidates match.
+Move down to a candidate explicitly to insert an existing note instead.
+Other completion commands keep their own selection behavior."
+   (if (eq completing-read-function #'ivy-completing-read)
+       (let ((ivy-use-selectable-prompt t)
+             (ivy-index-functions-alist
+              (cons '(my/org-read-link-target . (lambda (_regexp _candidates) -1))
+                    ivy-index-functions-alist)))
+         (ivy-read "Link to (RET: input, down: existing note): " names
+                   :require-match nil :preselect -1
+                   :caller 'my/org-read-link-target))
+     (completing-read "Link to (existing file or new title): " names nil nil)))
+
  (defun my/org-insert-link ()
    "Insert a link to an existing or future note, without creating a file.
 Complete a filename relative to `org-directory', or enter a new title or
@@ -363,8 +381,7 @@ capture filename convention.  The description comes from the filename."
    (interactive)
    (let* ((files (directory-files-recursively org-directory "\\.org$"))
           (names (mapcar (lambda (f) (file-relative-name f org-directory)) files))
-          (pick (string-trim
-                 (completing-read "Link to (existing file or new title): " names nil nil)))
+          (pick (string-trim (my/org-read-link-target names)))
           (abs (if (member pick names)
                    (expand-file-name pick org-directory)
                  (my/org-new-link-file pick)))
