@@ -5,7 +5,8 @@
 
 #+begin_src emacs-lisp
  ;; -*- lexical-binding: t; -*-
- (use-package python-mode
+ (use-package python
+   :ensure nil
    :config
    (setq python-indent-offset 4)
    (setq python-indent-guess-indent-offset nil))
@@ -15,6 +16,7 @@
 #+begin_src emacs-lisp
  (use-package elpy
    :config
+   (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
    (elpy-enable))
 #+end_src
 

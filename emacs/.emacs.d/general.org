@@ -19,8 +19,7 @@
            (executable-find "wl-paste"))
   (setq interprogram-paste-function
         (lambda ()
-          (string-trim-right
-           (shell-command-to-string "wl-paste --no-newline 2>/dev/null"))))
+          (shell-command-to-string "wl-paste --no-newline 2>/dev/null")))
   (setq interprogram-cut-function
         (lambda (text)
           (let ((process-connection-type nil))

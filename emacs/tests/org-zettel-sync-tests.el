@@ -553,4 +553,22 @@
         (save-buffer))
       (should-not (string-match-p (regexp-quote "[[file:Foo.org][Foo]]") (org-zettel-test--read "Target.org"))))))
 
+(ert-deftest org-zettel-last-modified-stays-inside-vault ()
+  (org-zettel-test--with-vault
+    ;; Match the real configuration, which has no trailing directory slash.
+    (let ((org-directory (directory-file-name org-directory))
+          (original "#+LAST_MODIFIED: original\n"))
+      (dolist (test-case
+               (list (cons (expand-file-name "Inside.org" org-directory) t)
+                     (cons (expand-file-name "nested/Inside.org" org-directory) t)
+                     (cons (concat org-directory "-other/Outside.org") nil)))
+        (with-temp-buffer
+          (org-mode)
+          (setq buffer-file-name (car test-case))
+          (insert original)
+          (my/org-update-last-modified)
+          (if (cdr test-case)
+              (should-not (equal (buffer-string) original))
+            (should (equal (buffer-string) original))))))))
+
 ;;; org-zettel-sync-tests.el ends here

@@ -483,11 +483,11 @@ names containing Org's file-search separator."
 
 #+begin_src emacs-lisp
  (defun my/org-update-last-modified ()
-   "Update #+LAST_MODIFIED: on save for org files under ~/org/."
+   "Update #+LAST_MODIFIED: on save for Org files under `org-directory'."
    (when (and (derived-mode-p 'org-mode)
               (buffer-file-name)
-              (string-prefix-p (expand-file-name org-directory)
-                               (expand-file-name (buffer-file-name))))
+              (file-in-directory-p (my/org-canonical-file buffer-file-name)
+                                   (my/org-canonical-file org-directory)))
      (save-excursion
        (goto-char (point-min))
        (when (re-search-forward "^#\\+LAST_MODIFIED:.*$" (min (point-max) 1000) t)

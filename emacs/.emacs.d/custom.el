@@ -14,7 +14,7 @@
 		 google-c-style htmlize lsp-treemacs lsp-ui magit
 		 markdown-preview-mode minions modus-themes
 		 multiple-cursors ob-rust org-bullets org-cliplink
-		 ox-gfm py-autopep8 python-mode rjsx-mode rustic
+		 ox-gfm py-autopep8 rjsx-mode rustic
 		 sage-shell-mode smartparens solidity-mode tide
 		 typescript-mode web-mode ws-butler zig-mode))
  '(package-vc-selected-packages
