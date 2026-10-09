@@ -14,3 +14,19 @@
      (setq claude-code-ide-terminal-backend 'eat)
      (claude-code-ide-emacs-tools-setup))
 #+end_src
+
+* Codex IDE
+
+#+begin_src emacs-lisp
+ (use-package codex-ide
+   :preface
+   ;; Load the macro before package-vc generates autoloads.
+   (require 'transient)
+   :vc (:url "https://github.com/dgillis/emacs-codex-ide"
+        :lisp-dir "."
+        :rev :newest)
+   :bind ("C-c C-;" . codex-ide-menu)
+   :custom
+   (codex-ide-cli-path
+    "/home/kish/.local/share/mise/installs/codex/latest/bin/codex"))
+#+end_src

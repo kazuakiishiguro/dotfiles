@@ -8,7 +8,7 @@
  '(org-agenda-files nil)
  '(package-selected-packages
    '(agent-shell cargo chatgpt-shell claude-code-ide claude-shell
-		 cmake-mode counsel deft docker-compose-mode
+		 cmake-mode codex-ide counsel deft docker-compose-mode
 		 dockerfile-mode eat elpy exec-path-from-shell
 		 find-file-in-project fringe-helper gist git-gutter
 		 google-c-style htmlize lsp-treemacs lsp-ui magit
@@ -18,7 +18,9 @@
 		 sage-shell-mode smartparens solidity-mode tide
 		 typescript-mode web-mode ws-butler zig-mode))
  '(package-vc-selected-packages
-   '((tramp-rpc :url "https://github.com/ArthurHeymans/emacs-tramp-rpc"
+   '((codex-ide :url "https://github.com/dgillis/emacs-codex-ide"
+               :lisp-dir ".")
+     (tramp-rpc :url "https://github.com/ArthurHeymans/emacs-tramp-rpc"
 		:lisp-dir "lisp")
      (claude-code-ide :url
 		      "https://github.com/manzaltu/claude-code-ide.el"))))
