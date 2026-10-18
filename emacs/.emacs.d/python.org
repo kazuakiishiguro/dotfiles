@@ -8,6 +8,7 @@
  (use-package python
    :ensure nil
    :config
+   (setq python-shell-interpreter "python3")
    (setq python-indent-offset 4)
    (setq python-indent-guess-indent-offset nil))
 #+end_src
@@ -15,9 +16,15 @@
 ** Elpy
 #+begin_src emacs-lisp
  (use-package elpy
+   :custom
+   ;; Use the active Python environment without creating/downloading a venv
+   ;; while opening a source file.  Install Jedi/formatters in that environment.
+   (elpy-rpc-virtualenv-path 'current)
+   (elpy-rpc-python-command "python3")
    :config
    (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-   (elpy-enable))
+   (elpy-enable)
+   (add-hook 'python-ts-mode-hook #'elpy-mode))
 #+end_src
 
 ** Autopep8
