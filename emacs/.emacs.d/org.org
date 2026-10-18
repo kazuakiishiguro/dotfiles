@@ -35,7 +35,7 @@
     (js . t)
     (latex . t)
     (python . t)
-    (scheme .t)))
+    (scheme . t)))
 #+end_src
 
 ** STRUCTURE TEMPLATES

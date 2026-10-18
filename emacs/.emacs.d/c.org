@@ -15,6 +15,6 @@
 ** CMake
    #+begin_src emacs-lisp
     (use-package cmake-mode
-      :mode (("CMakeLists\\.txt\\'" . cmake-mode))
-             ("\\.cmake\\'" . cmake-mode))
+      :mode (("CMakeLists\\.txt\\'" . cmake-mode)
+             ("\\.cmake\\'" . cmake-mode)))
    #+end_src
