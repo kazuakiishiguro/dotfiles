@@ -26,6 +26,11 @@
   (load custom-file))
 
 ;; Load configuration file
-(org-babel-load-file "~/.emacs.d/configuration.org")
+(org-babel-load-file (expand-file-name "configuration.org" user-emacs-directory))
+
+;; Apply machine-specific choices after the shared configuration.
+(let ((local-file (expand-file-name "local.el" user-emacs-directory)))
+  (when (file-readable-p local-file)
+    (load local-file nil 'nomessage)))
 
 ;;; init.el ends here

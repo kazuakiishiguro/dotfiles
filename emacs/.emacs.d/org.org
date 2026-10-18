@@ -114,7 +114,7 @@ When the note already exists, open it instead of creating a duplicate."
  (defun my/cliplink-capture-file ()
    "Read URL from clipboard, fetch page title, and return a new file path.
 Sets `my/capture-last-title' and `my/cliplink-last-link'."
-   (let* ((url (string-trim (shell-command-to-string "wl-paste --no-newline 2>/dev/null")))
+   (let* ((url (string-trim (or (ignore-errors (current-kill 0 t)) "")))
           (_ (when (string-empty-p url)
                (user-error "No URL in clipboard")))
           (title (org-cliplink-retrieve-title-synchronously url))

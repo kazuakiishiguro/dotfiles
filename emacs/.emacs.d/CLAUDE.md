@@ -25,6 +25,16 @@ Wayland clipboard integration (wl-paste/wl-copy) is in `general.org`, guarded by
 
 Literate config source: `~/fun/dotfiles/emacs/.emacs.d/org.org`. Compiled output: `~/.emacs.d/org.el`. Edit both when changing config.
 
+Machine-specific overrides belong in `local.el` inside the active Emacs
+configuration directory. It is loaded after the shared configuration and must
+not be committed. For example, an environment with Elpy's Python dependencies
+already installed can opt in with `(setq elpy-rpc-virtualenv-path 'current)`.
+Shared Python configuration keeps Elpy's default dedicated RPC environment.
+
+On macOS GUI frames, `exec-path-from-shell` imports the shell's PATH before
+other shared features load. The existing package bootstrap installs it when
+needed. Linux and terminal sessions skip this initialization.
+
 ---
 
 ## Org vault
@@ -42,7 +52,7 @@ Personal knowledge base managed via Emacs org-mode. Data lives in `~/org/`, conf
 | Key | Name     | Target   | Notes                                                                 |
 |-----|----------|----------|-----------------------------------------------------------------------|
 | n   | Note     | `~/org/` | Prompts for title, creates file via `my/capture-file`                 |
-| c   | Clipping | `~/org/` | Reads URL from clipboard via wl-paste, auto-derives title and link via org-cliplink |
+| c   | Clipping | `~/org/` | Reads URL through Emacs clipboard/kill-ring support, auto-derives title and link via org-cliplink |
 
 Both templates create `* 概要` and place the cursor at the start of its body.
 
@@ -51,7 +61,7 @@ Both templates create `* 概要` and place the cursor at the start of its body.
 - **`my/org-title-to-path`** — core title-to-path logic: capitalizes first letter, replaces spaces with underscores, rejects duplicates, sets `my/capture-last-title`. Used by `my/capture-file` and `my/deft-new-note`
 - **`my/capture-file`** — wraps `my/org-title-to-path` with a `read-string` prompt. Used by Note capture
 - **`my/org-ensure-backlink`** — inserts a link under `* Backlinks (N)` in a target file, skipping duplicates and updating the count
-- **`my/cliplink-capture-file`** — reads URL from clipboard via `wl-paste`, fetches page title via `org-cliplink`, sets `my/capture-last-title` and `my/cliplink-last-link`, returns file path. Used by Clipping capture template
+- **`my/cliplink-capture-file`** — reads URL through Emacs clipboard/kill-ring support, fetches page title via `org-cliplink`, sets `my/capture-last-title` and `my/cliplink-last-link`, returns file path. Used by Clipping capture template
 
 ### Search
 

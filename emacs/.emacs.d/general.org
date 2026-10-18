@@ -1,3 +1,13 @@
+* macOS GUI environment
+#+begin_src emacs-lisp
+;; -*- lexical-binding: t; -*-
+(when (and (eq system-type 'darwin) (display-graphic-p))
+  (use-package exec-path-from-shell
+    :ensure t
+    :config
+    (exec-path-from-shell-initialize)))
+#+end_src
+
 * Magit
 #+begin_src emacs-lisp
 ;; -*- lexical-binding: t; -*-

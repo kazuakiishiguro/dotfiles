@@ -16,11 +16,8 @@
 ** Elpy
 #+begin_src emacs-lisp
  (use-package elpy
-   :custom
-   ;; Use the active Python environment without creating/downloading a venv
-   ;; while opening a source file.  Install Jedi/formatters in that environment.
-   (elpy-rpc-virtualenv-path 'current)
-   (elpy-rpc-python-command "python3")
+   ;; Keep Elpy's dedicated RPC environment and interpreter defaults.
+   ;; Machine-specific choices belong in local.el, loaded after this file.
    :config
    (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
    (elpy-enable)
