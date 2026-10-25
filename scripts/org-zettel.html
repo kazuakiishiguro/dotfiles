@@ -402,6 +402,16 @@ body {
   mask-size: contain;
 }
 #page-content a.ext-link:hover { text-decoration: underline; }
+#page-content .youtube-player {
+  display: block;
+  width: 640px;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 200px;
+  border: 0;
+  border-radius: 4px;
+  margin: 8px 0;
+}
 #page-content blockquote {
   border-left: 3px solid var(--card-border);
   margin: 12px 0;
@@ -793,6 +803,34 @@ const GRAPH_DATA = null;
     return html;
   }
 
+  function youtubeVideo(url) {
+    let parsed;
+    try {
+      parsed = new URL(/^https?:\/\//i.test(url) ? url : 'https://' + url);
+    } catch { return null; }
+    if (!['http:', 'https:'].includes(parsed.protocol)) return null;
+    const host = parsed.hostname.toLowerCase();
+    let id;
+    if (host === 'youtu.be') {
+      id = parsed.pathname.slice(1);
+    } else if (['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com'].includes(host)) {
+      id = parsed.pathname === '/watch' ? parsed.searchParams.get('v')
+        : (parsed.pathname.match(/^\/(?:shorts|embed|live)\/([^/]+)\/?$/) || [])[1];
+    }
+    if (!id || !/^[a-zA-Z0-9_-]{11}$/.test(id)) return null;
+    const time = parsed.searchParams.get('start') || parsed.searchParams.get('t')
+      || new URLSearchParams(parsed.hash.slice(1)).get('t') || '';
+    const parts = time.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/);
+    const start = /^\d+$/.test(time) ? Number(time)
+      : parts ? Number(parts[1] || 0) * 3600 + Number(parts[2] || 0) * 60 + Number(parts[3] || 0) : 0;
+    return { id, start };
+  }
+
+  function youtubeThumbnail(url) {
+    const video = youtubeVideo(url);
+    return video ? 'https://img.youtube.com/vi/' + video.id + '/hqdefault.jpg' : null;
+  }
+
   // Extract first image path or YouTube thumbnail from org content
   function extractThumbnail(orgContent) {
     if (!orgContent) return null;
@@ -803,8 +841,14 @@ const GRAPH_DATA = null;
     const extImg = orgContent.match(/\[\[(https?:\/\/[^\]]+?\.(?:png|jpg|jpeg|gif|svg|webp)(?:\?[^\]]*)?)\]\]/i);
     if (extImg) return extImg[1];
     // YouTube link — extract video ID and use thumbnail
-    const yt = orgContent.match(/\[\[(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    if (yt) return 'https://img.youtube.com/vi/' + yt[1] + '/hqdefault.jpg';
+    for (const link of orgContent.matchAll(/\[\[([^\]]+)\]/g)) {
+      const thumbnail = youtubeThumbnail(link[1]);
+      if (thumbnail) return thumbnail;
+    }
+    for (const link of orgContent.matchAll(/https?:\/\/[^\s<>"\[\]]+/g)) {
+      const thumbnail = youtubeThumbnail(link[0].replace(/[.,;:!?)}]+$/, ''));
+      if (thumbnail) return thumbnail;
+    }
     return null;
   }
 
@@ -897,8 +941,25 @@ const GRAPH_DATA = null;
 
   // Org-to-HTML inline markup renderer
   function inlineMarkup(text) {
-    let s = escHtml(text);
     const noteLinks = [];
+    // Convert both Org links and pasted URLs before escaping or generating HTML.
+    // Keep every other Org link intact so URLs inside it aren't converted twice.
+    let s = escHtml(text.replace(/\[\[([^\]]+)\](?:\[([^\]]*)\])?\]|https?:\/\/[^\s<>"\[\]]+/g,
+      function(match, target, desc) {
+        const url = target !== undefined ? target : match.replace(/[.,;:!?)}]+$/, '');
+        const video = youtubeVideo(url);
+        if (!video) return match;
+        const label = desc !== undefined ? desc : url;
+        const src = 'https://www.youtube.com/embed/' + video.id
+          + (video.start > 0 ? '?start=' + video.start : '');
+        const html = '<iframe class="youtube-player" src="' + src + '" title="' + escHtml(label)
+          + '" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"'
+          + ' allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>'
+          + '<a class="ext-link" href="' + escHtml(url) + '" target="_blank" rel="noopener noreferrer">'
+          + escHtml(label) + '</a>';
+        return '\x01NOTE' + (noteLinks.push(html) - 1) + '\x02'
+          + (target !== undefined ? '' : match.slice(url.length));
+      }));
     const unescapeHtml = value => value.replace(/&(amp|lt|gt|quot);/g,
       (_match, name) => ({ amp: '&', lt: '<', gt: '>', quot: '"' })[name]);
 
@@ -2364,6 +2425,8 @@ const GRAPH_DATA = null;
     setUploadStatus('', '');
     updateAttachButton();
     gridEl.style.display = 'grid';
+    // Remove embedded players so audio stops when returning to the grid.
+    pageContent.replaceChildren();
     pageView.style.display = 'none';
     backBtn.style.display = 'none';
     renderCardGrid();
