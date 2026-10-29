@@ -1,5 +1,15 @@
+# Resolve the packaged Omarchy path before loading shared settings.
+if [ -r /usr/share/omarchy/default/bash/env-bootstrap ]; then
+    source /usr/share/omarchy/default/bash/env-bootstrap
+elif [ -d "$HOME/.local/share/omarchy" ]; then
+    export OMARCHY_PATH="$HOME/.local/share/omarchy"
+fi
+
 # --- Shared config ---
 source ~/.shellrc
+
+# Keep aliases, prompts, and interactive integrations out of SSH commands.
+[[ $- != *i* ]] && return
 
 # --- Prompt ---
 # set variable identifying the chroot you work in (used in the prompt below)
@@ -42,7 +52,6 @@ case "$TERM" in
 esac
 
 # --- Omarchy ---
-export OMARCHY_PATH=$HOME/.local/share/omarchy
-if [ -f "$OMARCHY_PATH/default/bash/rc" ]; then
+if [ -n "${OMARCHY_PATH:-}" ] && [ -f "$OMARCHY_PATH/default/bash/rc" ]; then
     source "$OMARCHY_PATH/default/bash/rc"
 fi

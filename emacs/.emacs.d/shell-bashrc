@@ -1,0 +1,22 @@
+# Emacs shell-mode bashrc: load Omarchy without readline/bind integration.
+if [[ -r /usr/share/omarchy/default/bash/env-bootstrap ]]; then
+  source /usr/share/omarchy/default/bash/env-bootstrap
+else
+  export OMARCHY_PATH="${OMARCHY_PATH:-$HOME/.local/share/omarchy}"
+fi
+for emacs_shell_part in shell aliases functions envs; do
+  [[ -r "$OMARCHY_PATH/default/bash/$emacs_shell_part" ]] && source "$OMARCHY_PATH/default/bash/$emacs_shell_part"
+done
+unset emacs_shell_part
+[[ -r ~/.shellrc ]] && source ~/.shellrc
+
+if command -v mise &>/dev/null; then
+  eval "$(mise activate bash)"
+fi
+if command -v zoxide &>/dev/null; then
+  eval "$(zoxide init bash)"
+fi
+
+# Shell mode cannot render starship's terminal escape sequences.
+PS1='\w \$ '
+[[ -f ~/.bashrc.emacs ]] && source ~/.bashrc.emacs

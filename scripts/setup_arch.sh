@@ -1,41 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -eu
-
-source ./scripts/utils.sh
-
-if is_command yay; then
-    echo "yay exists"
-    yay
+# Compatibility entry point. The installer uses setup-system.sh directly.
+# No full upgrade, AUR-helper bootstrap, source Emacs build, or directory change.
+set -euo pipefail
+setup_script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+if command -v omarchy >/dev/null 2>&1; then
+    bash "$setup_script_dir/setup-system.sh" --profile omarchy "$@"
 else
-    sudo pacman -S --needed git base-devel
-    git clone https://aur.archlinux.org/yay.git ~/fun/yay
-    cd ~/fun/yay && makepkg -si
-fi
-
-yay
-
-# install fcitx5-mozc for Japanese input
-if ! pacman -Qi fcitx5-mozc &>/dev/null; then
-    yay -S fcitx5-mozc
-fi
-
-# install curl
-if is_command curl; then
-    echo "curl exists"
-else
-    yay -S curl
-fi
-
-# install emacs
-if is_command emacs; then
-    echo "emacs exists"
-else
-    yay texinfo tree-sitter gnutls
-    git clone --branch emacs-29 https://git.savannah.gnu.org/git/emacs.git ~/fun/emacs
-    cd ~/fun/emacs
-    ./autogen.sh
-    ./configure --without-x --without-ns --without-native-compilation --with-tree-sitter
-    make
-    sudo make install
+    bash "$setup_script_dir/setup-system.sh" --profile linux "$@"
 fi

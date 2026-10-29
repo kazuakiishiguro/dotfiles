@@ -1,6 +1,9 @@
 # Dotfiles
 
-Personal dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/). Each top-level directory is a stow module symlinked into `$HOME`.
+Personal dotfiles with a Stow-style source layout. The supported installer is
+`./init.sh`, backed by Python's standard library; GNU Stow is not required.
+Profiles decide which module files to apply and whether to link, copy or retain
+each target. See `README.md` for the end-user commands.
 
 ## Repository layout
 
@@ -9,31 +12,94 @@ dotfiles/
   bash/           # .bashrc, .bash_profile
   bin/            # Custom scripts (~/.bin/)
   config/         # XDG configs: Hyprland, Ghostty, Kitty, i3, rofi
-  emacs/          # Literate Emacs config (.emacs.d/*.org)
+  emacs/          # Literate Emacs config and fixture-only ERT tests
   git/            # .gitconfig, .gitconfig_fun, .gitignore_global
   screen/         # .screenrc
-  scripts/        # OS-specific setup scripts, Brewfile, org-zettel
+  profiles/       # omarchy, linux, macos installation policies
+  scripts/        # Installer implementation, dependencies, org-zettel, tests
   shell/          # .shellrc (shared shell config sourced by bash & zsh)
   vim/            # .vimrc
   xinitrc/        # .xinitrc (Arch only)
   Xmodmap/        # .Xmodmap (Arch only)
   xprofile/       # .xprofile (Arch only)
   zsh/            # .zshrc, .zprofile
-  bootstrap.sh    # One-liner setup for fresh machines
-  init.sh         # Detects OS, runs setup, stows modules
+  bootstrap.sh    # Clone/reuse ~/fun/dotfiles, then invoke init.sh
+  init.sh         # Cwd-independent entry point for scripts/install.py
 ```
 
-## How stow modules work
+## Installation and machine profiles
 
-`init.sh` runs `stow -t ~ -v <module>` for each module. Files inside a module directory mirror the home directory structure (e.g., `emacs/.emacs.d/init.el` becomes `~/.emacs.d/init.el`).
+Files inside module directories mirror `$HOME`. `scripts/install.py` selects
+tracked and nonignored source files from the profile's modules, backs up
+existing targets, and installs individual files. Runtime Emacs files are
+excluded by an explicit allowlist. Do not reintroduce `stow --adopt`,
+`git checkout .`, or other resets into installation or update hooks.
 
-## Cross-platform support
+The Omarchy profile copies desktop-module `.config/**` and `.bashrc`, so Omarchy cannot change
+repository sources by writing through installed symlinks. Shared desktop edits
+must be made in the repository and applied with `./init.sh --config-only`.
+The separately mapped Emacs source files remain symlinks under `~/.config/emacs`.
+Existing monitor/fcitx5 settings are preserved. Idle/lock files, the old
+post-update hook, app metadata and external-project systemd units are excluded.
+`~/.config/hypr/local.lua` is a machine-owned override loaded after all shared
+Hyprland modules. Keep local paths and application environment settings there;
+never distribute that file from a shared profile.
 
-Detected via `uname` in `init.sh`. OS-specific setup scripts live in `scripts/`:
-- **macOS** — `setup_macos.sh` + `Brewfile`
-- **Ubuntu** — `setup_ubuntu.sh`
-- **Fedora** — `setup_fedora.sh`
-- **Arch** — `setup_arch.sh` (also stows xinitrc, Xmodmap, xprofile)
+Machine overrides in `~/.config/dotfiles/local.json` support four keys:
+`modules` replaces the selected list; `exclude`, `preserve_existing` and `copy`
+add path patterns to profile rules. Do not put host-specific paths or secrets
+in shared profiles. Omarchy requires the standard `~/.config` location because
+its packaged Emacs integration hardcodes that path.
+
+`./init.sh --dry-run` must remain free of filesystem and package mutations.
+`--skip-emacs` must leave all Emacs paths and packages untouched.
+`--config-only` applies files without dependency installation or Emacs checks.
+The normal flow is system prerequisites, configuration application, then
+Emacs packages and validation. Reload a running daemon only for `--reload`.
+
+`scripts/setup-system.sh` installs missing packages on Omarchy without a full
+upgrade, source build or Rust toolchain switch. Other Linux/macOS profiles
+currently validate prerequisites rather than automatically provisioning them;
+the older `setup_arch.sh`, `setup_macos.sh`, `setup_ubuntu.sh`,
+`setup_fedora.sh` and `install-rust.sh` are retained but not invoked by the new
+entry point. Bootstrap may install its own missing Git/Python prerequisites.
+On Omarchy, a pre-existing plain `emacs` package must be replaced with
+`emacs-wayland` interactively before normal provisioning. Check for that
+conflict before installing any other packages.
+
+Configuration backups are `~/.dotfiles-backup-*/` and logs are under
+`${XDG_STATE_HOME:-~/.local/state}/dotfiles/`. A failed apply restores changed
+files. Dependency failures retain completed work for the next run. Bootstrap
+reuses an existing matching checkout without pulling or resetting it.
+
+## Emacs setup
+
+Keep sources under `emacs/.emacs.d/`. Omarchy maps selected files into
+`~/.config/emacs/`, preserving managed Omarchy integration and backing up
+conflicting legacy startup paths. Generic Linux/macOS use `~/.emacs.d/`.
+Keep runtime data and generated files out of Git.
+Legacy-to-XDG migration carries the entire runtime tree into an absent target,
+rebases symlinks and generated virtualenv launchers, and keeps originals in the
+backup. Refuse ambiguous independent Emacs trees or replacement of personal
+custom/snippet settings; do not silently deactivate them.
+
+Declare package dependencies and authoritative VC recipes in `packages.el`.
+Package acquisition belongs to `scripts/setup-emacs.sh`; regular startup must
+remain network-free. Configuration checks use `check-config.el`. Preserve the
+canonical Codex repository/recipe, the Transient preload before VC builds,
+and safe interrupted-build recovery. See the nested Emacs `CLAUDE.md` for
+editing and regression-test conventions.
+Archive-to-VC changes preserve the previous archive in
+`package-archive-backups/` after the new source package is verified, so a fresh
+startup cannot accidentally select an older archive with a higher version.
+
+Installer regression checks:
+
+```sh
+python3 -B -m unittest discover -s scripts/tests
+node scripts/tests/test_org_zettel_render.cjs
+emacs --batch -Q -l emacs/tests/setup-packages-tests.el -f ert-run-tests-batch-and-exit
+```
 
 ## Shell config
 
@@ -87,7 +153,9 @@ Backend regression tests use temporary vaults and mocked GUI launches:
 
 ## Conventions
 
-- Keep stow module directories flat — mirror the target `$HOME` structure
-- Emacs config changes go in the appropriate `.org` file, not raw `.el`
-- OS-specific packages go in the corresponding `scripts/setup_*.sh`
-- The `.gitignore` excludes compiled `.emacs.d/` artifacts except `init.el`, `custom.el`, and `*.org`
+- Keep module files in the existing layout mirroring `$HOME`; profiles provide installation policy.
+- Emacs feature changes go in the appropriate `.org` source; do not edit generated `.el` files.
+- Keep package manifests/bootstrap logic in the explicit Emacs entry files; never download during startup.
+- System dependencies belong to `scripts/setup-system.sh`; installer internals belong under `scripts/`, daily commands under `bin/.bin/`.
+- The `.gitignore` excludes runtime `.emacs.d/` data and allows only selected source/entry files and `*.org`.
+- Installer tests must use temporary homes, checkouts and fake package managers; never modify the real desktop or download packages.

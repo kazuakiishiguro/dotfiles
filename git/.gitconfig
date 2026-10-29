@@ -1,3 +1,6 @@
+[include]
+	path = ~/.config/git/config
+
 [includeIf "gitdir:~/fun/"]
 	path = ~/.gitconfig_fun
 [includeIf "gitdir:~/org/"]

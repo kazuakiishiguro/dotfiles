@@ -29,6 +29,7 @@
 (defvar portability-test-events)
 (defvar my/dotfiles-elpa-packages)
 (defvar my/dotfiles-vc-packages)
+(defvar my/dotfiles-configuration-loaded)
 
 (ert-deftest portability-python-preserves-existing-rpc-choices ()
   (dolist (environment '(default "/Users/example/venvs/elpy"))
@@ -114,10 +115,11 @@
                    (lambda () (cl-incf imports))))
           (eval form t))
         (should (= imports expected))
-        (should (= installs expected))))))
+        (should (= installs 0))))))
 
-(defun portability-test-init (with-local)
-  "Load init with fake packages and a temporary configuration directory."
+(defun portability-test-init (with-local &optional check-missing)
+  "Load init with fake packages and a temporary configuration directory.
+When CHECK-MISSING is non-nil, run the real strict configuration checker."
   (let* ((root (make-temp-file "emacs-portability-" t))
          (user-emacs-directory (file-name-as-directory root))
          (custom-file nil)
@@ -126,6 +128,7 @@
          (package-vc-selected-packages nil)
          (my/dotfiles-elpa-packages nil)
          (my/dotfiles-vc-packages nil)
+         (my/dotfiles-configuration-loaded nil)
          (elpy-rpc-virtualenv-path 'default)
          (portability-test-events nil)
          (original-load (symbol-function 'load)))
@@ -151,7 +154,16 @@
                        (setq portability-test-events '(shared)))))
             (load (or (getenv "EMACS_PORTABILITY_INIT")
                       (expand-file-name "init.el" portability-test-config-dir))
-                  nil t))
+                  nil t)
+            (should my/dotfiles-configuration-loaded)
+            (when check-missing
+              (let ((failure
+                     (should-error
+                      (load (expand-file-name "check-config.el" portability-test-config-dir)
+                            nil t))))
+                (should (string-match-p
+                         "Shared Emacs packages are missing:.*optional-unavailable-package"
+                         (error-message-string failure))))))
           (should (equal portability-test-events
                          (if with-local '(shared local) '(shared))))
           (should (eq elpy-rpc-virtualenv-path (if with-local 'current 'default))))
@@ -162,5 +174,8 @@
 
 (ert-deftest portability-init-loads-machine-overrides-after-shared-settings ()
   (portability-test-init t))
+
+(ert-deftest portability-strict-check-rejects-packages-tolerated-at-startup ()
+  (portability-test-init nil t))
 
 ;;; portability-tests.el ends here

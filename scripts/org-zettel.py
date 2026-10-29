@@ -534,12 +534,16 @@ def make_handler(org_dir, template_path, build_args):
                         val = _get_display_env().get(var)
                         if val and var not in env:
                             env[var] = val
-                    subprocess.Popen(['alacritty', '--class', 'org-zettel-edit',
-                                       '-e', 'emacsclient', '-t', '-a', '', str(filepath)],
+                    # A daemon started without COLORTERM can still select only
+                    # 256 colors.  Set TERM after the terminal has initialized
+                    # its environment so Emacs uses the true-color terminfo.
+                    subprocess.Popen(['xdg-terminal-exec', '--app-id=org-zettel-edit',
+                                       '--', 'env', 'TERM=xterm-direct',
+                                       'emacsclient', '-t', '-a', '', str(filepath)],
                                      env=env)
                     self._send_json({'ok': True})
                 except FileNotFoundError as exc:
-                    self._send_json({'error': f'{exc.filename or "alacritty"} not found'}, 500)
+                    self._send_json({'error': f'{exc.filename or "xdg-terminal-exec"} not found'}, 500)
                 except OSError as exc:
                     self._send_json({'error': f'could not launch Emacs: {exc}'}, 500)
             elif self.path.startswith('/api/rename/'):

@@ -85,7 +85,8 @@ class OpenEmacsTest(TemporaryVaultTest):
     def assert_launch(self, filepath):
         self.launch.assert_called_once()
         self.assertEqual(self.launch.call_args.args[0], [
-            "alacritty", "--class", "org-zettel-edit", "-e", "emacsclient",
+            "xdg-terminal-exec", "--app-id=org-zettel-edit", "--",
+            "env", "TERM=xterm-direct", "emacsclient",
             "-t", "-a", "", str(filepath),
         ])
         self.handler._send_json.assert_called_once_with({"ok": True})
@@ -123,9 +124,9 @@ class OpenEmacsTest(TemporaryVaultTest):
         self.assertFalse((outside / "Escape.org").exists())
 
     def test_missing_launcher_reports_its_actual_name(self):
-        self.launch.side_effect = FileNotFoundError(2, "No such file or directory", "alacritty")
+        self.launch.side_effect = FileNotFoundError(2, "No such file or directory", "xdg-terminal-exec")
         self.request("Future.org")
-        self.handler._send_json.assert_called_once_with({"error": "alacritty not found"}, 500)
+        self.handler._send_json.assert_called_once_with({"error": "xdg-terminal-exec not found"}, 500)
         self.assertFalse((self.vault / "Future.org").exists())
 
     def test_other_launch_errors_are_json_errors(self):

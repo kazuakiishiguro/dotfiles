@@ -1,11 +1,6 @@
 #!/bin/bash
 
-# Restore personal Hyprland configs after omarchy-update overwrites them.
-# omarchy uses `cp -f` which replaces symlink targets in the dotfiles repo.
-DOTFILES_DIR="$(git -C "$(dirname "$(readlink -f "$0")")" rev-parse --show-toplevel 2>/dev/null)"
-if [ -d "$DOTFILES_DIR/.git" ]; then
-    git -C "$DOTFILES_DIR" checkout -- config/.config/hypr/ config/.config/fcitx5/ bash/
-fi
-
-# Restore default browser
-xdg-settings set default-web-browser brave-browser.desktop
+# Kept for older installations that already linked this hook. New profiles do
+# not install an automatic updater: applying shared settings is explicit and
+# backs up the previous files. Never discard edits in the source checkout.
+printf 'Review Omarchy changes, then reapply shared settings with dotfiles/init.sh --config-only.\n'

@@ -1,29 +1,134 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -eu
+set -euo pipefail
 
-DOTFILES_DIR="$(pwd)/dotfiles"
-REPO="https://github.com/kazuakiishiguro/dotfiles.git"
+repository_url="https://github.com/kazuakiishiguro/dotfiles.git"
+dotfiles_dir="$HOME/fun/dotfiles"
+dry_run=false
+init_args=()
 
-if [ -d "$DOTFILES_DIR" ]; then
-    echo "dotfiles already exist at $DOTFILES_DIR"
-    exit 1
-fi
+usage() {
+    cat <<'EOF'
+Usage: bash bootstrap.sh [--dir DIRECTORY] [init.sh options]
 
-if ! command -v git > /dev/null 2>&1; then
-    echo "installing git..."
-    if [[ $(uname) == 'Darwin' ]]; then
-        xcode-select --install
-    elif [[ $(uname -a) == *Ubuntu* ]] || [[ $(uname -a) == *pop-os* ]]; then
-        sudo apt update && sudo apt install -y git
-    elif [[ $(uname -a) == *asahi* ]]; then
-        sudo dnf install -y git
-    elif [[ $(uname -a) == *arch* ]]; then
-        sudo pacman -S --noconfirm git
+Clone into ~/fun/dotfiles, or reuse an existing checkout of this repository.
+Existing files and Git changes are retained; bootstrap never pulls or resets.
+All options other than --dir are forwarded to init.sh.
+
+Example: bash bootstrap.sh --dir "$HOME/fun/dotfiles" --profile omarchy
+Preview: bash bootstrap.sh --dry-run
+EOF
+}
+
+while (($#)); do
+    case "$1" in
+        --dir)
+            if (($# < 2)) || [[ -z "$2" || "$2" == --* ]]; then
+                echo "bootstrap: --dir requires a directory" >&2
+                exit 2
+            fi
+            dotfiles_dir="$2"; shift 2 ;;
+        --dir=*)
+            dotfiles_dir="${1#*=}"
+            [[ -n "$dotfiles_dir" ]] || { echo "bootstrap: empty --dir" >&2; exit 2; }
+            shift ;;
+        -h|--help) usage; exit 0 ;;
+        --dry-run) dry_run=true; init_args+=("$1"); shift ;;
+        --) shift; init_args+=("$@"); break ;;
+        *) init_args+=("$1"); shift ;;
+    esac
+done
+
+# A forwarded --dry-run must also prevent bootstrap's own clone/install steps.
+# Bash 3.2 treats empty arrays as unset under nounset. The conditional expansion
+# also preserves empty arguments when the array actually contains them.
+for argument in ${init_args[@]+"${init_args[@]}"}; do
+    [[ "$argument" != --dry-run ]] || dry_run=true
+done
+
+print_command() {
+    printf '  '
+    printf '%q ' "$@"
+    printf '\n'
+}
+
+# init.sh uses Python's standard library. Bootstrap only the missing tools;
+# application dependencies are handled by scripts/setup-system.sh afterwards.
+missing_tools=()
+for executable in git python3; do
+    command -v "$executable" >/dev/null 2>&1 || missing_tools+=("$executable")
+done
+if ((${#missing_tools[@]})); then
+    packages=()
+    if command -v omarchy >/dev/null 2>&1 && command -v pacman >/dev/null 2>&1; then
+        for executable in "${missing_tools[@]}"; do
+            case "$executable" in python3) packages+=(python) ;; *) packages+=("$executable") ;; esac
+        done
+        install_command=(omarchy pkg add "${packages[@]}")
+    elif [[ "$(uname -s)" == Darwin ]]; then
+        if ! command -v brew >/dev/null 2>&1; then
+            echo "bootstrap: install the Xcode command line tools and Homebrew first; git and python3 are required." >&2
+            exit 1
+        fi
+        for executable in "${missing_tools[@]}"; do
+            case "$executable" in python3) packages+=(python) ;; *) packages+=("$executable") ;; esac
+        done
+        install_command=(brew install "${packages[@]}")
+    elif command -v apt-get >/dev/null 2>&1; then
+        install_command=(sudo apt-get install -y "${missing_tools[@]}")
+    elif command -v dnf >/dev/null 2>&1; then
+        install_command=(sudo dnf install -y "${missing_tools[@]}")
+    elif command -v pacman >/dev/null 2>&1; then
+        for executable in "${missing_tools[@]}"; do
+            case "$executable" in python3) packages+=(python) ;; *) packages+=("$executable") ;; esac
+        done
+        install_command=(sudo pacman -S --needed --noconfirm "${packages[@]}")
+    else
+        echo "bootstrap: install git and python3 before continuing." >&2
+        exit 1
+    fi
+    echo "Bootstrap prerequisites:"
+    print_command "${install_command[@]}"
+    if [[ "$dry_run" == false ]]; then
+        "${install_command[@]}"
+        for executable in git python3; do
+            command -v "$executable" >/dev/null 2>&1 || { echo "bootstrap: $executable is still unavailable" >&2; exit 1; }
+        done
     fi
 fi
 
-mkdir -p "$(dirname "$DOTFILES_DIR")"
-git clone "$REPO" "$DOTFILES_DIR"
-cd "$DOTFILES_DIR"
-./init.sh
+if [[ -e "$dotfiles_dir" || -L "$dotfiles_dir" ]]; then
+    if ! command -v git >/dev/null 2>&1; then
+        echo "bootstrap: git is required to verify this existing directory." >&2
+        exit 1
+    fi
+    if ! checkout_root=$(git -C "$dotfiles_dir" rev-parse --show-toplevel 2>/dev/null); then
+        echo "bootstrap: $dotfiles_dir exists but is not a Git checkout; it was left untouched." >&2
+        exit 1
+    fi
+    canonical_dir=$(cd "$dotfiles_dir" && pwd -P)
+    canonical_root=$(cd "$checkout_root" && pwd -P)
+    if [[ "$canonical_dir" != "$canonical_root" ]]; then
+        echo "bootstrap: --dir must point to the repository root." >&2
+        exit 1
+    fi
+    # Read the configured URL without applying local insteadOf rewrites.
+    origin=$(git -C "$dotfiles_dir" config --get remote.origin.url || true)
+    case "$origin" in
+        https://github.com/kazuakiishiguro/dotfiles|https://github.com/kazuakiishiguro/dotfiles.git|git@github.com:kazuakiishiguro/dotfiles|git@github.com:kazuakiishiguro/dotfiles.git|ssh://git@github.com/kazuakiishiguro/dotfiles|ssh://git@github.com/kazuakiishiguro/dotfiles.git) ;;
+        *) echo "bootstrap: existing checkout has a different origin; it was left untouched." >&2; exit 1 ;;
+    esac
+    echo "Reusing $dotfiles_dir (without pulling or resetting)."
+else
+    echo "Clone repository:"
+    print_command git clone "$repository_url" "$dotfiles_dir"
+    if [[ "$dry_run" == true ]]; then
+        print_command bash "$dotfiles_dir/init.sh" ${init_args[@]+"${init_args[@]}"}
+        exit 0
+    fi
+    mkdir -p "$(dirname "$dotfiles_dir")"
+    git clone "$repository_url" "$dotfiles_dir"
+fi
+
+[[ -f "$dotfiles_dir/init.sh" ]] || { echo "bootstrap: checkout has no init.sh" >&2; exit 1; }
+exec bash "$dotfiles_dir/init.sh" ${init_args[@]+"${init_args[@]}"}

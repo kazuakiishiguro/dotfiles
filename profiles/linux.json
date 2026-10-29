@@ -1,0 +1,7 @@
+{
+  "modules": ["shell", "bash", "bin", "emacs", "git", "screen", "vim", "zsh"],
+  "emacs_target": "legacy",
+  "exclude": [".emacs.d/shell-bashrc"],
+  "preserve_existing": [],
+  "copy": []
+}

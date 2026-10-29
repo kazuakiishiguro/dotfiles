@@ -1,0 +1,21 @@
+{
+  "modules": ["shell", "bash", "bin", "config", "emacs", "git", "screen", "vim", "zsh"],
+  "emacs_target": "xdg",
+  "exclude": [
+    ".config/github-copilot/**",
+    ".config/i3/**",
+    ".config/rofi/**",
+    ".config/systemd/user/**",
+    ".config/hypr/hypridle.conf",
+    ".config/hypr/hyprlock.conf",
+    ".config/hypr/local.lua",
+    ".config/environment.d/fcitx.conf",
+    ".config/omarchy/hooks/post-update"
+  ],
+  "preserve_existing": [
+    ".config/hypr/monitors.lua",
+    ".config/fcitx5/config",
+    ".config/fcitx5/profile"
+  ],
+  "copy": [".config/**", ".bashrc"]
+}

@@ -12,5 +12,6 @@
 * Enable preview
 #+begin_src emacs-lisp
 (use-package markdown-preview-mode
+  :commands markdown-preview-mode
   :after (markdown-mode))
 #+end_src

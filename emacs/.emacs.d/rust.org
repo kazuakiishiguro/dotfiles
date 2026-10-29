@@ -4,7 +4,10 @@ Massively inspired by https://github.com/rksm/emacs-rust-config.
 #+begin_src emacs-lisp
  ;; -*- lexical-binding: t; -*-
  (use-package rustic
-   :ensure
+   :mode ("\\.rs\\'" . rustic-mode)
+   :init
+   ;; Start LSP from our hook after checking this machine's toolchain.
+   (setq rustic-lsp-setup-p nil)
    :bind (:map rustic-mode-map
 	       ("M-j" . lsp-ui-imenu)
 	       ("M-?" . lsp-find-references)
@@ -24,11 +27,18 @@ Massively inspired by https://github.com/rksm/emacs-rust-config.
    ;; (setq lsp-enable-symbol-highlighting nil)
    ;; (setq lsp-signature-auto-activate nil)
 
-   ;; comment to disable rustfmt on save
-   (setq rustic-format-on-save t)
    (add-hook 'rustic-mode-hook 'rk/rustic-mode-hook))
 
  (defun rk/rustic-mode-hook ()
+   "Enable Rust tools when available, keeping plain editing usable otherwise."
+   ;; Evaluate these per buffer so newly installed tools work without a restart.
+   (setq-local rustic-format-trigger
+               (when (executable-find "rustfmt") 'on-save))
+   (unless (executable-find "rustfmt")
+     (message "Rust formatting needs rustfmt; automatic formatting is deferred"))
+   (if (and (executable-find "rust-analyzer") (executable-find "cargo"))
+       (rustic-setup-lsp)
+     (message "Rust IDE needs rust-analyzer and cargo; install them, then run M-x lsp"))
    ;; so that run C-c C-c C-r works without having to confirm, but don't try to
    ;; save rust buffers that are not file visiting. Once
    ;; https://github.com/brotzeit/rustic/issues/253 has been resolved this should

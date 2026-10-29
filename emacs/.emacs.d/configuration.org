@@ -5,11 +5,12 @@
 
 * BASIC CONFIGS
 
-** ALWAYS =:ensure t=
+** Explicit package installation
 #+begin_src emacs-lisp
 ;; -*- lexical-binding: t; -*-
 (require 'use-package-ensure)
-(setq use-package-always-ensure t)
+;; packages.el owns acquisition; opening Emacs only loads installed packages.
+(setq use-package-always-ensure nil)
 #+end_src
 
 * LOAD CONFIGS
@@ -17,8 +18,7 @@
 #+begin_src emacs-lisp
 (defun load-config (file)
   (org-babel-load-file
-   (expand-file-name
-    (concat user-emacs-directory file))))
+   (expand-file-name file user-emacs-directory)))
 #+end_src
 
 ** Core

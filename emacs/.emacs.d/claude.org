@@ -3,15 +3,22 @@
 #+begin_src emacs-lisp
    ;; -*- lexical-binding: t; -*-
    (use-package eat
-     :ensure t)
+     :commands eat)
 
    (use-package claude-code-ide
-     :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
-     :after eat
+     :commands (claude-code-ide claude-code-ide-menu)
      :bind (("C-c C-c C-i" . claude-code-ide)
  	   ("C-c C-'" . claude-code-ide-menu))
      :config
      (setq claude-code-ide-terminal-backend 'eat)
+     (setq claude-code-ide-cli-path
+           (or (executable-find "claude")
+               (seq-find #'file-executable-p
+                         (mapcar #'expand-file-name
+                                 '("~/.local/bin/claude"
+                                   "/opt/homebrew/bin/claude"
+                                   "/usr/local/bin/claude")))
+               "claude"))
      (claude-code-ide-emacs-tools-setup))
 #+end_src
 
@@ -22,9 +29,6 @@
    :preface
    ;; Load the macro before package-vc generates autoloads.
    (require 'transient)
-   :vc (:url "https://github.com/dgillis/emacs-codex-ide"
-        :lisp-dir "."
-        :rev :newest)
    :bind ("C-c C-;" . codex-ide-menu)
    :custom
    (codex-ide-cli-path

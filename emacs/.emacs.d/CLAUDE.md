@@ -1,6 +1,12 @@
 # Emacs config
 
-Literate config using org-babel. `init.el` tangles and loads `.org` files:
+Literate config using org-babel. Sources stay in this directory, while the
+installer maps selected files into `~/.config/emacs/` on Omarchy or
+`~/.emacs.d/` on generic Linux/macOS. Use `user-emacs-directory` in Lisp rather
+than hardcoded configuration paths.
+
+`init.el` reports missing declared packages, then tangles and loads the shared
+`.org` configuration so available features can still load:
 
 | File                | Purpose                              |
 |---------------------|--------------------------------------|
@@ -15,15 +21,32 @@ Literate config using org-babel. `init.el` tangles and loads `.org` files:
 | `python.org`        | Python                               |
 | `markdown.org`      | Markdown                             |
 
-After editing any `.org` config, reload with:
+Edit the appropriate `.org` source, then reload through the active directory:
+
 ```elisp
-(delete-file "~/.emacs.d/<name>.el")
-(org-babel-load-file "~/.emacs.d/<name>.org")
+(org-babel-load-file (expand-file-name "org.org" user-emacs-directory))
 ```
 
-Wayland clipboard integration (wl-paste/wl-copy) is in `general.org`, guarded by `WAYLAND_DISPLAY` so it's skipped on macOS.
+Replace `org.org` with the changed module, or reload `init.el` to load them all.
+Generated `.el` files live in the active configuration directory and are
+regenerated from Org; do not edit or commit them. `custom.el` contains shared
+preferences, while Customize writes machine changes to `custom-local.el`.
 
-Literate config source: `~/fun/dotfiles/emacs/.emacs.d/org.org`. Compiled output: `~/.emacs.d/org.el`. Edit both when changing config.
+`packages.el` is the authoritative archive/VC package manifest, including the
+canonical Codex recipe. Add new dependencies there and keep runtime
+`use-package` declarations free of package downloads. Run `./init.sh` from the
+repository to install system tools, install missing Emacs packages and verify
+the full configuration. `scripts/setup-emacs.sh --config-dir DIR` handles only
+Emacs packages/integration and validation; `--check-only` performs validation.
+Reloading a running daemon is opt-in with `--reload`.
+
+`early-init.el` contains early startup fixes. `check-config.el` validates shared
+features. `shell-bashrc` adapts Omarchy shell integration without readline
+bindings. Keep the Omarchy shim, theme, local package trees, caches and personal
+notes on their host rather than copying them into this source directory.
+
+Wayland clipboard integration (wl-paste/wl-copy) is in `general.org`, guarded by
+`WAYLAND_DISPLAY` so it is skipped on macOS.
 
 Machine-specific overrides belong in `local.el` inside the active Emacs
 configuration directory. It is loaded after the shared configuration and must
@@ -32,8 +55,8 @@ already installed can opt in with `(setq elpy-rpc-virtualenv-path 'current)`.
 Shared Python configuration keeps Elpy's default dedicated RPC environment.
 
 On macOS GUI frames, `exec-path-from-shell` imports the shell's PATH before
-other shared features load. The existing package bootstrap installs it when
-needed. Linux and terminal sessions skip this initialization.
+other shared features load. Explicit setup installs it when needed; GUI startup
+does not acquire packages. Linux and terminal sessions skip this initialization.
 
 ---
 
@@ -125,6 +148,11 @@ From the dotfiles repository root:
 
 ```sh
 emacs --batch -Q -l emacs/tests/org-zettel-sync-tests.el -f ert-run-tests-batch-and-exit
+emacs --batch -Q -l emacs/tests/setup-packages-tests.el -f ert-run-tests-batch-and-exit
 ```
 
-The tests load only the relevant configuration forms, use disposable notes under `/tmp`, and reject note writes outside those fixtures.
+Org tests load only relevant configuration forms, use disposable notes under
+`/tmp`, and reject note writes outside those fixtures. Package tests use
+temporary local Git repositories and verify interrupted builds, source-origin
+checks and preservation of user edits without network access or existing
+packages.

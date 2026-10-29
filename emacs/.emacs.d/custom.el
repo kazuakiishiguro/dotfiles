@@ -24,11 +24,12 @@
 		:lisp-dir "lisp")
      (claude-code-ide :url
 		      "https://github.com/manzaltu/claude-code-ide.el"))))
-(custom-set-faces
+(unless (bound-and-true-p my/omarchy-integration-p)
+ (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(line-number-current-line ((t (:foreground "Royalblue" :background "DarkGray")))))
+ '(line-number-current-line ((t (:foreground "Royalblue" :background "DarkGray"))))))
 (put 'set-goal-column 'disabled nil)
 (put 'upcase-region 'disabled nil)
