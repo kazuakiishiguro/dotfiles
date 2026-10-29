@@ -52,11 +52,43 @@ print_command() {
     printf '\n'
 }
 
+platform="$(uname -s)"
+developer_tools_ready=false
+if [[ "$platform" == Darwin ]]; then
+    # SSH and fresh shells may not include Homebrew yet. Discover an existing
+    # installation without changing the user's shell files or replacing PATH.
+    if ! command -v brew >/dev/null 2>&1; then
+        for brew_prefix in /opt/homebrew /usr/local; do
+            if [[ -x "$brew_prefix/bin/brew" ]]; then
+                export PATH="$brew_prefix/bin:$brew_prefix/sbin:$PATH"
+                break
+            fi
+        done
+    fi
+    # Apple provides Git/Python launcher stubs even when the developer tools
+    # are absent. Do not execute those stubs (including during --dry-run), as
+    # they can open the command line tools installation dialog.
+    if developer_directory=$(xcode-select -p 2>/dev/null) && [[ -d "$developer_directory" ]]; then
+        developer_tools_ready=true
+    fi
+fi
+
+tool_works() {
+    local executable
+    executable=$(command -v "$1") || return 1
+    if [[ "$platform" == Darwin && "$developer_tools_ready" == false ]]; then
+        case "$executable" in
+            /usr/bin/git|/usr/bin/python3) return 1 ;;
+        esac
+    fi
+    "$executable" --version >/dev/null 2>&1
+}
+
 # init.sh uses Python's standard library. Bootstrap only the missing tools;
 # application dependencies are handled by scripts/setup-system.sh afterwards.
 missing_tools=()
 for executable in git python3; do
-    command -v "$executable" >/dev/null 2>&1 || missing_tools+=("$executable")
+    tool_works "$executable" || missing_tools+=("$executable")
 done
 if ((${#missing_tools[@]})); then
     packages=()
@@ -65,7 +97,11 @@ if ((${#missing_tools[@]})); then
             case "$executable" in python3) packages+=(python) ;; *) packages+=("$executable") ;; esac
         done
         install_command=(omarchy pkg add "${packages[@]}")
-    elif [[ "$(uname -s)" == Darwin ]]; then
+    elif [[ "$platform" == Darwin ]]; then
+        if [[ "$developer_tools_ready" == false ]]; then
+            echo "bootstrap: install the Xcode command line tools with xcode-select --install, then rerun; no installer dialog was opened." >&2
+            exit 1
+        fi
         if ! command -v brew >/dev/null 2>&1; then
             echo "bootstrap: install the Xcode command line tools and Homebrew first; git and python3 are required." >&2
             exit 1
@@ -92,13 +128,13 @@ if ((${#missing_tools[@]})); then
     if [[ "$dry_run" == false ]]; then
         "${install_command[@]}"
         for executable in git python3; do
-            command -v "$executable" >/dev/null 2>&1 || { echo "bootstrap: $executable is still unavailable" >&2; exit 1; }
+            tool_works "$executable" || { echo "bootstrap: $executable is still unavailable or not working" >&2; exit 1; }
         done
     fi
 fi
 
 if [[ -e "$dotfiles_dir" || -L "$dotfiles_dir" ]]; then
-    if ! command -v git >/dev/null 2>&1; then
+    if ! tool_works git; then
         echo "bootstrap: git is required to verify this existing directory." >&2
         exit 1
     fi

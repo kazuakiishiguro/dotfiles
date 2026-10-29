@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Package acquisition is explicit; regular Emacs startup stays network-free.
 set -Eeuo pipefail
+emacs_setup_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+source "$emacs_setup_directory/macos-env.sh"
 
 emacs_config_dir=""
 emacs_check_only=false

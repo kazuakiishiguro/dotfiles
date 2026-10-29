@@ -23,7 +23,7 @@ class InstallTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve()
         self.repo = self.root / "fixture repository"
         self.home = self.root / "home"
         self.repo.mkdir()
@@ -164,6 +164,56 @@ class InstallTests(unittest.TestCase):
         self.assertEqual(legacy.read_text(), "legacy settings\n")
         self.assertEqual(current.read_text(), "current settings\n")
         self.assertEqual(list(self.home.glob(".dotfiles-backup-*")), [])
+
+    def test_legacy_profile_does_not_shadow_an_active_xdg_configuration(self):
+        profile = self.profile(modules=["shell", "emacs"], emacs_target="legacy")
+        shell = self.installed_file(".shellrc", "machine shell\n")
+        bookmark = self.installed_file(".config/emacs/bookmarks", "personal bookmarks\n")
+        with mock.patch.dict(os.environ, {"XDG_CONFIG_HOME": ""}):
+            for name in ("init.el", "init.elc"):
+                with self.subTest(name=name):
+                    current = self.installed_file(".config/emacs/" + name, "active config\n")
+                    with self.assertRaisesRegex(ValueError, "would shadow the existing Emacs configuration"):
+                        self.plan(profile)
+                    self.assertEqual(current.read_text(), "active config\n")
+                    self.assertEqual(bookmark.read_text(), "personal bookmarks\n")
+                    self.assertEqual(shell.read_text(), "machine shell\n")
+                    self.assertFalse((self.home / ".emacs.d").exists())
+                    self.assertEqual(list(self.home.glob(".dotfiles-backup-*")), [])
+                    current.unlink()
+
+    def test_legacy_profile_checks_custom_xdg_config_home(self):
+        profile = self.profile(modules=["emacs"], emacs_target="legacy")
+        config = self.root / "custom config"
+        current = config / "emacs/init.el"
+        current.parent.mkdir(parents=True)
+        current.write_text("custom XDG init\n")
+        with mock.patch.dict(os.environ, {"XDG_CONFIG_HOME": str(config)}):
+            with self.assertRaisesRegex(ValueError, "would shadow the existing Emacs configuration"):
+                self.plan(profile)
+        self.assertEqual(current.read_text(), "custom XDG init\n")
+        self.assertFalse((self.home / ".emacs.d").exists())
+
+    def test_skip_emacs_allows_shell_install_without_shadowing_xdg(self):
+        profile = self.profile(modules=["shell", "emacs"], emacs_target="legacy")
+        current = self.installed_file(".config/emacs/init.el", "active config\n")
+        bookmark = self.installed_file(".config/emacs/bookmarks", "personal bookmarks\n")
+        with mock.patch.dict(os.environ, {"XDG_CONFIG_HOME": ""}):
+            self.apply(self.plan(profile, skip_emacs=True), profile)
+        self.assertTrue((self.home / ".shellrc").is_symlink())
+        self.assertEqual(current.read_text(), "active config\n")
+        self.assertEqual(bookmark.read_text(), "personal bookmarks\n")
+        self.assertFalse((self.home / ".emacs.d").exists())
+
+    def test_existing_legacy_directory_remains_usable_with_unused_xdg_init(self):
+        profile = self.profile(modules=["emacs"], emacs_target="legacy")
+        bookmark = self.installed_file(".emacs.d/bookmarks", "active legacy state\n")
+        current = self.installed_file(".config/emacs/init.el", "unused XDG init\n")
+        with mock.patch.dict(os.environ, {"XDG_CONFIG_HOME": ""}):
+            self.apply(self.plan(profile), profile)
+        self.assertTrue((self.home / ".emacs.d/init.el").is_symlink())
+        self.assertEqual(bookmark.read_text(), "active legacy state\n")
+        self.assertEqual(current.read_text(), "unused XDG init\n")
 
     def test_personal_customize_settings_require_preservation_before_replacement(self):
         personal = self.installed_file(".emacs.d/custom.el", "; personal preferences\n")

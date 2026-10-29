@@ -16,9 +16,28 @@
 ** Elpy
 #+begin_src emacs-lisp
  (use-package elpy
-   ;; Keep Elpy's dedicated RPC environment and interpreter defaults.
-   ;; Machine-specific choices belong in local.el, loaded after this file.
    :config
+   ;; macOS provisioning installs these tools in a dedicated environment.
+   ;; Select it only when already installed; startup never creates/downloads it.
+   ;; Linux retains Elpy's defaults. local.el can override either platform.
+   (when (eq system-type 'darwin)
+     (let* ((xdg-data (getenv "XDG_DATA_HOME"))
+            (data-home (if (and xdg-data (not (equal xdg-data "")))
+                           xdg-data
+                         "~/.local/share/"))
+            (backend (expand-file-name "dotfiles/python" data-home))
+            (bin (expand-file-name "bin" backend))
+            (python (expand-file-name "python" bin)))
+       (when (file-executable-p python)
+         (setq elpy-rpc-virtualenv-path backend
+               elpy-rpc-python-command python)
+         ;; Offer black/flake8 as fallbacks while retaining the project's
+         ;; python3 and any project-specific tools at the front of PATH.
+         (add-to-list 'exec-path bin t)
+         (let ((path (or (getenv "PATH") "")))
+           (unless (member bin (split-string path (regexp-quote path-separator) t))
+             (setenv "PATH" (if (equal path "") bin
+                              (concat path path-separator bin))))))))
    (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
    (elpy-enable)
    (add-hook 'python-ts-mode-hook #'elpy-mode))

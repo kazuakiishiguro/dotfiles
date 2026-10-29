@@ -119,12 +119,19 @@ def build_plan(repo, home, profile, skip_emacs=False):
     materialize = emacs_root if use_emacs and emacs_root.is_symlink() else None
     migrations = []
     if use_emacs:
+        legacy = home / ".emacs.d"
+        if profile["emacs_target"] == "legacy" and not exists(legacy):
+            xdg = Path(os.environ.get("XDG_CONFIG_HOME") or home / ".config") / "emacs"
+            if any((xdg / name).is_file() for name in ("init.el", "init.elc")):
+                raise ValueError(
+                    f"Creating {legacy} would shadow the existing Emacs configuration in {xdg}. "
+                    "Merge or relocate that state explicitly before rerunning, or use --skip-emacs; "
+                    "no files were changed.")
         old_paths = LEGACY_EMACS if profile["emacs_target"] == "xdg" else LEGACY_EMACS[:3]
         for name in old_paths:
             path = home / name
             if exists(path):
                 migrations.append(path)
-        legacy = home / ".emacs.d"
         if profile["emacs_target"] == "xdg" and exists(legacy):
             if not legacy.is_dir():
                 raise ValueError(f"Legacy Emacs state must be a directory: {legacy}")

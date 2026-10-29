@@ -57,15 +57,37 @@ its packaged Emacs integration hardcodes that path.
 The normal flow is system prerequisites, configuration application, then
 Emacs packages and validation. Reload a running daemon only for `--reload`.
 
-`scripts/setup-system.sh` installs missing packages on Omarchy without a full
-upgrade, source build or Rust toolchain switch. Other Linux/macOS profiles
-currently validate prerequisites rather than automatically provisioning them;
-the older `setup_arch.sh`, `setup_macos.sh`, `setup_ubuntu.sh`,
-`setup_fedora.sh` and `install-rust.sh` are retained but not invoked by the new
-entry point. Bootstrap may install its own missing Git/Python prerequisites.
+`scripts/setup-system.sh` installs missing packages on Omarchy and dispatches
+macOS provisioning to `scripts/setup-macos.sh`. Generic Linux remains
+check-only. Do not add full upgrades, source builds or implicit Rust toolchain
+switches. Bootstrap may install its own missing Git/Python prerequisites.
 On Omarchy, a pre-existing plain `emacs` package must be replaced with
 `emacs-wayland` interactively before normal provisioning. Check for that
 conflict before installing any other packages.
+
+macOS requires existing Homebrew and Xcode command line tools. Discover
+Homebrew's ARM/Intel prefix when it is absent from PATH, and do not invoke
+Apple's launcher stubs when developer tools are missing. `scripts/macos-env.sh`
+supplies process-only Homebrew/Cargo/TeX paths to checkout entry points, keeping
+explicit tool selections first without sourcing personal shell startup files.
+Keep bootstrap and setup scripts compatible with the system Bash 3.2, including
+empty arrays under `set -u`. Homebrew installation uses bottles and disables automatic
+updates, target upgrades and cleanup. BasicTeX may request sudo interactively.
+Existing working Emacs 29+ is retained; fresh installations get Homebrew's
+`emacs-app` Cocoa cask, which supplies `emacs` and `emacsclient`. Alternative
+GUI editions such as Emacs Plus remain an explicit user choice. Reject
+broken/older installed editors before any package changes. Do not overwrite
+an existing Emacs application just because its CLI command is absent from PATH.
+
+Retain the active rustup toolchain and add only missing components, including
+`rust-src`. Preserve working non-rustup toolchains as well. macOS Python editor
+dependencies belong to `${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/python`,
+never global Homebrew/Apple site-packages. Verify this environment directly;
+Emacs selects it only on macOS without replacing project Python or downloading
+anything during startup. `--skip-emacs` leaves this backend and Rust/TeX/font
+dependencies untouched. The underscore `scripts/setup_macos.sh` is a safe
+compatibility wrapper; the legacy Brewfile is not invoked. The older Arch,
+Ubuntu, Fedora and Rust setup scripts are not used by `init.sh`.
 
 Configuration backups are `~/.dotfiles-backup-*/` and logs are under
 `${XDG_STATE_HOME:-~/.local/state}/dotfiles/`. A failed apply restores changed
@@ -77,7 +99,9 @@ reuses an existing matching checkout without pulling or resetting it.
 Keep sources under `emacs/.emacs.d/`. Omarchy maps selected files into
 `~/.config/emacs/`, preserving managed Omarchy integration and backing up
 conflicting legacy startup paths. Generic Linux/macOS use `~/.emacs.d/`.
-Keep runtime data and generated files out of Git.
+Keep runtime data and generated files out of Git. Inspect both legacy and XDG
+directories before migrating an existing Mac; do not silently deactivate
+personal state in a pre-existing XDG setup.
 Legacy-to-XDG migration carries the entire runtime tree into an absent target,
 rebases symlinks and generated virtualenv launchers, and keeps originals in the
 backup. Refuse ambiguous independent Emacs trees or replacement of personal
@@ -101,9 +125,18 @@ node scripts/tests/test_org_zettel_render.cjs
 emacs --batch -Q -l emacs/tests/setup-packages-tests.el -f ert-run-tests-batch-and-exit
 ```
 
+On macOS, set `DOTFILES_TEST_BASH=/bin/bash` when running
+`test_bootstrap.py` and `test_setup_macos.py` to exercise real Bash 3.2 semantics.
+The macOS fixtures must never invoke real Homebrew or write outside temporary
+homes, including when the test runner itself is a Mac.
+
 ## Shell config
 
 Shared config (aliases, PATH, history, locale, GPG) lives in `shell/.shellrc`. Both `.bashrc` and `.zshrc` source `~/.shellrc`, then add shell-specific bits (bash: prompt, omarchy; zsh: vcs_info prompt, fzf, xcape).
+
+Machine Git overrides belong in `~/.config/git/config`, included last by the
+shared `.gitconfig`. Preserve local identity/signing choices and GPG agent
+configuration; private keys are never distributed through this repository.
 
 ## Hyprland (Arch)
 
@@ -140,6 +173,7 @@ A Scrapbox.io-style card grid viewer for the `~/org/` knowledge base. Symlinked 
 - Static export: `cd ~/org && python3 org-zettel.py` → produces `org-zettel-view.html`
 - Live server with editing: `cd ~/org && python3 org-zettel.py --serve` → serves on `localhost:8080`
 - To run and open: `cd ~/org && python3 org-zettel.py --serve & sleep 1 && xdg-open http://127.0.0.1:8080`
+- On macOS use `open` instead of `xdg-open`. The Emacs button uses `emacsclient` to open a Cocoa frame; it requires a GUI Emacs edition and a desktop session. Homebrew's terminal-only Emacs cannot supply that frame.
 - Server endpoints: `GET /api/health`, `GET /api/raw/{id}`, `POST /api/save/{id}`, `POST /api/open-emacs/{id}`, plus static file serving for images
 - Inline editing is disabled by default; use the Emacs button to edit notes.
 - Missing note links are red. Clicking one in the live viewer opens an unsaved Emacs buffer with the new-note template; the server does not create the file. Save in Emacs, then reload the viewer to refresh its graph and link colors.
@@ -156,6 +190,6 @@ Backend regression tests use temporary vaults and mocked GUI launches:
 - Keep module files in the existing layout mirroring `$HOME`; profiles provide installation policy.
 - Emacs feature changes go in the appropriate `.org` source; do not edit generated `.el` files.
 - Keep package manifests/bootstrap logic in the explicit Emacs entry files; never download during startup.
-- System dependencies belong to `scripts/setup-system.sh`; installer internals belong under `scripts/`, daily commands under `bin/.bin/`.
+- System dependencies belong to `scripts/setup-system.sh` and its macOS helper; installer internals belong under `scripts/`, daily commands under `bin/.bin/`.
 - The `.gitignore` excludes runtime `.emacs.d/` data and allows only selected source/entry files and `*.org`.
 - Installer tests must use temporary homes, checkouts and fake package managers; never modify the real desktop or download packages.

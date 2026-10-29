@@ -525,25 +525,31 @@ def make_handler(org_dir, template_path, build_args):
                 if not file_id or (filepath.exists() and not filepath.is_file()):
                     self._send_json({'error': 'invalid path'}, 400)
                     return
+                launcher = 'emacsclient' if sys.platform == 'darwin' else 'xdg-terminal-exec'
                 try:
                     # A missing note is opened as an unsaved Emacs buffer.  The
                     # server must not create a file merely because a link is used.
-                    # Ensure Wayland/X11 display vars are available for GUI windows
                     env = os.environ.copy()
-                    for var in ('WAYLAND_DISPLAY', 'DISPLAY', 'XDG_RUNTIME_DIR'):
-                        val = _get_display_env().get(var)
-                        if val and var not in env:
-                            env[var] = val
-                    # A daemon started without COLORTERM can still select only
-                    # 256 colors.  Set TERM after the terminal has initialized
-                    # its environment so Emacs uses the true-color terminfo.
-                    subprocess.Popen(['xdg-terminal-exec', '--app-id=org-zettel-edit',
-                                       '--', 'env', 'TERM=xterm-direct',
-                                       'emacsclient', '-t', '-a', '', str(filepath)],
-                                     env=env)
+                    if sys.platform == 'darwin':
+                        # Cocoa Emacs creates its own frame. Pass the resolved
+                        # filename directly, without shell or AppleScript quoting.
+                        command = [launcher, '-c', '-n', '-a', '', str(filepath)]
+                    else:
+                        # Ensure Wayland/X11 display vars are available for GUI windows.
+                        for var in ('WAYLAND_DISPLAY', 'DISPLAY', 'XDG_RUNTIME_DIR'):
+                            val = _get_display_env().get(var)
+                            if val and var not in env:
+                                env[var] = val
+                        # A daemon started without COLORTERM can still select only
+                        # 256 colors. Set TERM after the terminal has initialized
+                        # its environment so Emacs uses the true-color terminfo.
+                        command = [launcher, '--app-id=org-zettel-edit',
+                                   '--', 'env', 'TERM=xterm-direct',
+                                   'emacsclient', '-t', '-a', '', str(filepath)]
+                    subprocess.Popen(command, env=env)
                     self._send_json({'ok': True})
                 except FileNotFoundError as exc:
-                    self._send_json({'error': f'{exc.filename or "xdg-terminal-exec"} not found'}, 500)
+                    self._send_json({'error': f'{exc.filename or launcher} not found'}, 500)
                 except OSError as exc:
                     self._send_json({'error': f'could not launch Emacs: {exc}'}, 500)
             elif self.path.startswith('/api/rename/'):

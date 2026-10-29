@@ -1,7 +1,8 @@
-* macOS GUI environment
+* macOS GUI and daemon environment
 #+begin_src emacs-lisp
 ;; -*- lexical-binding: t; -*-
-(when (and (eq system-type 'darwin) (display-graphic-p))
+(when (and (eq system-type 'darwin)
+           (or (display-graphic-p) (daemonp)))
   (use-package exec-path-from-shell
     :config
     (exec-path-from-shell-initialize)))

@@ -25,6 +25,14 @@ case "$profile" in
     *) echo "setup-system: specify --profile omarchy, linux, or macos" >&2; exit 2 ;;
 esac
 
+if [[ "$profile" == macos ]]; then
+    macos_args=()
+    [[ "$skip_emacs" == false ]] || macos_args+=(--skip-emacs)
+    [[ "$dry_run" == false ]] || macos_args+=(--dry-run)
+    script_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+    exec bash "$script_directory/setup-macos.sh" ${macos_args[@]+"${macos_args[@]}"}
+fi
+
 run() {
     printf '  '
     printf '%q ' "$@"
@@ -62,8 +70,7 @@ verify_tools() {
 }
 
 if [[ "$profile" != omarchy ]]; then
-    # Config application is portable; automatic package provisioning is currently
-    # supported on Omarchy. Keep other hosts explicit and predictable.
+    # Generic Linux remains check-only; distribution package policies vary.
     missing_tools=()
     tools=(git python3 curl fzf)
     if [[ "$skip_emacs" == false ]]; then

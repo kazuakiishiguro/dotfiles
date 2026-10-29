@@ -19,7 +19,7 @@ class TemporaryVaultTest(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="org-zettel-test-")
         self.addCleanup(self.temp.cleanup)
-        self.vault = Path(self.temp.name) / "vault"
+        self.vault = (Path(self.temp.name) / "vault").resolve()
         self.vault.mkdir()
         org_zettel._mtime_cache = None
         org_zettel.MTIME_CACHE_FILE = None
@@ -69,6 +69,9 @@ class GraphFileIdsTest(TemporaryVaultTest):
 
 
 class OpenEmacsTest(TemporaryVaultTest):
+    platform = "linux"
+    launcher = "xdg-terminal-exec"
+
     def setUp(self):
         super().setUp()
         handler_class = org_zettel.make_handler(self.vault, Path("unused"), {})
@@ -76,7 +79,8 @@ class OpenEmacsTest(TemporaryVaultTest):
         self.handler._send_json = mock.Mock()
         self.launch = mock.patch.object(org_zettel.subprocess, "Popen").start()
         self.addCleanup(mock.patch.stopall)
-        mock.patch.object(org_zettel, "_get_display_env", return_value={}).start()
+        self.display_env = mock.patch.object(org_zettel, "_get_display_env", return_value={}).start()
+        mock.patch.object(org_zettel.sys, "platform", self.platform).start()
 
     def request(self, file_id):
         self.handler.path = "/api/open-emacs/" + quote(file_id, safe="")
@@ -84,11 +88,15 @@ class OpenEmacsTest(TemporaryVaultTest):
 
     def assert_launch(self, filepath):
         self.launch.assert_called_once()
-        self.assertEqual(self.launch.call_args.args[0], [
-            "xdg-terminal-exec", "--app-id=org-zettel-edit", "--",
-            "env", "TERM=xterm-direct", "emacsclient",
-            "-t", "-a", "", str(filepath),
-        ])
+        if self.platform == "darwin":
+            command = ["emacsclient", "-c", "-n", "-a", "", str(filepath)]
+            self.display_env.assert_not_called()
+        else:
+            command = ["xdg-terminal-exec", "--app-id=org-zettel-edit", "--",
+                       "env", "TERM=xterm-direct", "emacsclient",
+                       "-t", "-a", "", str(filepath)]
+        self.assertEqual(self.launch.call_args.args[0], command)
+        self.assertFalse(self.launch.call_args.kwargs.get("shell", False))
         self.handler._send_json.assert_called_once_with({"ok": True})
 
     def test_existing_note_opens_without_writing(self):
@@ -100,6 +108,12 @@ class OpenEmacsTest(TemporaryVaultTest):
 
     def test_missing_note_opens_without_creating_file_or_parents(self):
         file_id = "new folder/未作成のページ.org"
+        self.request(file_id)
+        self.assert_launch(self.vault / file_id)
+        self.assertEqual(list(self.vault.iterdir()), [])
+
+    def test_filename_with_shell_characters_is_one_literal_argument(self):
+        file_id = '--eval="(kill-emacs)"; $(touch injected) `uname` \'新規\'\n.org'
         self.request(file_id)
         self.assert_launch(self.vault / file_id)
         self.assertEqual(list(self.vault.iterdir()), [])
@@ -124,10 +138,15 @@ class OpenEmacsTest(TemporaryVaultTest):
         self.assertFalse((outside / "Escape.org").exists())
 
     def test_missing_launcher_reports_its_actual_name(self):
-        self.launch.side_effect = FileNotFoundError(2, "No such file or directory", "xdg-terminal-exec")
+        self.launch.side_effect = FileNotFoundError(2, "No such file or directory", self.launcher)
         self.request("Future.org")
-        self.handler._send_json.assert_called_once_with({"error": "xdg-terminal-exec not found"}, 500)
+        self.handler._send_json.assert_called_once_with({"error": self.launcher + " not found"}, 500)
         self.assertFalse((self.vault / "Future.org").exists())
+
+    def test_missing_launcher_error_without_filename_uses_platform_default(self):
+        self.launch.side_effect = FileNotFoundError("missing executable")
+        self.request("Future.org")
+        self.handler._send_json.assert_called_once_with({"error": self.launcher + " not found"}, 500)
 
     def test_other_launch_errors_are_json_errors(self):
         self.launch.side_effect = PermissionError("permission denied")
@@ -136,6 +155,11 @@ class OpenEmacsTest(TemporaryVaultTest):
             {"error": "could not launch Emacs: permission denied"}, 500,
         )
         self.assertFalse((self.vault / "Future.org").exists())
+
+
+class OpenEmacsMacTest(OpenEmacsTest):
+    platform = "darwin"
+    launcher = "emacsclient"
 
 
 if __name__ == "__main__":

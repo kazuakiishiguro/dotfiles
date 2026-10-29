@@ -6,6 +6,7 @@ Set DOTFILES_TEST_BASH to an older Bash binary to exercise its actual semantics.
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -27,6 +28,7 @@ class BootstrapTests(unittest.TestCase):
         self.output = self.root / "init-arguments.json"
         self.env = dict(os.environ, HOME=str(self.home), INIT_OUTPUT=str(self.output))
         self.env.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+        self.bootstrap = BOOTSTRAP
 
     def make_checkout(self, directory=None, origin=ORIGIN):
         directory = directory or self.home / "fun" / "dotfiles"
@@ -41,9 +43,47 @@ class BootstrapTests(unittest.TestCase):
 
     def run_bootstrap(self, *arguments):
         return subprocess.run(
-            [BASH, str(BOOTSTRAP), *map(str, arguments)],
+            [BASH, str(self.bootstrap), *map(str, arguments)],
             cwd=self.root, env=self.env, capture_output=True, text=True,
         )
+
+    def make_darwin_tools(self, developer_tools=True):
+        """Use fixture paths for fixed macOS locations, never the real system."""
+        self.tools = self.root / "tools"
+        self.tools.mkdir()
+        self.apple_bin = self.root / "usr/bin"
+        self.apple_bin.mkdir(parents=True)
+        self.brew_prefixes = [self.root / "opt/homebrew", self.root / "usr/local"]
+        self.tool_log = self.root / "tool-calls"
+        self.tool_log.write_text("")
+        self.env["MOCK_TOOL_LOG"] = str(self.tool_log)
+        self.env["PATH"] = os.pathsep.join(map(str, (self.apple_bin, self.tools)))
+        for name in ("bash", "dirname", "git", "python3"):
+            (self.tools / name).symlink_to(shutil.which(name))
+        self.write_command(self.tools / "uname", "printf 'Darwin\\n'\n")
+        if developer_tools:
+            developer_directory = self.root / "Developer"
+            developer_directory.mkdir()
+            self.env["MOCK_DEVELOPER_DIRECTORY"] = str(developer_directory)
+            self.write_command(self.tools / "xcode-select", 'printf "%s\\n" "$MOCK_DEVELOPER_DIRECTORY"\n')
+        else:
+            self.write_command(self.tools / "xcode-select", "exit 1\n")
+        script = BOOTSTRAP.read_text()
+        for original, fixture in (("/opt/homebrew", self.brew_prefixes[0]),
+                                  ("/usr/local", self.brew_prefixes[1]),
+                                  ("/usr/bin/git", self.apple_bin / "git"),
+                                  ("/usr/bin/python3", self.apple_bin / "python3")):
+            script = script.replace(original, str(fixture))
+        self.bootstrap = self.root / "bootstrap.sh"
+        self.bootstrap.write_text(script)
+
+    def write_command(self, path, content):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("#!/bin/bash\n" + content)
+        path.chmod(0o755)
+
+    def install_fake_brew(self, prefix):
+        self.write_command(prefix / "bin/brew", 'printf "brew %s\\n" "$*" >> "$MOCK_TOOL_LOG"\n')
 
     def test_reuses_default_checkout_and_forwards_flags(self):
         directory = self.make_checkout()
@@ -136,6 +176,57 @@ class BootstrapTests(unittest.TestCase):
         result = self.run_bootstrap("--dir")
         self.assertEqual(result.returncode, 2)
         self.assertFalse(self.output.exists())
+
+    def test_macos_discovers_existing_homebrew_without_shell_changes(self):
+        for index in (0, 1):
+            with self.subTest(prefix=index):
+                # Separate fixtures let the second case exercise Intel's path
+                # rather than selecting an already-created ARM installation.
+                with tempfile.TemporaryDirectory() as temporary:
+                    previous_root = self.root
+                    self.root = Path(temporary)
+                    try:
+                        self.make_darwin_tools()
+                        prefix = self.brew_prefixes[index]
+                        self.install_fake_brew(prefix)
+                        self.write_command(self.apple_bin / "python3", "exit 9\n")
+                        result = self.run_bootstrap("--dry-run")
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        self.assertIn("brew install python", result.stdout)
+                        self.assertEqual(self.tool_log.read_text(), "")
+                        self.assertFalse((self.home / "fun/dotfiles").exists())
+                        self.assertFalse((self.home / ".zprofile").exists())
+                    finally:
+                        self.root = previous_root
+
+    def test_macos_dry_run_never_executes_apple_stubs_without_developer_tools(self):
+        self.make_darwin_tools(developer_tools=False)
+        self.install_fake_brew(self.brew_prefixes[0])
+        for name in ("git", "python3"):
+            self.write_command(self.apple_bin / name,
+                               'printf "Apple stub ran\\n" >> "$MOCK_TOOL_LOG"\nexit 1\n')
+        result = self.run_bootstrap("--dry-run")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("xcode-select --install", result.stderr)
+        self.assertEqual(self.tool_log.read_text(), "")
+        self.assertFalse((self.home / "fun/dotfiles").exists())
+
+    def test_macos_accepts_working_nonapple_tools_without_developer_tools(self):
+        self.make_darwin_tools(developer_tools=False)
+        result = self.run_bootstrap("--dry-run")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("git clone", result.stdout)
+        self.assertEqual(self.tool_log.read_text(), "")
+
+    def test_macos_rechecks_tool_usability_after_homebrew_install(self):
+        self.make_darwin_tools()
+        self.install_fake_brew(self.brew_prefixes[0])
+        self.write_command(self.apple_bin / "python3", "exit 9\n")
+        result = self.run_bootstrap()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("python3 is still unavailable or not working", result.stderr)
+        self.assertEqual(self.tool_log.read_text().splitlines(), ["brew install python"])
+        self.assertFalse((self.home / "fun/dotfiles").exists())
 
 
 if __name__ == "__main__":

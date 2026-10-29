@@ -52,11 +52,16 @@ Machine-specific overrides belong in `local.el` inside the active Emacs
 configuration directory. It is loaded after the shared configuration and must
 not be committed. For example, an environment with Elpy's Python dependencies
 already installed can opt in with `(setq elpy-rpc-virtualenv-path 'current)`.
-Shared Python configuration keeps Elpy's default dedicated RPC environment.
+Linux configuration keeps Elpy's default dedicated RPC environment. On macOS,
+setup creates `${XDG_DATA_HOME:-~/.local/share}/dotfiles/python`; when available,
+the shared configuration selects it for Elpy RPC and appends its tool directory
+to PATH/exec-path, retaining project Python and project-specific tools first.
+Do not create environments or install Python packages during Emacs startup.
 
-On macOS GUI frames, `exec-path-from-shell` imports the shell's PATH before
+On macOS GUI or daemon startup, `exec-path-from-shell` imports the shell's PATH before
 other shared features load. Explicit setup installs it when needed; GUI startup
-does not acquire packages. Linux and terminal sessions skip this initialization.
+does not acquire packages. Linux, batch checks and ordinary terminal sessions
+skip this initialization.
 
 ---
 

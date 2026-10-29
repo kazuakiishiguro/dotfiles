@@ -1,11 +1,7 @@
-# for brew
-if [ -f /opt/homebrew/bin/brew ]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-fi
-
-# always load .zshrc
-if [ -e "$HOME/.zshrc" ]; then
-  . "$HOME/.zshrc"
+# Login commands need the shared environment too. Zsh loads .zshrc itself
+# for interactive shells; sourcing it here would run its integrations twice.
+if [ -f "$HOME/.shellrc" ]; then
+  . "$HOME/.shellrc"
 fi
 
 # load .zprofile.local
@@ -23,8 +19,10 @@ if [ -e "$HOME/.nvm" ]; then
   export NVM_DIR="$HOME/.nvm"
   [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
-  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+  if [[ $- == *i* ]]; then
+    [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+  fi
 fi
 
 # rbenv

@@ -3,11 +3,6 @@ if [ -f "$HOME/.bashrc" ]; then
     source "$HOME/.bashrc"
 fi
 
-# export Homebrew's sbin if apple m1
-if [ `uname -m` == "arm64" ]; then
-    export PATH="/opt/homebrew/sbin:$PATH"
-fi
-
 # Rust toolchain
 if [ -e "$HOME/.cargo" ]; then
     export PATH="$HOME/.cargo/bin:$PATH"
@@ -22,7 +17,9 @@ fi
 if [ -d "$HOME/.nvm" ]; then
     export NVM_DIR="$HOME/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    if [[ $- == *i* ]] && [ -s "$NVM_DIR/bash_completion" ]; then
+        . "$NVM_DIR/bash_completion"
+    fi
 fi
 
 # rbenv
@@ -32,7 +29,7 @@ if [ -d "$HOME/.rbenv" ]; then
 fi
 
 # fzf setup
-if command -v fzf >/dev/null 2>&1; then
+if [[ $- == *i* ]] && command -v fzf >/dev/null 2>&1; then
     if fzf --bash >/dev/null 2>&1; then
         eval "$(fzf --bash)"
     elif [ -f ~/.fzf.bash ]; then

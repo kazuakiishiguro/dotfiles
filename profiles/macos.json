@@ -1,7 +1,12 @@
 {
   "modules": ["shell", "bash", "bin", "emacs", "git", "screen", "vim", "zsh"],
   "emacs_target": "legacy",
-  "exclude": [".emacs.d/shell-bashrc"],
+  "exclude": [
+    ".emacs.d/shell-bashrc",
+    ".bin/fcitx5_status",
+    ".bin/pulse_volume",
+    ".bin/start-xcape.sh"
+  ],
   "preserve_existing": [],
   "copy": []
 }
